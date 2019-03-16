@@ -130,12 +130,13 @@ function ibase_build_sql($struct, $data){
 	return $sql;
 }
 
-function parse_search_q($q){
-	$q = preg_replace('/[\%]/', '', $q);
+function parse_search_q($q, $minWordLen = 3){
+	//$q = preg_replace('/[\%]/', '', $q);
+	$q = preg_replace('/[%,\'\.]/', ' ', $q);
 	$words = explode(' ', $q);
 
 	foreach($words as $k=>$word){
-		if($word = trim($word)){
+		if(($word = trim($word)) && (mb_strlen($word) >= $minWordLen)){
 			$words[$k] = mb_strtoupper($word);
 		} else {
 			unset($words[$k]);

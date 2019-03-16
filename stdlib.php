@@ -2,22 +2,24 @@
 
 use dqdp\LV;
 use dqdp\QueueMailer;
-use PHPMailer\PHPMailer;
 use dqdp\EmptyObject;
+use PHPMailer\PHPMailer;
 
-define('NETMASKS', ["0.0.0.0", "128.0.0.0", "192.0.0.0", "224.0.0.0", "240.0.0.0", "248.0.0.0", "252.0.0.0",
-"254.0.0.0", "255.0.0.0", "255.128.0.0", "255.192.0.0", "255.224.0.0", "255.240.0.0", "255.248.0.0", "255.252.0.0",
-"255.254.0.0", "255.255.0.0", "255.255.128.0", "255.255.192.0", "255.255.224.0", "255.255.240.0", "255.255.248.0",
-"255.255.252.0", "255.255.254.0", "255.255.255.0", "255.255.255.128", "255.255.255.192", "255.255.255.224",
-"255.255.255.240", "255.255.255.248", "255.255.255.252", "255.255.255.254", "255.255.255.255"]);
-
-define('M', [ 'janvārī', 'februārī', 'martā', 'aprīlī', 'maijā', 'jūnijā', 'jūlijā', 'augustā', 'septembrī', 'oktobrī',
-'novembrī', 'decembrī' ]);
-
-define('D', ['svētdiena', 'pirmdiena', 'otrdiena', 'trešdiena', 'ceturtdiena', 'piektdiena', 'sestdiena']);
+function netmasks(){
+	return [
+		"0.0.0.0", "128.0.0.0", "192.0.0.0", "224.0.0.0", "240.0.0.0", "248.0.0.0", "252.0.0.0",
+		"254.0.0.0", "255.0.0.0", "255.128.0.0", "255.192.0.0", "255.224.0.0", "255.240.0.0", "255.248.0.0", "255.252.0.0",
+		"255.254.0.0", "255.255.0.0", "255.255.128.0", "255.255.192.0", "255.255.224.0", "255.255.240.0", "255.255.248.0",
+		"255.255.252.0", "255.255.254.0", "255.255.255.0", "255.255.255.128", "255.255.255.192", "255.255.255.224",
+		"255.255.255.240", "255.255.255.248", "255.255.255.252", "255.255.255.254", "255.255.255.255"
+	];
+};
 
 function menesi(){
-	return ['Janvāris', 'Februāris', 'Marts', 'Aprīlis', 'Maijs', 'Jūnijs', 'Jūlijs', 'Augusts', 'Septembris', 'Oktobris', 'Novembris', 'Decembris'];
+	return [
+		'Janvāris', 'Februāris', 'Marts', 'Aprīlis', 'Maijs', 'Jūnijs', 'Jūlijs',
+		'Augusts', 'Septembris', 'Oktobris', 'Novembris', 'Decembris'
+	];
 }
 
 function country_codes_eu(){
@@ -672,8 +674,6 @@ function date_startend($DATE){
 		if($DATE2->END = $DATE->END)$end_date = strtotime($DATE->END);
 	}
 
-	//printr($DATE, $DATE2);
-
 	if($start_date)$start_date = date($format, $start_date);
 	if($end_date)$end_date = date($format, $end_date);
 
@@ -785,11 +785,11 @@ function mb_streqi($s1, $s2){
 }
 
 function net2cidr($mask){
-	return array_search($mask, NETMASKS);
+	return array_search($mask, netmasks());
 }
 
 function cidr2net($bits){
-	return isset(NETMASKS[$bits]) ? NETMASKS[$bits] : false;
+	return netmasks()[$bits] ?? false;
 }
 
 function net2long($ip){
@@ -957,16 +957,16 @@ function emailex($params)
 	return false;
 }
 
-# TODO: naming
-function loadCSV($file, $map){
-	if(($f = fopen($file, "r")) === FALSE)
+function csv_load($file, $map){
+	if(($f = fopen($file, "r")) === false){
 		return false;
+	}
 
-	$ret = array();
-	while (($line = fgetcsv($f, 1000, ';')) !== FALSE){
-		$rl = array();
+	$ret = [];
+	while (($line = fgetcsv($f, 2000, ';')) !== false){
+		$rl = [];
 		foreach($map as $k=>$v){
-			$rl[$v] = trim($line[$k]);
+			$rl[$v] = ltrim(trim($line[$k]), "'");
 		}
 		$ret[] = $rl;
 	}
@@ -974,7 +974,7 @@ function loadCSV($file, $map){
 	return $ret;
 }
 
-function findCSVKey($map, $field){
+function csv_find_key($map, $field){
 	foreach($map as $k=>$v){
 		if($v == $field){
 			return $k;
@@ -984,8 +984,8 @@ function findCSVKey($map, $field){
 	return false;
 }
 
-function findCSVValue($map, $line, $field){
-	if(($k = findCSVKey($map, $field)) !== false){
+function csv_find_value($map, $line, $field){
+	if(($k = csv_find_key($map, $field)) !== false){
 		return $line[$k];
 	}
 
@@ -1004,6 +1004,7 @@ function header404($msg = "Not Found"){
 # TODO: smukāk!
 function proc_date($date){
 	$D = ['šodien', 'vakar', 'aizvakar'];
+	$M = ['janvārī', 'februārī', 'martā', 'aprīlī', 'maijā', 'jūnijā', 'jūlijā', 'augustā', 'septembrī', 'oktobrī', 'novembrī', 'decembrī'];
 
 	$date_now = date("Y:m:j:H:i");
 	list($y0, $m0, $d0, $h0, $min0) = explode(":", date("Y:m:j:H:i", strtotime($date)));
@@ -1021,17 +1022,13 @@ function proc_date($date){
 	} else {
 		if($y1 != $y0)
 			$retdate .= "$y0. gada ";
-		$retdate.= "$d0. ".get_month($m0 - 1);
+		$retdate.= "$d0. ".$M[$m0 - 1];
 	}
 
 	//if((integer)$h0 || (integer)$min0)
 		$retdate .= ", plkst. $h0:$min0";
 
 	return $retdate;
-}
-
-function get_month($i){
-	return M[$i];
 }
 
 function print_time($start_time, $end_time = false)
@@ -1138,4 +1135,3 @@ function kdsort(&$a){
 			kdsort($a[$k]);
 	}
 }
-
