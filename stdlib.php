@@ -300,7 +300,6 @@ function countries(){
 	];
 }
 
-# TODO: varbūt uzreiz uzsetot $GLOBALS[]?
 function get($key, $default = ''){
 	return isset($_GET[$key]) ? $_GET[$key] : $default;
 }
@@ -311,6 +310,10 @@ function post($key, $default = ''){
 
 function postget($key, $default = ''){
 	return isset($_POST[$key]) ? $_POST[$key] : get($key, $default);
+}
+
+function getpost($key, $default = ''){
+	return isset($_GET[$key]) ? $_GET[$key] : post($key, $default);
 }
 
 function sess($key, $default = ''){
@@ -558,47 +561,27 @@ function date_timestamp(){
 }
 
 function get_date_format(){
-	return empty($GLOBALS['DQDP_DATE_FORMAT']) ? 'd.m.Y' : $GLOBALS['DQDP_DATE_FORMAT'];
+	return $GLOBALS['DQDP_DATE_FORMAT'] ?? 'd.m.Y';
 }
 
 function set_date_format($f){
 	return $GLOBALS['DQDP_DATE_FORMAT'] = $f;
 }
 
-/*
-function date_lastmonth_end(){
-	return datef(mktime (0,0,0, date('m') - 1, date_daycount(date('m')-1), date('Y')));
+function timef($ts = null){
+	return date(get_time_format(), $ts ?? time());
 }
 
-function date_monthstart_ts($TS = 0){
-	if(!$TS){
-		$TS = time();
-	}
-
-	return mktime (0,0,0, date('m', $TS), 1, date('Y', $TS));
+function get_time_format(){
+	return $GLOBALS['DQDP_TIME_FORMAT'] ?? 'H:i:s';
 }
 
-function date_monthend_ts($TS = 0){
-	if(!$TS){
-		$TS = time();
-	}
-
-	return mktime(0,0,0, date('m', $TS), date('t', $TS), date('Y', $TS));
+function set_time_format($f){
+	return $GLOBALS['DQDP_TIME_FORMAT'] = $f;
 }
 
-# TODO: test
-function day_in_interval($y, $m, $d, $ts1, $ts2){
-	$dd = mktime(0,0,0, $m, $d, $y);
-	$ts1 = mktime(0,0,0, date('m', $ts1), date('d', $ts1), date('Y', $ts1));
-	$ts2 = mktime(0,0,0, date('m', $ts2), date('d', $ts2), date('Y', $ts2));
-	//print date('Y-m-d', $dd).":$dd:$ts1:$ts2";
-	return ($dd >= $ts1) && ($dd <= $ts2);
-}
-
-*/
-
-function datef($ts){
-	return date(get_date_format(), $ts);
+function datef($ts = null){
+	return date(get_date_format(), $ts ?? time());
 }
 
 function date_today(){
@@ -629,21 +612,12 @@ function date_lastmonth_end(){
 	return datef(strtotime("last day of previous month"));
 }
 
-# TODO: get_time_format();
-function date_time(){
-	return date('H:i:s');
-}
-
 function is_valid_date($date){
 	return strtotime($date) !== false;
 }
 
 function ustrftime($format, $timestamp = 0){
 	return win2utf(strftime($format, $timestamp));
-}
-
-function __date_startend_compact($DATE){
-	unset($DATE->MONTH, $DATE->YEAR, $DATE->START, $DATE->END);
 }
 
 function date_startend($DATE){
@@ -758,6 +732,13 @@ function __looper($data, $func){
 			print "\n";
 		}
 	}
+}
+
+# NOTE: dep on https://highlightjs.org/
+function sqlr(){
+	__looper(func_get_args(), function($v){
+		print '<code class="sql">'.printrr($v).'</code>';
+	});
 }
 
 function dumpr(){

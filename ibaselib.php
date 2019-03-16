@@ -44,7 +44,7 @@ function ibase_execute_array($q, $values){
 	array_unshift($values, $q);
 	$ret = call_user_func_array('ibase_execute', $values);
 	if(!$ret){
-		dumpr($values);
+		sqlr($values);
 	}
 	return $ret;
 }
@@ -62,7 +62,7 @@ function ibase_query_array(){
 	$values = __ibase_params(func_get_args());
 	$ret = call_user_func_array('ibase_query', $values);
 	if(!$ret){
-		dumpr($values);
+		sqlr($values);
 	}
 	return $ret;
 }
@@ -73,7 +73,7 @@ function ibase_fetch_all(){
 	$ret = [];
 	$values = __ibase_params(func_get_args());
 	if(!($q = call_user_func_array('ibase_query', $values))){
-		dumpr($values);
+		sqlr($values);
 		return false;
 	}
 	//$q = call_user_func_array('ibase_query', func_get_args());
@@ -82,17 +82,6 @@ function ibase_fetch_all(){
 	};
 	return $ret;
 }
-
-/*
-function ibase_query_array($sql, $values){
-	array_unshift($values, $sql);
-	$ret = call_user_func_array('ibase_query', $values);
-	if(!$ret){
-		dumpr($sql, $values);
-	}
-	return $ret;
-}
-*/
 
 function ibase_build_sql($struct, $data){
 	$sql = '';
