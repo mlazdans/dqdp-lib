@@ -1,0 +1,1160 @@
+<?php
+
+use dqdp\LV;
+use dqdp\QueueMailer;
+use PHPMailer\PHPMailer;
+use dqdp\EmptyObject;
+
+define('NETMASKS', ["0.0.0.0", "128.0.0.0", "192.0.0.0", "224.0.0.0", "240.0.0.0", "248.0.0.0", "252.0.0.0",
+"254.0.0.0", "255.0.0.0", "255.128.0.0", "255.192.0.0", "255.224.0.0", "255.240.0.0", "255.248.0.0", "255.252.0.0",
+"255.254.0.0", "255.255.0.0", "255.255.128.0", "255.255.192.0", "255.255.224.0", "255.255.240.0", "255.255.248.0",
+"255.255.252.0", "255.255.254.0", "255.255.255.0", "255.255.255.128", "255.255.255.192", "255.255.255.224",
+"255.255.255.240", "255.255.255.248", "255.255.255.252", "255.255.255.254", "255.255.255.255"]);
+
+define('M', [ 'janvārī', 'februārī', 'martā', 'aprīlī', 'maijā', 'jūnijā', 'jūlijā', 'augustā', 'septembrī', 'oktobrī',
+'novembrī', 'decembrī' ]);
+
+define('D', ['svētdiena', 'pirmdiena', 'otrdiena', 'trešdiena', 'ceturtdiena', 'piektdiena', 'sestdiena']);
+
+function menesi(){
+	return ['Janvāris', 'Februāris', 'Marts', 'Aprīlis', 'Maijs', 'Jūnijs', 'Jūlijs', 'Augusts', 'Septembris', 'Oktobris', 'Novembris', 'Decembris'];
+}
+
+function country_codes_eu(){
+	return [
+		'AT','BE','BG','CY','CZ','DK','EE','FI','FR','DE','GR','HU','HR','IE',
+		'IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE','GB'
+	];
+}
+
+function country_codes_eu_sql(){
+	return "'".join("','", country_codes_eu())."'";
+}
+
+function countries(){
+	return [
+		"AF" => "Afghanistan",
+		"AL" => "Albania",
+		"DZ" => "Algeria",
+		"AS" => "American Samoa",
+		"AD" => "Andorra",
+		"AO" => "Angola",
+		"AI" => "Anguilla",
+		"AQ" => "Antarctica",
+		"AG" => "Antigua and Barbuda",
+		"AR" => "Argentina",
+		"AM" => "Armenia",
+		"AW" => "Aruba",
+		"AU" => "Australia",
+		"AT" => "Austria",
+		"AZ" => "Azerbaijan",
+		"BS" => "Bahamas",
+		"BH" => "Bahrain",
+		"BD" => "Bangladesh",
+		"BB" => "Barbados",
+		"BY" => "Belarus",
+		"BE" => "Belgium",
+		"BZ" => "Belize",
+		"BJ" => "Benin",
+		"BM" => "Bermuda",
+		"BT" => "Bhutan",
+		"BO" => "Bolivia",
+		"BA" => "Bosnia and Herzegovina",
+		"BW" => "Botswana",
+		"BV" => "Bouvet Island",
+		"BR" => "Brazil",
+		"BQ" => "British Antarctic Territory",
+		"IO" => "British Indian Ocean Territory",
+		"VG" => "British Virgin Islands",
+		"BN" => "Brunei",
+		"BG" => "Bulgaria",
+		"BF" => "Burkina Faso",
+		"BI" => "Burundi",
+		"KH" => "Cambodia",
+		"CM" => "Cameroon",
+		"CA" => "Canada",
+		"CT" => "Canton and Enderbury Islands",
+		"CV" => "Cape Verde",
+		"KY" => "Cayman Islands",
+		"CF" => "Central African Republic",
+		"TD" => "Chad",
+		"CL" => "Chile",
+		"CN" => "China",
+		"CX" => "Christmas Island",
+		"CC" => "Cocos [Keeling] Islands",
+		"CO" => "Colombia",
+		"KM" => "Comoros",
+		"CG" => "Congo - Brazzaville",
+		"CD" => "Congo - Kinshasa",
+		"CK" => "Cook Islands",
+		"CR" => "Costa Rica",
+		"HR" => "Croatia",
+		"CU" => "Cuba",
+		"CY" => "Cyprus",
+		"CZ" => "Czech Republic",
+		"CI" => "Côte d’Ivoire",
+		"DK" => "Denmark",
+		"DJ" => "Djibouti",
+		"DM" => "Dominica",
+		"DO" => "Dominican Republic",
+		"NQ" => "Dronning Maud Land",
+		"DD" => "East Germany",
+		"EC" => "Ecuador",
+		"EG" => "Egypt",
+		"SV" => "El Salvador",
+		"GQ" => "Equatorial Guinea",
+		"ER" => "Eritrea",
+		"EE" => "Estonia",
+		"ET" => "Ethiopia",
+		"FK" => "Falkland Islands",
+		"FO" => "Faroe Islands",
+		"FJ" => "Fiji",
+		"FI" => "Finland",
+		"FR" => "France",
+		"GF" => "French Guiana",
+		"PF" => "French Polynesia",
+		"TF" => "French Southern Territories",
+		"FQ" => "French Southern and Antarctic Territories",
+		"GA" => "Gabon",
+		"GM" => "Gambia",
+		"GE" => "Georgia",
+		"DE" => "Germany",
+		"GH" => "Ghana",
+		"GI" => "Gibraltar",
+		"GR" => "Greece",
+		"GL" => "Greenland",
+		"GD" => "Grenada",
+		"GP" => "Guadeloupe",
+		"GU" => "Guam",
+		"GT" => "Guatemala",
+		"GG" => "Guernsey",
+		"GN" => "Guinea",
+		"GW" => "Guinea-Bissau",
+		"GY" => "Guyana",
+		"HT" => "Haiti",
+		"HM" => "Heard Island and McDonald Islands",
+		"HN" => "Honduras",
+		"HK" => "Hong Kong SAR China",
+		"HU" => "Hungary",
+		"IS" => "Iceland",
+		"IN" => "India",
+		"ID" => "Indonesia",
+		"IR" => "Iran",
+		"IQ" => "Iraq",
+		"IE" => "Ireland",
+		"IM" => "Isle of Man",
+		"IL" => "Israel",
+		"IT" => "Italy",
+		"JM" => "Jamaica",
+		"JP" => "Japan",
+		"JE" => "Jersey",
+		"JT" => "Johnston Island",
+		"JO" => "Jordan",
+		"KZ" => "Kazakhstan",
+		"KE" => "Kenya",
+		"KI" => "Kiribati",
+		"KW" => "Kuwait",
+		"KG" => "Kyrgyzstan",
+		"LA" => "Laos",
+		"LV" => "Latvia",
+		"LB" => "Lebanon",
+		"LS" => "Lesotho",
+		"LR" => "Liberia",
+		"LY" => "Libya",
+		"LI" => "Liechtenstein",
+		"LT" => "Lithuania",
+		"LU" => "Luxembourg",
+		"MO" => "Macau SAR China",
+		"MK" => "Macedonia",
+		"MG" => "Madagascar",
+		"MW" => "Malawi",
+		"MY" => "Malaysia",
+		"MV" => "Maldives",
+		"ML" => "Mali",
+		"MT" => "Malta",
+		"MH" => "Marshall Islands",
+		"MQ" => "Martinique",
+		"MR" => "Mauritania",
+		"MU" => "Mauritius",
+		"YT" => "Mayotte",
+		"FX" => "Metropolitan France",
+		"MX" => "Mexico",
+		"FM" => "Micronesia",
+		"MI" => "Midway Islands",
+		"MD" => "Moldova",
+		"MC" => "Monaco",
+		"MN" => "Mongolia",
+		"ME" => "Montenegro",
+		"MS" => "Montserrat",
+		"MA" => "Morocco",
+		"MZ" => "Mozambique",
+		"MM" => "Myanmar [Burma]",
+		"NA" => "Namibia",
+		"NR" => "Nauru",
+		"NP" => "Nepal",
+		"NL" => "Netherlands",
+		"AN" => "Netherlands Antilles",
+		"NT" => "Neutral Zone",
+		"NC" => "New Caledonia",
+		"NZ" => "New Zealand",
+		"NI" => "Nicaragua",
+		"NE" => "Niger",
+		"NG" => "Nigeria",
+		"NU" => "Niue",
+		"NF" => "Norfolk Island",
+		"KP" => "North Korea",
+		"VD" => "North Vietnam",
+		"MP" => "Northern Mariana Islands",
+		"NO" => "Norway",
+		"OM" => "Oman",
+		"PC" => "Pacific Islands Trust Territory",
+		"PK" => "Pakistan",
+		"PW" => "Palau",
+		"PS" => "Palestinian Territories",
+		"PA" => "Panama",
+		"PZ" => "Panama Canal Zone",
+		"PG" => "Papua New Guinea",
+		"PY" => "Paraguay",
+		"YD" => "People's Democratic Republic of Yemen",
+		"PE" => "Peru",
+		"PH" => "Philippines",
+		"PN" => "Pitcairn Islands",
+		"PL" => "Poland",
+		"PT" => "Portugal",
+		"PR" => "Puerto Rico",
+		"QA" => "Qatar",
+		"RO" => "Romania",
+		"RU" => "Russia",
+		"RW" => "Rwanda",
+		"RE" => "Réunion",
+		"BL" => "Saint Barthélemy",
+		"SH" => "Saint Helena",
+		"KN" => "Saint Kitts and Nevis",
+		"LC" => "Saint Lucia",
+		"MF" => "Saint Martin",
+		"PM" => "Saint Pierre and Miquelon",
+		"VC" => "Saint Vincent and the Grenadines",
+		"WS" => "Samoa",
+		"SM" => "San Marino",
+		"SA" => "Saudi Arabia",
+		"SN" => "Senegal",
+		"RS" => "Serbia",
+		"CS" => "Serbia and Montenegro",
+		"SC" => "Seychelles",
+		"SL" => "Sierra Leone",
+		"SG" => "Singapore",
+		"SK" => "Slovakia",
+		"SI" => "Slovenia",
+		"SB" => "Solomon Islands",
+		"SO" => "Somalia",
+		"ZA" => "South Africa",
+		"GS" => "South Georgia and the South Sandwich Islands",
+		"KR" => "South Korea",
+		"ES" => "Spain",
+		"LK" => "Sri Lanka",
+		"SD" => "Sudan",
+		"SR" => "Suriname",
+		"SJ" => "Svalbard and Jan Mayen",
+		"SZ" => "Swaziland",
+		"SE" => "Sweden",
+		"CH" => "Switzerland",
+		"SY" => "Syria",
+		"ST" => "São Tomé and Príncipe",
+		"TW" => "Taiwan",
+		"TJ" => "Tajikistan",
+		"TZ" => "Tanzania",
+		"TH" => "Thailand",
+		"TL" => "Timor-Leste",
+		"TG" => "Togo",
+		"TK" => "Tokelau",
+		"TO" => "Tonga",
+		"TT" => "Trinidad and Tobago",
+		"TN" => "Tunisia",
+		"TR" => "Turkey",
+		"TM" => "Turkmenistan",
+		"TC" => "Turks and Caicos Islands",
+		"TV" => "Tuvalu",
+		"UM" => "U.S. Minor Outlying Islands",
+		"PU" => "U.S. Miscellaneous Pacific Islands",
+		"VI" => "U.S. Virgin Islands",
+		"UG" => "Uganda",
+		"UA" => "Ukraine",
+		"SU" => "Union of Soviet Socialist Republics",
+		"AE" => "United Arab Emirates",
+		"GB" => "United Kingdom",
+		"US" => "United States",
+		"ZZ" => "Unknown or Invalid Region",
+		"UY" => "Uruguay",
+		"UZ" => "Uzbekistan",
+		"VU" => "Vanuatu",
+		"VA" => "Vatican City",
+		"VE" => "Venezuela",
+		"VN" => "Vietnam",
+		"WK" => "Wake Island",
+		"WF" => "Wallis and Futuna",
+		"EH" => "Western Sahara",
+		"YE" => "Yemen",
+		"ZM" => "Zambia",
+		"ZW" => "Zimbabwe",
+		"AX" => "Åland Islands",
+	];
+}
+
+# TODO: varbūt uzreiz uzsetot $GLOBALS[]?
+function get($key, $default = ''){
+	return isset($_GET[$key]) ? $_GET[$key] : $default;
+}
+
+function post($key, $default = ''){
+	return isset($_POST[$key]) ? $_POST[$key] : $default;
+}
+
+function postget($key, $default = ''){
+	return isset($_POST[$key]) ? $_POST[$key] : get($key, $default);
+}
+
+function sess($key, $default = ''){
+	return isset($_SESSION[$key]) ? $_SESSION[$key] : $default;
+}
+
+function cookie($key, $default = ''){
+	return isset($_COOKIE[$key]) ? $_COOKIE[$key] : $default;
+}
+
+function server($key, $default = ''){
+	return isset($_SERVER[$key]) ? $_SERVER[$key] : $default;
+}
+
+function env($key, $default = ''){
+	return isset($_ENV[$key]) ? $_ENV[$key] : $default;
+}
+
+function upload($key, $default = ''){
+	return isset($_FILES[$key]) ? $_FILES[$key] : $default;
+}
+
+function redirect($url = ''){
+	$url = $url ? $url : php_self();
+	header("Location: $url");
+}
+
+function redirect_not_found($url = '/', $msg = ''){
+	header404($msg);
+	redirect($url);
+}
+
+function floatpoint($val){
+	$val = preg_replace('/\s/', '', $val);
+	return str_replace(',', '.', $val);
+}
+
+function to_float($data){
+	return __object_map($data, function($item){
+		return floatval(floatpoint($item));
+	});
+}
+
+function to_int($data){
+	return __object_map($data, function($item){
+		return intval($item);
+	});
+}
+
+function money_conv($data){
+	$data = floatpoint($data);
+	return number_format($data, 2, '.', '');
+}
+
+function to_money($data){
+	return __object_map($data, function($item){
+		return money_conv($item);
+	});
+}
+
+/*
+function money_conv($val){
+	$val = preg_replace("/\s/", '', $val);
+	$val = preg_replace("/,/", '.', $val);
+	$val = (float)$val;
+	$val = number_format($val, 2, '.', '');
+
+	return $val;
+}
+*/
+
+function to_range($val, $range, $default = ''){
+	$range_a = preg_split('//', $range);
+	if(!$val || !in_array($val, $range_a)){
+		$val = $default;
+	}
+
+	return $val;
+}
+
+# TODO: test
+function upload_save($id, $save_path){
+	$f = upload($id);
+	return $f && !!move_uploaded_file($f['tmp_name'], $save_path);
+}
+
+function upload_errormsg($id){
+	$f = upload($id);
+	if(empty($f['error'])){
+		return "";
+	}
+
+	switch($f['error']){
+		case UPLOAD_ERR_INI_SIZE:
+			$errormsg = 'The uploaded file exceeds the upload_max_filesize directive in php.ini';
+			break;
+		case UPLOAD_ERR_FORM_SIZE:
+			$errormsg = 'The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form';
+			break;
+		case UPLOAD_ERR_PARTIAL:
+			$errormsg = 'The uploaded file was only partially uploaded.';
+			break;
+		case UPLOAD_ERR_NO_FILE:
+			$errormsg = 'No file was uploaded.';
+			break;
+		case UPLOAD_ERR_NO_TMP_DIR:
+			$errormsg = 'Missing a temporary folder.';
+			break;
+		case UPLOAD_ERR_CANT_WRITE:
+			$errormsg = 'Failed to write file to disk.';
+			break;
+		default:
+			$errormsg = 'Unknow error.';
+			break;
+	}
+
+	return $errormsg;
+}
+
+function numpad($data, $size = 2){
+	return str_pad($data, $size, "0", STR_PAD_LEFT);
+}
+
+function md5uniqid(){
+	return md5(uniqid(rand(), true));
+}
+
+function browse($path, callable $function){
+	$entries = array_filter(scandir($path), function($entry){
+		return $entry != '.' && $entry != '..';
+	});
+
+	array_map(function($entry) use ($path, $function) {
+		$function($path, $entry);
+	}, $entries);
+}
+
+function compacto($data){
+	return __object_filter($data, function($item){
+		return !empty($item);
+	});
+}
+
+function __object_filter($data, $func){
+	$ndata = null;
+	if(is_array($data)){
+		$ndata = [];
+		foreach($data as $k=>$v){
+			if(__object_filter($v, $func)){
+				$ndata[$k] = $v;
+			}
+		}
+	} elseif(is_object($data)) {
+		return __object_filter(get_object_vars($data), $func);
+	} else {
+		if($func($data)){
+			$ndata = $data;
+		}
+	}
+	return $ndata;
+}
+
+function __object_map($data, $func){
+	if(is_array($data)){
+		$ndata = [];
+		foreach($data as $k=>$v){
+			$ndata[$k] = __object_map($v, $func);
+		}
+	} elseif(is_object($data)) {
+		$ndata = (object)__object_map(get_object_vars($data), $func);
+	} else {
+		$ndata = $func($data);
+	}
+	return $ndata;
+}
+
+function __object_reduce($data, $func, $initial = null){
+	$carry = $initial;
+	if(is_array($data)){
+		foreach($data as $k=>$v){
+			$carry = __object_reduce($v, $func, $carry);
+		}
+	} elseif(is_object($data)) {
+		$carry = __object_reduce(get_object_vars($data), $func, $carry);
+	} else {
+		$carry = $func($carry, $data);
+	}
+	return $carry;
+}
+
+function utf2win($data){
+	return __object_map($data, function($item){
+		return mb_convert_encoding($item, 'ISO-8859-13', 'UTF-8');
+	});
+}
+
+function win2utf($data){
+	return __object_map($data, function($item){
+		return mb_convert_encoding($item, 'UTF-8', 'ISO-8859-13');
+	});
+}
+
+function translit($data){
+	return __object_map($data, function($item){
+		return iconv("utf-8","ascii//TRANSLIT", $item);
+	});
+}
+
+function is_empty($data = false){
+	return __object_reduce($data, function($carry, $item){
+		if(is_array($item) || is_object($item))
+			return $carry && is_empty($item);
+		return $carry && empty($item);
+	}, true);
+}
+
+function ent($data){
+	return __object_map($data, function($item){
+		return htmlentities($item);
+	});
+}
+
+function entdecode($data){
+	return __object_map($data, function($item){
+		return html_entity_decode($item);
+	});
+}
+
+function specialchars($data){
+	return __object_map($data, function($item){
+		return htmlspecialchars($item, ENT_COMPAT | ENT_HTML401, '', false);
+	});
+}
+
+function date_monthstamp(){
+	return date('Ym');
+}
+
+function date_datestamp(){
+	return date('Ymd');
+}
+
+function date_timestamp(){
+	return date('YmdHi');
+}
+
+function get_date_format(){
+	return empty($GLOBALS['DQDP_DATE_FORMAT']) ? 'd.m.Y' : $GLOBALS['DQDP_DATE_FORMAT'];
+}
+
+function set_date_format($f){
+	return $GLOBALS['DQDP_DATE_FORMAT'] = $f;
+}
+
+/*
+function date_lastmonth_end(){
+	return datef(mktime (0,0,0, date('m') - 1, date_daycount(date('m')-1), date('Y')));
+}
+
+function date_monthstart_ts($TS = 0){
+	if(!$TS){
+		$TS = time();
+	}
+
+	return mktime (0,0,0, date('m', $TS), 1, date('Y', $TS));
+}
+
+function date_monthend_ts($TS = 0){
+	if(!$TS){
+		$TS = time();
+	}
+
+	return mktime(0,0,0, date('m', $TS), date('t', $TS), date('Y', $TS));
+}
+
+# TODO: test
+function day_in_interval($y, $m, $d, $ts1, $ts2){
+	$dd = mktime(0,0,0, $m, $d, $y);
+	$ts1 = mktime(0,0,0, date('m', $ts1), date('d', $ts1), date('Y', $ts1));
+	$ts2 = mktime(0,0,0, date('m', $ts2), date('d', $ts2), date('Y', $ts2));
+	//print date('Y-m-d', $dd).":$dd:$ts1:$ts2";
+	return ($dd >= $ts1) && ($dd <= $ts2);
+}
+
+*/
+
+function datef($ts){
+	return date(get_date_format(), $ts);
+}
+
+function date_today(){
+	return datef(time());
+}
+
+function date_yesterday(){
+	return datef(strtotime('yesterday'));
+}
+
+function date_daycount($m = false, $y = false){
+	return $m ? date('t', mktime(0,0,0, $m, 1, $y ? $y : date('Y'))) : date('t');
+}
+
+function date_month_start(){
+	return datef(strtotime("first day of this month"));
+}
+
+function date_month_end(){
+	return datef(strtotime("last day of this month"));
+}
+
+function date_lastmonth_start(){
+	return datef(strtotime("first day of previous month"));
+}
+
+function date_lastmonth_end(){
+	return datef(strtotime("last day of previous month"));
+}
+
+# TODO: get_time_format();
+function date_time(){
+	return date('H:i:s');
+}
+
+function is_valid_date($date){
+	return strtotime($date) !== false;
+}
+
+function ustrftime($format, $timestamp = 0){
+	return win2utf(strftime($format, $timestamp));
+}
+
+function __date_startend_compact($DATE){
+	unset($DATE->MONTH, $DATE->YEAR, $DATE->START, $DATE->END);
+}
+
+function date_startend($DATE){
+	$format = get_date_format();
+	$start_date = $end_date = false;
+
+	$ceturksnis = false;
+	for($i = 1; $i < 5; $i++){
+		if($DATE->{"C$i"}){
+			$ceturksnis = $i;
+		}
+	}
+
+	$DATE2 = new EmptyObject();
+	if($ceturksnis){
+		$DATE2->{"C$ceturksnis"} = true;
+		$start_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 1, 1, date('Y'));
+		$days_in_end_month = date_daycount(($ceturksnis - 1) * 3 + 3);
+		$end_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 3, $days_in_end_month, date('Y'));
+	} elseif($DATE2->PREV_YEAR = $DATE->PREV_YEAR) {
+		$start_date = strtotime('first day of January last year');
+		$end_date = strtotime('last day of December last year');
+	} elseif($DATE2->THIS_YEAR = $DATE->THIS_YEAR){
+		$start_date = strtotime('first day of January');
+		$end_date = time();
+	} elseif($DATE2->YESTERDAY = $DATE->YESTERDAY) {
+		$start_date = $end_date = strtotime('yesterday');
+		$end_date = time();
+	} elseif($DATE2->THIS_WEEK = $DATE->THIS_WEEK) {
+		$start_date = strtotime("last Monday");
+		$end_date = time();
+	} elseif($DATE2->THIS_MONTH = $DATE->THIS_MONTH) {
+		$start_date = strtotime("first day of");
+		$end_date = time();
+	} elseif($DATE2->PREV_MONTH = $DATE->PREV_MONTH) {
+		$start_date = strtotime("first day of previous month");
+		$end_date = strtotime("last day of previous month");
+	} elseif($DATE2->PREV_30DAYS = $DATE->PREV_30DAYS){
+		$start_date = strtotime("-30 days");
+		$end_date = time();
+	} elseif($DATE2->MONTH = $DATE->MONTH){
+		if(empty($DATE->YEAR))$DATE->YEAR = date('Y');
+		$DATE2->YEAR = $DATE->YEAR;
+		$dc = date_daycount($DATE->MONTH, $DATE->YEAR);
+		$start_date = strtotime("$DATE->YEAR-$DATE->MONTH-01");
+		$end_date = strtotime("$DATE->YEAR-$DATE->MONTH-$dc");
+	} elseif($DATE2->YEAR = $DATE->YEAR){
+		$start_date = strtotime("first day of January $DATE->YEAR");
+		$end_date = strtotime("last day of December $DATE->YEAR");
+	} else {
+		if($DATE2->START = $DATE->START)$start_date = strtotime($DATE->START);
+		if($DATE2->END = $DATE->END)$end_date = strtotime($DATE->END);
+	}
+
+	//printr($DATE, $DATE2);
+
+	if($start_date)$start_date = date($format, $start_date);
+	if($end_date)$end_date = date($format, $end_date);
+
+	return [$start_date, $end_date, $DATE2];
+}
+
+function php_self(){
+	return isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+}
+
+function queryl($format = '', $allowed = []){
+	return __query($_SERVER['QUERY_STRING'], $format, '&', $allowed);
+}
+
+function query($format = '', $allowed = []){
+	return __query($_SERVER['QUERY_STRING'], $format, '&amp;', $allowed);
+}
+
+function __query($query_string = '', $format = '', $delim = '&amp;', $allowed = []){
+	parse_str($query_string, $QS);
+	parse_str($format, $FORMAT);
+
+	foreach($allowed as $k=>$v){
+		unset($QS[$k]);
+	}
+
+	foreach($FORMAT as $k=>$v){
+		if($k{0} == '-'){
+			$k2 = substr($k, 1);
+			if(!$v || $v == $QS[$k2]){
+				unset($QS[$k2]);
+			}
+		} else {
+			$QS[$k] = $v;
+		}
+	}
+
+	$ret = [];
+	foreach($QS as $k=>$v)
+		$ret[] = "$k=$v";
+
+	return join($delim, $ret);
+}
+
+function __looper($data, $func){
+	$sys_web_mode = ini_get('html_errors');
+	if($sys_web_mode){
+		foreach($data as $v){
+			print "<pre>";
+			$func($v);
+			print "</pre>";
+		}
+	} else {
+		foreach($data as $v){
+			$func($v);
+			print "\n";
+		}
+	}
+}
+
+function dumpr(){
+	__looper(func_get_args(), "var_dump");
+}
+
+function printr(){
+	__looper(func_get_args(), "print_r");
+}
+
+function printrr(){
+	ob_start();
+	call_user_func_array('printr', func_get_args());
+	return ob_get_clean();
+}
+
+function dumprr(){
+	ob_start();
+	call_user_func_array('dumpr', func_get_args());
+	return ob_get_clean();
+}
+
+function mt(){
+	return microtime(true);
+}
+
+function br2nl($text){
+	return preg_replace('/<br\\\\s*?\\/??>/i', "\\n", $text);
+}
+
+function js_bool($js_bool){
+	if($js_bool === 'true')
+		$ret = true;
+	elseif($js_bool === 'on')
+		$ret = true;
+	else
+		$ret = false;
+
+	return $ret;
+}
+
+function mb_streqi($s1, $s2){
+	return mb_strtoupper($s1) === mb_strtoupper($s2);
+}
+
+function net2cidr($mask){
+	return array_search($mask, NETMASKS);
+}
+
+function cidr2net($bits){
+	return isset(NETMASKS[$bits]) ? NETMASKS[$bits] : false;
+}
+
+function net2long($ip){
+	return ip2long($ip);
+}
+
+function long2net($net){
+	return long2ip($net);
+}
+
+# $ip      = 192.168.1.2
+# $network = 192.168.1.0/24
+function ipInNet($pIp, $pNetwork){
+	list($net, $cidr) = split('/', $pNetwork);
+
+	$ipLong = net2long($pIp);
+	$netLong = net2long($net);
+	$mask = net2long(cidr2net($cidr));
+
+	return ($ipLong & $mask) == ($netLong & $mask);
+}
+
+function array_sort_len($a){
+	array_multisort(array_map('strlen', $a), SORT_NUMERIC, SORT_DESC, $a);
+	return $a;
+}
+
+function localeGetInfo($refresh = false){
+	if($refresh || !isset($GLOBALS['__LOCALE_INFO'])){
+		$GLOBALS['__LOCALE_INFO'] = localeconv();
+	}
+
+	return $GLOBALS['__LOCALE_INFO'];
+}
+
+function localeNumberFormat($t, $places = 2){
+	$LOCALE_INFO = localeGetInfo();
+	$point = !empty($LOCALE_INFO['decimal_point']) ? $LOCALE_INFO['decimal_point'] : '.';
+	$sep = !empty($LOCALE_INFO['thousands_sep']) ? $LOCALE_INFO['thousands_sep'] : '';
+
+	return number_format($t, $places, $point, $sep);
+}
+
+function localeMoneyFormat($t, $places = 2){
+	$LOCALE_INFO = localeGetInfo();
+	$point = !empty($LOCALE_INFO['mon_decimal_point']) ? $LOCALE_INFO['mon_decimal_point'] : '.';
+	$sep = !empty($LOCALE_INFO['mon_thousands_sep']) ? $LOCALE_INFO['mon_thousands_sep'] : '';
+
+	return number_format($t, $places, $point, $sep);
+}
+
+function strippath($service) {
+	return preg_replace('/[\/\.\\\]/', '', $service);
+}
+
+function urlize($name){
+	$name = preg_replace("/[%]/", " ", $name);
+	$name = html_entity_decode($name, ENT_QUOTES);
+	$name = mb_strtolower($name);
+	$name = strip_tags($name);
+	$name = preg_replace("/[\:\/\?\#\[\]\@\"'\(\)\.,&;\+=\\\]/", " ", $name);
+	$name = trim($name);
+	$name = preg_replace("/\s+/", "-", $name);
+	$name = preg_replace("/-+/", "-", $name);
+
+	return $name;
+}
+
+function url_pattern() {
+	$url_patt = $path_patt = '';
+	return "/(http(s?):\/\/|ftp:\/\/|mailto:|callto:)([^\/\s\t\n\r\!\'\<>\(\)]".$url_patt."*)([^\s\t\n\r\'\<>]".$path_patt."*)/is";
+}
+
+function get_inner_html($node){
+	$innerHTML= '';
+	$children = $node->childNodes;
+	foreach ($children as $child) {
+		$innerHTML .= $child->ownerDocument->saveXML( $child );
+	}
+
+	return $innerHTML;
+}
+
+function ip_rev($ip){
+	return implode('.', array_reverse(explode('.', $ip)));
+}
+
+function ip_blacklisted($ip){
+	$dnsbl = ['bl.blocklist.de', 'xbl.spamhaus.org', 'cbl.abuseat.org', 'all.s5h.net'];
+
+	$iprev = ip_rev($ip);
+	foreach($dnsbl as $bl) {
+		# return 1 - not found; 0 - listed
+		# $c = "host -W 1 -t any $iprev.$bl";
+		$c = "host -W 1 $iprev.$bl";
+		$ret = exec($c, $o, $rv);
+		if(!$rv){
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function emailex($params)
+{
+	$to                = $params->to;
+	$from              = $params->from;
+	$subj              = $params->subject;
+	$msg               = $params->message;
+	$attachments       = (isset($params->attachments) ? $params->attachments : array());
+	$MAIL_PARAMS       = (isset($params->MAIL_PARAMS) ? $params->MAIL_PARAMS : false);
+	$use_queue         = (isset($params->use_queue) ? $params->use_queue : false);
+	$delete_after_send = (isset($params->delete_after_send) ? $params->delete_after_send : true);
+	$id_user           = (isset($params->id_user) ? $params->id_user : null);
+
+	if($use_queue){
+		$mail = new QueueMailer(true);
+	} else {
+		$mail = new PHPMailer(true);
+		$mail->isSMTP();
+	}
+
+	$mail->Encoding = QueueMailer::ENCODING_QUOTED_PRINTABLE;
+	$mail->CharSet = 'utf-8';
+	$mail->XMailer = " ";
+	//$mail->SMTPDebug = 2;
+	//$mail->isSMTP();
+	$mail->Host = $MAIL_PARAMS['host'];
+	$mail->SMTPAuth = $MAIL_PARAMS['auth'];
+	$mail->Username = $MAIL_PARAMS['username'];
+	$mail->Password = $MAIL_PARAMS['password'];
+	$mail->SMTPSecure = 'tls';
+	$mail->Port = $MAIL_PARAMS['port'];
+
+	$mail->setFrom($from);
+	$mail->addAddress($to);
+	$mail->isHTML(false);
+	$mail->Subject = $subj;
+	$mail->Body = $msg;
+
+	foreach($attachments as $item)
+	{
+		if(!isset($item->isfile)){
+			$item->isfile = true;
+		}
+		if(!isset($item->name)){
+			$item->name = "";
+		}
+
+		if($item->isfile){
+			$mail->addAttachment($item->file, $item->name);
+		} else {
+			trigger_error("Passing attachement as data is not implemented");
+		}
+	}
+
+	try {
+		$mail->send();
+		return true;
+	} catch (Exception $e) {
+		$GLOBALS['EMAILEX_ERROR'] = $mail;
+	}
+
+	return false;
+}
+
+# TODO: naming
+function loadCSV($file, $map){
+	if(($f = fopen($file, "r")) === FALSE)
+		return false;
+
+	$ret = array();
+	while (($line = fgetcsv($f, 1000, ';')) !== FALSE){
+		$rl = array();
+		foreach($map as $k=>$v){
+			$rl[$v] = trim($line[$k]);
+		}
+		$ret[] = $rl;
+	}
+
+	return $ret;
+}
+
+function findCSVKey($map, $field){
+	foreach($map as $k=>$v){
+		if($v == $field){
+			return $k;
+		}
+	}
+
+	return false;
+}
+
+function findCSVValue($map, $line, $field){
+	if(($k = findCSVKey($map, $field)) !== false){
+		return $line[$k];
+	}
+
+	return false;
+}
+
+function header404($msg = "Not Found"){
+	if(!($SERVER_PROTOCOL = env('SERVER_PROTOCOL'))){
+		$SERVER_PROTOCOL = server('SERVER_PROTOCOL');
+	}
+
+	header("$SERVER_PROTOCOL 404 $msg", true, 404);
+	print "<h1>$msg!</h1>";
+}
+
+# TODO: smukāk!
+function proc_date($date){
+	$D = ['šodien', 'vakar', 'aizvakar'];
+
+	$date_now = date("Y:m:j:H:i");
+	list($y0, $m0, $d0, $h0, $min0) = explode(":", date("Y:m:j:H:i", strtotime($date)));
+	list($y1, $m1, $d1, $h1, $min1) = explode(":", $date_now);
+	// mktime ( [int hour [, int minute [, int second [, int month [, int day [, int year [, int is_dst]]]]]]])
+	$dlong0 = mktime($h0, $min0, 0, $m0, $d0, $y0);
+	$dlong1 = mktime($h1, $min1, 0, $m1, $d1, $y1);
+	$diff = date('z', $dlong1) - date('z', $dlong0);
+	$retdate = '';
+
+	if( ($diff < 3) && ($y1 == $y0) )
+	//if( ($diff < 3) /*&& ($y1 == $y0)*/ )
+	{
+		$retdate .= $D[$diff];
+	} else {
+		if($y1 != $y0)
+			$retdate .= "$y0. gada ";
+		$retdate.= "$d0. ".get_month($m0 - 1);
+	}
+
+	//if((integer)$h0 || (integer)$min0)
+		$retdate .= ", plkst. $h0:$min0";
+
+	return $retdate;
+}
+
+function get_month($i){
+	return M[$i];
+}
+
+function print_time($start_time, $end_time = false)
+{
+	$print_time = [];
+	$seconds = $end_time - $start_time;
+	if(!$end_time){
+		$end_time = mt();
+	}
+
+	if($d = floor($seconds / 86400)){
+		$print_time[] = $d."d";
+		$seconds -= $d * 86400;
+	}
+
+	if($h = floor($seconds / 3600)){
+		$print_time[] = $h."h";
+		$seconds -= $h * 3600;
+	}
+
+	if($m = floor($seconds / 60)){
+		$print_time[] = $m."min";
+		$seconds -= $m * 60;
+	}
+
+	$print_time[] = sprintf("%.2f sec", $seconds);
+
+	return join(" ", $print_time);
+}
+
+function print_memory($mem){
+	return number_format($mem / 1024 / 1024, 2, '.', '').'MB';
+}
+
+function selected($v, $value){
+	return sprintf(' value="%s"%s', $v, $v == $value ? ' selected' : '');
+}
+
+function optioned($v, $value){
+	return sprintf(' value="%s"%s', $v, checked($v == $value));
+}
+
+function checked($v){
+	return ($v ? ' checked' : '');
+}
+
+function datediff($d1, $d2, $calc = 3600 * 24){
+	$date1 = strtotime($d1);
+	$date2 = strtotime($d2);
+
+	return round(($date1 - $date2) / $calc);
+}
+
+function vardiem($int, $CURR_ID){
+	return LV::vardiem($int, $CURR_ID);
+}
+
+# $value = stdval or comma separated multiples
+function sql_create_filter($field, $value){
+	$v = array_map(function($i){
+		return (int)$i;
+	}, explode(",", $value));
+	return ["$field IN (".join(",", array_fill(0, count($v), "?")).")", $v];
+}
+
+function sql_add_filter(&$filter, &$values, $newf){
+	list($q,$v) = $newf;
+	$filter[] = $q;
+	$values = array_merge($values, $v);
+}
+
+function xml2array($xml, $d = 0) {
+	//print str_repeat(" ", $d * 2).sprintf("%s(%s)\n", $xml->getName(), $xml->count());
+	if($xml->count()){
+		$result = [];
+		foreach($xml->children() as $k=>$c) {
+			$r = xml2array($c, $d + 1);
+			/*
+			if(is_array($r)){
+				$result[$k][] = $r;
+			} else {
+				$result[$k] = $r;
+			}
+			*/
+			if(isset($result[$k])){
+				if(isset($result[$k][0]))
+					$result[$k][] = $r;
+				else
+					$result[$k] = array_merge([$result[$k]], [$r]);
+			} else {
+				$result[$k] = $r;
+			}
+		}
+	} else {
+		$result = "$xml";
+	}
+	return $result;
+}
+
+function kdsort(&$a){
+	ksort($a);
+	foreach(array_keys($a) as $k){
+		if(is_array($a[$k]))
+			kdsort($a[$k]);
+	}
+}
+
