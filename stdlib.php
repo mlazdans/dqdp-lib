@@ -957,7 +957,21 @@ function emailex($params)
 	return false;
 }
 
-function csv_load($file, $map){
+function csv_col_count($file){
+	if(($f = fopen($file, "r")) === false){
+		return false;
+	}
+
+	$col_count = 0;
+	if(($line = fgetcsv($f, 2000, ';')) !== false){
+		$col_count = count($line);
+	}
+	fclose($f);
+
+	return $col_count;
+}
+
+function __csv_load($file, $map, $ret_type = 'array'){
 	if(($f = fopen($file, "r")) === false){
 		return false;
 	}
@@ -966,12 +980,22 @@ function csv_load($file, $map){
 	while (($line = fgetcsv($f, 2000, ';')) !== false){
 		$rl = [];
 		foreach($map as $k=>$v){
-			$rl[$v] = ltrim(trim($line[$k]), "'");
+			$rl[$v] = ltrim(trim($line[$k]??null), "'");
 		}
-		$ret[] = $rl;
+		$ret[] = ($ret_type == 'object' ? (object)$rl : $rl);
 	}
 
+	fclose($f);
+
 	return $ret;
+}
+
+function csv_load($file, $map){
+	return __csv_load($file, $map, 'array');
+}
+
+function csv_load_object($file, $map){
+	return __csv_load($file, $map, 'object');
 }
 
 function csv_find_key($map, $field){
@@ -1097,7 +1121,11 @@ function sql_create_filter($field, $value){
 function sql_add_filter(&$filter, &$values, $newf){
 	list($q,$v) = $newf;
 	$filter[] = $q;
-	$values = array_merge($values, $v);
+	if(is_array($v)){
+		$values = array_merge($values, $v);
+	} else {
+		$values[] = $v;
+	}
 }
 
 function xml2array($xml, $d = 0) {

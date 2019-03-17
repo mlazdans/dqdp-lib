@@ -25,6 +25,7 @@ function ibase(){
 	if($q = call_user_func_array('ibase_query', $values)){
 		return ifetch($q);
 	} else {
+		sqlr($values);
 		return false;
 	}
 }
