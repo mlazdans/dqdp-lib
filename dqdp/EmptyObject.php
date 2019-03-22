@@ -19,10 +19,6 @@ class EmptyObject
 		return isset($this->{$v}) ? $this->{$v} : null;
 	}
 
-	// function __toString(){
-	// 	return "";
-	// }
-
 	function merge($o){
 		if(is_array($o)){
 			$a = $o;

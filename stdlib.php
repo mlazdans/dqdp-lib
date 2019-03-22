@@ -17,8 +17,18 @@ function netmasks(){
 
 function menesi(){
 	return [
-		'Janvāris', 'Februāris', 'Marts', 'Aprīlis', 'Maijs', 'Jūnijs', 'Jūlijs',
-		'Augusts', 'Septembris', 'Oktobris', 'Novembris', 'Decembris'
+		'01'=>'Janvāris',
+		'02'=>'Februāris',
+		'03'=>'Marts',
+		'04'=>'Aprīlis',
+		'05'=>'Maijs',
+		'06'=>'Jūnijs',
+		'07'=>'Jūlijs',
+		'08'=>'Augusts',
+		'09'=>'Septembris',
+		'10'=>'Oktobris',
+		'11'=>'Novembris',
+		'12'=>'Decembris',
 	];
 }
 
@@ -366,8 +376,9 @@ function to_int($data){
 }
 
 function money_conv($data){
-	$data = floatpoint($data);
-	return number_format($data, 2, '.', '');
+	return floatpoint($data);
+	//$data = floatpoint($data);
+	//return number_format($data, 2, '.', '');
 }
 
 function to_money($data){
@@ -1111,10 +1122,11 @@ function vardiem($int, $CURR_ID){
 }
 
 # $value = stdval or comma separated multiples
-function sql_create_filter($field, $value){
+function sql_create_int_filter($field, $values){
 	$v = array_map(function($i){
 		return (int)$i;
-	}, explode(",", $value));
+	}, explode(",", $values));
+
 	return ["$field IN (".join(",", array_fill(0, count($v), "?")).")", $v];
 }
 
@@ -1162,4 +1174,24 @@ function kdsort(&$a){
 		if(is_array($a[$k]))
 			kdsort($a[$k]);
 	}
+}
+
+function merge(&$o1, $o2){
+	if(is_object($o2)){
+		$a2 = get_object_vars($o2);
+	} elseif(is_array($o2)){
+		$a2 = $o2;
+	} else {
+		return false;
+	}
+
+	if(is_object($o1)){
+		foreach($a2 as $k=>$v)$o1->{$k} = $v;
+	} elseif(is_array($o1)){
+		foreach($a2 as $k=>$v)$o1[$k] = $v;
+	} else {
+		return false;
+	}
+
+	return true;
 }
