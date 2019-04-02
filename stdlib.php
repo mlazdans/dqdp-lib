@@ -32,6 +32,17 @@ function menesi(){
 	];
 }
 
+function country_find_iso($country){
+	$country = mb_strtoupper($country);
+	foreach(countries() as $k=>$v){
+		if(mb_strtoupper($v) == $country){
+			return $k;
+		}
+	}
+
+	return false;
+}
+
 function country_codes_eu(){
 	return [
 		'AT','BE','BG','CY','CZ','DK','EE','FI','FR','DE','GR','HU','HR','IE',
@@ -723,24 +734,24 @@ function __query($query_string = '', $format = '', $delim = '&amp;', $allowed = 
 	}
 
 	$ret = [];
-	foreach($QS as $k=>$v)
+	foreach($QS as $k=>$v){
 		$ret[] = "$k=$v";
+	}
 
 	return join($delim, $ret);
 }
 
 function __looper($data, $func){
-	$sys_web_mode = ini_get('html_errors');
-	if($sys_web_mode){
+	if(is_climode()){
+		foreach($data as $v){
+			$func($v);
+			print "\n";
+		}
+	} else {
 		foreach($data as $v){
 			print "<pre>";
 			$func($v);
 			print "</pre>";
-		}
-	} else {
-		foreach($data as $v){
-			$func($v);
-			print "\n";
 		}
 	}
 }
@@ -1195,3 +1206,13 @@ function merge(&$o1, $o2){
 
 	return true;
 }
+
+function is_climode(){
+	return php_sapi_name() === 'cli';
+}
+
+function println($s){
+	call_user_func_array('printf', func_get_args());
+	print is_climode() ? "\n" : "<br>\n";
+}
+
