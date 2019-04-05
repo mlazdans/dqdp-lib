@@ -370,7 +370,7 @@ function redirect_not_found($url = '/', $msg = ''){
 }
 
 function floatpoint($val){
-	$val = preg_replace('/\s/', '', $val);
+	$val = preg_replace('/[^0-9,\.]/', '', $val);
 	return str_replace(',', '.', $val);
 }
 
@@ -388,8 +388,6 @@ function to_int($data){
 
 function money_conv($data){
 	return floatpoint($data);
-	//$data = floatpoint($data);
-	//return number_format($data, 2, '.', '');
 }
 
 function to_money($data){
@@ -397,17 +395,6 @@ function to_money($data){
 		return money_conv($item);
 	});
 }
-
-/*
-function money_conv($val){
-	$val = preg_replace("/\s/", '', $val);
-	$val = preg_replace("/,/", '.', $val);
-	$val = (float)$val;
-	$val = number_format($val, 2, '.', '');
-
-	return $val;
-}
-*/
 
 function to_range($val, $range, $default = ''){
 	$range_a = preg_split('//', $range);
@@ -644,6 +631,11 @@ function ustrftime($format, $timestamp = 0){
 	return win2utf(strftime($format, $timestamp));
 }
 
+# quarter month
+function date_qt_month($C, $m = 1){
+	return ($C - 1) * 3 + $m;
+}
+
 function date_startend($DATE){
 	$format = get_date_format();
 	$start_date = $end_date = false;
@@ -658,6 +650,7 @@ function date_startend($DATE){
 	$DATE2 = new EmptyObject();
 	if($ceturksnis){
 		$DATE2->{"C$ceturksnis"} = true;
+		# TODO: date_qt_month()
 		$start_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 1, 1, date('Y'));
 		$days_in_end_month = date_daycount(($ceturksnis - 1) * 3 + 3);
 		$end_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 3, $days_in_end_month, date('Y'));
@@ -1216,3 +1209,37 @@ function println($s){
 	print is_climode() ? "\n" : "<br>\n";
 }
 
+function __vp(){
+	$args = func_get_args();
+	$f = array_shift($args);
+	$v1 = array_shift($args);
+	foreach($args as $v){
+		$v1 = $f($v1, $v);
+	}
+
+	return $v1;
+}
+function vpaddr(&$v1){
+	return $v1 = call_user_func_array('__vp', array_merge(['bcadd'], func_get_args()));
+}
+function vpsubr(&$v1){
+	return $v1 = call_user_func_array('__vp', array_merge(['bcsub'], func_get_args()));
+}
+function vpmulr(&$v1){
+	return $v1 = call_user_func_array('__vp', array_merge(['bcmul'], func_get_args()));
+}
+function vpdivr(&$v1){
+	return $v1 = call_user_func_array('__vp', array_merge(['bcdiv'], func_get_args()));
+}
+function vpadd(){
+	return call_user_func_array('__vp', array_merge(['bcadd'], func_get_args()));
+}
+function vpsub(){
+	return call_user_func_array('__vp', array_merge(['bcsub'], func_get_args()));
+}
+function vpmul(){
+	return call_user_func_array('__vp', array_merge(['bcmul'], func_get_args()));
+}
+function vpdiv(){
+	return call_user_func_array('__vp', array_merge(['bcdiv'], func_get_args()));
+}
