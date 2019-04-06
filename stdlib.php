@@ -1148,6 +1148,10 @@ function sql_add_filter(&$filter, &$values, $newf){
 	}
 }
 
+function sql_where($filter){
+	return $filter ? " WHERE ".sprintf("(%s)", join(" AND ", $filter)) : '';
+}
+
 function xml2array($xml, $d = 0) {
 	//print str_repeat(" ", $d * 2).sprintf("%s(%s)\n", $xml->getName(), $xml->count());
 	if($xml->count()){
