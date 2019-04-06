@@ -390,6 +390,10 @@ function money_conv($data){
 	return floatpoint($data);
 }
 
+function money_round($data){
+	return number_format(money_conv($data), 2, '.', '');
+}
+
 function to_money($data){
 	return __object_map($data, function($item){
 		return money_conv($item);
