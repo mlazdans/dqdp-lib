@@ -377,8 +377,10 @@ function ibase_type2json_type($type){
 	return isset($js_types[$type]) ? $js_types[$type] : 'auto';
 }
 
-function ibase_quote($str){
-	return str_replace("'", "''", $str);
+function ibase_quote($data){
+	return __object_map($data, function($item){
+		return str_replace("'", "''", $item);
+	});
 }
 
 function ibase_get_pk(){
