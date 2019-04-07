@@ -1076,12 +1076,11 @@ function proc_date($date){
 
 function print_time($start_time, $end_time = false)
 {
-	$print_time = [];
-	$seconds = $end_time - $start_time;
-	if(!$end_time){
-		$end_time = mt();
-	}
+	if(!$end_time)$end_time = mt();
 
+	$seconds = $end_time - $start_time;
+
+	$print_time = [];
 	if($d = floor($seconds / 86400)){
 		$print_time[] = $d."d";
 		$seconds -= $d * 86400;
