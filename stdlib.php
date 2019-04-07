@@ -508,7 +508,7 @@ function __object_map($data, $func){
 function __object_reduce($data, $func, $initial = null){
 	$carry = $initial;
 	if(is_array($data)){
-		foreach($data as $k=>$v){
+		foreach($data as $v){
 			$carry = __object_reduce($v, $func, $carry);
 		}
 	} elseif(is_object($data)) {
@@ -1249,4 +1249,12 @@ function vpmul(){
 }
 function vpdiv(){
 	return call_user_func_array('__vp', array_merge(['bcdiv'], func_get_args()));
+}
+
+function between($v, $s, $e){
+	return ($v >= $s) && ($v <= $e);
+}
+
+function within($v, $s, $e){
+	return ($v > $s) && ($v < $e);
 }
