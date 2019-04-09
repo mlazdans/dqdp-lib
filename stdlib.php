@@ -370,7 +370,7 @@ function redirect_not_found($url = '/', $msg = ''){
 }
 
 function floatpoint($val){
-	$val = preg_replace('/[^0-9,\.]/', '', $val);
+	$val = preg_replace('/[^0-9,\.\-]/', '', $val);
 	return str_replace(',', '.', $val);
 }
 
