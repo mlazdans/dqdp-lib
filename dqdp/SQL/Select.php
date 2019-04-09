@@ -22,9 +22,9 @@ class Select extends Statement
 		}
 	}
 
-	function __call(string $name , array $arguments){
+	function __call(string $name, array $arguments){
 		# Reset parts, e.g. select, joins, etc
-		if($Reset = strpos($name, 'Reset') === 0){
+		if(strpos($name, 'Reset') === 0){
 			$part = strtolower(substr($name, strlen('Reset')));
 			if(isset($this->parts->{$part})){
 				return $this->parts->{$part} = [];
