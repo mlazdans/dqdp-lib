@@ -48,7 +48,7 @@ class Condition extends Statement
 
 	static function parse_conditions($conditions){
 		$line = '';
-		$cc = $c = count($conditions);
+		$c = count($conditions);
 		foreach($conditions as $cond){
 			$c--;
 			if($scond = (string)$cond){

@@ -1137,18 +1137,33 @@ function sql_create_int_filter($field, $values){
 	return ["$field IN (".join(",", array_fill(0, count($v), "?")).")", $v];
 }
 
+function sql_create_filter($filter, $join = "AND"){
+	if(!is_array($filter)){
+		$filter = [$filter];
+	}
+	return $filter ? sprintf("(%s)", join(" $join ", $filter)) : '';
+}
+
 function sql_add_filter(&$filter, &$values, $newf){
-	list($q,$v) = $newf;
-	$filter[] = $q;
-	if(is_array($v)){
-		$values = array_merge($values, $v);
+	if(!isset($newf[0])){
+		return;
+	}
+
+	$filter[] = $newf[0];
+
+	if(!isset($newf[1])){
+		return;
+	}
+
+	if(is_array($newf[1])){
+		$values = array_merge($values, $newf[1]);
 	} else {
-		$values[] = $v;
+		$values[] = $newf[1];
 	}
 }
 
-function sql_where($filter){
-	return $filter ? " WHERE ".sprintf("(%s)", join(" AND ", $filter)) : '';
+function where($filter, $join = "AND"){
+	return ($f = sql_create_filter($filter, $join)) ? " WHERE $f" : '';
 }
 
 function xml2array($xml, $d = 0) {
