@@ -913,8 +913,7 @@ function ip_blacklisted($ip){
 	return false;
 }
 
-function emailex($params)
-{
+function emailex($params){
 	$to                = $params->to;
 	$from              = $params->from;
 	$subj              = $params->subject;
@@ -938,11 +937,11 @@ function emailex($params)
 	//$mail->SMTPDebug = 2;
 	//$mail->isSMTP();
 	$mail->Host = $MAIL_PARAMS['host'];
-	$mail->SMTPAuth = $MAIL_PARAMS['auth'];
+	$mail->Port = $MAIL_PARAMS['port'];
 	$mail->Username = $MAIL_PARAMS['username'];
 	$mail->Password = $MAIL_PARAMS['password'];
+	$mail->SMTPAuth = $MAIL_PARAMS['auth'];
 	$mail->SMTPSecure = 'tls';
-	$mail->Port = $MAIL_PARAMS['port'];
 
 	$mail->setFrom($from);
 	$mail->addAddress($to);
@@ -950,19 +949,11 @@ function emailex($params)
 	$mail->Subject = $subj;
 	$mail->Body = $msg;
 
-	foreach($attachments as $item)
-	{
-		if(!isset($item->isfile)){
-			$item->isfile = true;
-		}
-		if(!isset($item->name)){
-			$item->name = "";
-		}
-
+	foreach($attachments as $item){
 		if($item->isfile){
-			$mail->addAttachment($item->file, $item->name);
+			$mail->addAttachment($item->data, $item->name);
 		} else {
-			trigger_error("Passing attachement as data is not implemented");
+			$mail->addStringAttachment($item->data, $item->name);
 		}
 	}
 
@@ -970,10 +961,8 @@ function emailex($params)
 		$mail->send();
 		return true;
 	} catch (Exception $e) {
-		$GLOBALS['EMAILEX_ERROR'] = $mail;
+		return $e;
 	}
-
-	return false;
 }
 
 function csv_col_count($file){
