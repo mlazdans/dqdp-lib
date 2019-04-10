@@ -766,7 +766,11 @@ function __looper($data, $func){
 # NOTE: dep on https://highlightjs.org/
 function sqlr(){
 	__looper(func_get_args(), function($v){
-		print '<code class="sql">'.printrr($v).'</code>';
+		if(is_climode()){
+			printr($v);
+		} else {
+			print '<code class="sql">'.printrr($v).'</code>';
+		}
 	});
 }
 
