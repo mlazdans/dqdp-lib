@@ -2,7 +2,6 @@
 
 use dqdp\LV;
 use dqdp\QueueMailer;
-use dqdp\EmptyObject;
 use PHPMailer\PHPMailer;
 
 function netmasks(){
@@ -651,52 +650,63 @@ function date_startend($DATE){
 		}
 	}
 
-	$DATE2 = new EmptyObject();
 	if($ceturksnis){
-		$DATE2->{"C$ceturksnis"} = true;
+		//$DATE2->{"C$ceturksnis"} = true;
 		# TODO: date_qt_month()
 		$start_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 1, 1, date('Y'));
 		$days_in_end_month = date_daycount(($ceturksnis - 1) * 3 + 3);
 		$end_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 3, $days_in_end_month, date('Y'));
-	} elseif($DATE2->PREV_YEAR = $DATE->PREV_YEAR) {
+	//} elseif($DATE2->PREV_YEAR = $DATE->PREV_YEAR) {
+	} elseif($DATE->PREV_YEAR) {
 		$start_date = strtotime('first day of January last year');
 		$end_date = strtotime('last day of December last year');
-	} elseif($DATE2->THIS_YEAR = $DATE->THIS_YEAR){
+	//} elseif($DATE2->THIS_YEAR = $DATE->THIS_YEAR){
+	} elseif($DATE->THIS_YEAR){
 		$start_date = strtotime('first day of January');
 		$end_date = time();
-	} elseif($DATE2->YESTERDAY = $DATE->YESTERDAY) {
+	//} elseif($DATE2->YESTERDAY = $DATE->YESTERDAY) {
+	} elseif($DATE->YESTERDAY) {
 		$start_date = $end_date = strtotime('yesterday');
 		$end_date = time();
-	} elseif($DATE2->THIS_WEEK = $DATE->THIS_WEEK) {
+	//} elseif($DATE2->THIS_WEEK = $DATE->THIS_WEEK) {
+	} elseif($DATE->THIS_WEEK) {
 		$start_date = strtotime("last Monday");
 		$end_date = time();
-	} elseif($DATE2->THIS_MONTH = $DATE->THIS_MONTH) {
+	//} elseif($DATE2->THIS_MONTH = $DATE->THIS_MONTH) {
+	} elseif($DATE->THIS_MONTH) {
 		$start_date = strtotime("first day of");
 		$end_date = time();
-	} elseif($DATE2->PREV_MONTH = $DATE->PREV_MONTH) {
+	//} elseif($DATE2->PREV_MONTH = $DATE->PREV_MONTH) {
+	} elseif($DATE->PREV_MONTH) {
 		$start_date = strtotime("first day of previous month");
 		$end_date = strtotime("last day of previous month");
-	} elseif($DATE2->PREV_30DAYS = $DATE->PREV_30DAYS){
+	//} elseif($DATE2->PREV_30DAYS = $DATE->PREV_30DAYS){
+	} elseif($DATE->PREV_30DAYS){
 		$start_date = strtotime("-30 days");
 		$end_date = time();
-	} elseif($DATE2->MONTH = $DATE->MONTH){
+	//} elseif($DATE2->MONTH = $DATE->MONTH){
+	} elseif($DATE->MONTH){
 		if(empty($DATE->YEAR))$DATE->YEAR = date('Y');
-		$DATE2->YEAR = $DATE->YEAR;
+		//$DATE2->YEAR = $DATE->YEAR;
 		$dc = date_daycount($DATE->MONTH, $DATE->YEAR);
 		$start_date = strtotime("$DATE->YEAR-$DATE->MONTH-01");
 		$end_date = strtotime("$DATE->YEAR-$DATE->MONTH-$dc");
-	} elseif($DATE2->YEAR = $DATE->YEAR){
+	//} elseif($DATE2->YEAR = $DATE->YEAR){
+	} elseif($DATE->YEAR){
 		$start_date = strtotime("first day of January $DATE->YEAR");
 		$end_date = strtotime("last day of December $DATE->YEAR");
 	} else {
-		if($DATE2->START = $DATE->START)$start_date = strtotime($DATE->START);
-		if($DATE2->END = $DATE->END)$end_date = strtotime($DATE->END);
+		//if($DATE2->START = $DATE->START)$start_date = strtotime($DATE->START);
+		//if($DATE2->END = $DATE->END)$end_date = strtotime($DATE->END);
+		if($DATE->START)$start_date = strtotime($DATE->START);
+		if($DATE->END)$end_date = strtotime($DATE->END);
 	}
 
 	if($start_date)$start_date = date($format, $start_date);
 	if($end_date)$end_date = date($format, $end_date);
 
-	return [$start_date, $end_date, $DATE2];
+	//return [$start_date, $end_date, $DATE2];
+	return [$start_date, $end_date];
 }
 
 function php_self(){
