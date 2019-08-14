@@ -850,6 +850,30 @@ function array_sort_len($a){
 	return $a;
 }
 
+function array_insert_after(array $a, $v1, $v2){
+	if(($pos = array_search($v1, $a)) === false){
+		return $a;
+	}
+	return array_merge(
+		array_slice($a, 0, $pos + 1),
+		[$v2],
+		array_slice($a, $pos + 1));
+}
+function array_insert_afterr(array &$a, $v1, $v2){
+	$a = array_insert_after($a, $v1, $v2);
+}
+
+function array_delete(array $a, $v1){
+	if(($pos = array_search($v1, $a)) !== false){
+		unset($a[$pos]);
+	}
+	return $a;
+}
+function array_deleter(array &$a, $v1){
+	$a = array_delete($a, $v1);
+}
+
+
 function localeGetInfo($refresh = false){
 	if($refresh || !isset($GLOBALS['__LOCALE_INFO'])){
 		$GLOBALS['__LOCALE_INFO'] = localeconv();
