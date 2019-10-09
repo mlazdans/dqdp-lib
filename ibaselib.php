@@ -2,10 +2,6 @@
 
 use dqdp\SQL\Condition;
 
-define('IBASE_DATE', "ibase.dateformat");
-define('IBASE_TIME', "ibase.timeformat");
-define('IBASE_TIMESTAMP', "ibase.timestampformat");
-
 $IBASE_FIELD_TYPES = [ 7=>'SMALLINT', 8=>'INTEGER', 9=>'QUAD', 10=>'FLOAT', 11=>'D_FLOAT', 12=>'DATE', 13=>'TIME',
 14=>'CHAR', 16=>'INT64', 27=>'DOUBLE', 35=>'TIMESTAMP', 37=>'VARCHAR', 40=>'CSTRING', 261=>'BLOB' ];
 
