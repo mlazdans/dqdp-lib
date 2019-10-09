@@ -983,9 +983,13 @@ function emailex($params){
 
 	$mail->setFrom($from);
 	$mail->addAddress($to);
-	$mail->isHTML(false);
+	$mail->isHTML($params->isHTML??false);
 	$mail->Subject = $subj;
-	$mail->Body = $msg;
+	if(!empty($params->isHTML)){
+		$mail->msgHTML($msg, $params->basedir??'');
+	} else {
+		$mail->Body = $msg;
+	}
 
 	foreach($attachments as $item){
 		if($item->isfile){
@@ -1142,6 +1146,10 @@ function optioned($v, $value){
 
 function checked($v){
 	return ($v ? ' checked' : '');
+}
+
+function checkeda($a, $k){
+	return checked($a[$k]??false);
 }
 
 function datediff($d1, $d2, $calc = 3600 * 24){

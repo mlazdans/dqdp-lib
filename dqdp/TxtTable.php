@@ -3,51 +3,21 @@
 namespace dqdp;
 
 class TxtTable {
-
-	// lauku (kolonnu) definiicija (tabulas headeris)
-	var $fields = array();
-
-	// dati (tabulas rindas)
-	var $rows = array();
-
-	// lauku platumi
-	var $field_widths = array();
-
-	// rindu atdaliitaajs
+	var $fields = [];
+	var $rows = [];
+	var $field_widths = [];
 	var $seperator;
-
 	var $cellAlign = 'left';
 
-	// constructor
 	function __construct() {
-
-		$this->ResetFields();
-		$this->ResetRows();
 	}
 
 	// pievienojam tabulai lauku
 	// $name - nosaukums (string)
 	// $field_wrap - minimaalais platums (int)
 	function AddField($name, $field_wrap = 0) {
-
 		$this->fields[] = $name;
 		$this->field_widths[] = $field_wrap;
-	}
-
-	// izdzeest lauku definiiciju
-	// reizee ar to tiek izdzeestas arii dati,
-	// kaada jeega no datiem, ja nav lauki :)
-	function ResetFields() {
-
-		$this->fields = array();
-		$this->field_widths = array();
-		$this->ResetRows();
-	}
-
-	// izdzeest visus datus
-	function ResetRows() {
-
-		$this->rows = array();
 	}
 
 	// izdzeest konkreetu rindu
@@ -56,37 +26,8 @@ class TxtTable {
 			array_splice($this->rows, $row_num, 1);
 		} else {
 			trigger_error("Row $row_num not found", E_USER_WARNING);
-
 			return false;
 		}
-	}
-
-	// izdzeest konkreetu lauku
-	// $field_num - lauks peec kaartas (int)
-	// tiek izdzeesti attieciigie dati kolonnaa
-	function DeleteField($field_num) {
-
-		if(isset($this->fields[$field_num])) {
-
-			array_splice($this->fields, $field_num, 1);
-
-			reset($this->rows);
-			foreach($this->rows as $k=>$v)
-				if(is_array($this->rows[$k]))
-					array_splice($this->rows[$k], $field_num, 1);
-
-			return true;
-		} else {
-			trigger_error("Field $field_num not found", E_USER_WARNING);
-
-			return false;
-		}
-	}
-
-	// cik pavisam lauku?
-	function GetFieldCount() {
-
-		return isset($this->fields) ? count($this->fields) : 0;
 	}
 
 	// pievienot jaunu rindu (datus)
@@ -94,20 +35,16 @@ class TxtTable {
 	// ja noraadiits mazaak datu kaa lauku skaits, paareejie ir tuksji
 	// ja vairaak - tiek ignoreeti
 	function AddRow() {
-
+		$num_fields = count($this->fields);
 		$num_args = func_num_args();
-		$num_fields = $this->GetFieldCount();
-		//if($num_args != $num_fields)
-			//trigger_error("Wrong parameter count for AddRow()", E_USER_WARNING);
-
 		$row = func_get_args();
 
-		if($num_args > $num_fields)
+		if($num_args > $num_fields){
 			array_splice($row, 0, $num_fields);
+		}
 
 		if($num_args < $num_fields) {
-			$add = array_fill($num_args, $num_fields - $num_args, '');
-			$row = array_merge($row, $add);
+			$row[] = array_fill($num_args, $num_fields - $num_args, '');
 		}
 
 		$this->rows[] = $row;
