@@ -2,6 +2,7 @@
 
 use dqdp\LV;
 use dqdp\QueueMailer;
+use dqdp\EmptyObject;
 use PHPMailer\PHPMailer;
 
 function netmasks(){
@@ -1332,4 +1333,8 @@ function build_sql_set($fields, $DATA){
 	}
 
 	return [join(",", $nfields), join(",", array_fill(0, count($nfields), "?")), $values];
+}
+
+function eo($data = null){
+	return new EmptyObject($data);
 }
