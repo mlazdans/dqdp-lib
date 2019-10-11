@@ -43,9 +43,13 @@ class Condition extends Statement
 		return $type === Condition::OR ? " OR " : " AND ";
 	}
 
-	static function factory($condition, $type = Condition::AND){
+	//static function factory($condition, $type = Condition::AND){
+	static function factory(){
+		$args = func_get_args();
+		$condition = $args[0]??null;
+
 		if((gettype($condition) != 'object') || (get_class($condition) != 'dqdp\SQL\Condition')){
-			return new Condition($condition, $type);
+			return new Condition(...$args);
 		} else {
 			return $condition;
 		}
@@ -77,8 +81,8 @@ class Condition extends Statement
 		return join(Condition::ao($this->Type), $lines);
 	}
 
-	function add_condition($condition){
-		$this->Conditions[] = Condition::factory($condition, $this->Type);
+	function add_condition(){
+		$this->Conditions[] = Condition::factory(...func_get_args());
 		return $this;
 	}
 
