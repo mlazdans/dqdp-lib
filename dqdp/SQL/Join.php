@@ -2,48 +2,42 @@
 
 namespace dqdp\SQL;
 
-class Join extends Statement
+class Join extends Condition
 {
 	const INNER_JOIN = 1;
 	const LEFT_OUTER_JOIN = 2;
 	const RIGHT_OUTER_JOIN = 3;
 
-	var $type;
-	var $table;
-	var $conditions = array();
+	var $Type;
+	var $Table;
 
-	function __construct(string $table, $condition = null, $type = Join::INNER_JOIN){
-		$this->table = $table;
-		$this->type = $type;
-		if($condition){
-			$this->add_condition($condition);
+	function __construct(string $Table, $Condition = null, $Type = Join::INNER_JOIN){
+		$this->Table = $Table;
+		$this->Type = $Type;
+		if($Condition){
+			$this->add_condition($Condition);
 		}
 	}
 
 	function parse(){
-		switch($this->type)
+		switch($this->Type)
 		{
 			case Join::INNER_JOIN:
-				$line = "JOIN $this->table";
+				$line = "JOIN $this->Table";
 				break;
 			case Join::LEFT_OUTER_JOIN:
-				$line = "LEFT JOIN $this->table";
+				$line = "LEFT JOIN $this->Table";
 				break;
 			case Join::RIGHT_OUTER_JOIN:
-				$line = "RIGHT JOIN $this->table";
+				$line = "RIGHT JOIN $this->Table";
 				break;
 			default:
 				return false;
 		}
 
-		if($cond_line = Condition::parse_conditions($this->conditions))
+		if($cond_line = Condition::parse_conditions($this->Conditions))
 			$line .= " ON $cond_line";
 
 		return $line;
-	}
-
-	function add_condition($condition){
-		$this->conditions[] = Condition::factory($condition);
-		return $this;
 	}
 }

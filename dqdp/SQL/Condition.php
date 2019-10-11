@@ -7,9 +7,10 @@ class Condition extends Statement
 	const AND = 1;
 	const OR = 2;
 
-	var $type;
-	var $condition = '';
-	var $conditions = [];
+	var $Type = Condition::AND;
+	var $Condition = '';
+	var $Conditions = [];
+	var $Vars = [];
 
 	# __construct($type = Condition::AND)
 	# __construct($str = '', $type = Condition::AND)
@@ -17,20 +18,24 @@ class Condition extends Statement
 		$argc = func_num_args();
 		$argv = func_get_args();
 
-		$this->type = Condition::AND;
-
-		if(($argc == 1) && (($argv[0] === Condition::AND) || ($argv[0] === Condition::OR))){
+		if($argc == 0) {
+		} elseif(gettype($argv[0]) == 'array'){
+			$this->Condition = $argv[0][0];
+			$this->Vars[] = $argv[0][1];
+			if(isset($argv[1])){
+				$this->Type = $argv[1];
+			}
+		} elseif(($argc == 1) && (($argv[0] === Condition::AND) || ($argv[0] === Condition::OR))){
 			# __construct($type = Condition::AND)
-			$this->type = $argv[0];
+			$this->Type = $argv[0];
 		} elseif(($argc == 1)){
 			# __construct($str = '')
-			$this->condition = $argv[0];
+			$this->Condition = $argv[0];
 		} elseif($argc == 2) {
-			$this->condition = $argv[0];
-			$this->type = $argv[1];
-		} elseif($argc == 0) {
+			$this->Condition = $argv[0];
+			$this->Type = $argv[1];
 		} else {
-			trigger_error("Wrong parameter count'", E_USER_WARNING);
+			trigger_error("Wrong parameter count", E_USER_WARNING);
 		}
 	}
 
@@ -39,7 +44,7 @@ class Condition extends Statement
 	}
 
 	static function factory($condition, $type = Condition::AND){
-		if(gettype($condition) == 'string'){
+		if((gettype($condition) != 'object') || (get_class($condition) != 'dqdp\SQL\Condition')){
 			return new Condition($condition, $type);
 		} else {
 			return $condition;
@@ -52,7 +57,7 @@ class Condition extends Statement
 		foreach($conditions as $cond){
 			$c--;
 			if($scond = (string)$cond){
-				$line .= $scond.($c ? Condition::ao($cond->type) : '');
+				$line .= $scond.($c ? Condition::ao($cond->Type) : '');
 			}
 		}
 
@@ -61,21 +66,27 @@ class Condition extends Statement
 
 	function parse(){
 		$lines = [];
-		if($this->condition){
-			$lines[] = "$this->condition";
+		if($this->Condition){
+			$lines[] = "$this->Condition";
 		}
 
-		if($extra = Condition::parse_conditions($this->conditions)){
+		if($extra = Condition::parse_conditions($this->Conditions)){
 			$lines[] = $extra;
 		}
 
-		return join(Condition::ao($this->type), $lines);
+		return join(Condition::ao($this->Type), $lines);
 	}
 
 	function add_condition($condition){
-		$c = Condition::factory($condition, $this->type);
-		$c->type = $this->type;
-		$this->conditions[] = $c;
+		$this->Conditions[] = Condition::factory($condition, $this->Type);
 		return $this;
+	}
+
+	function vars(){
+		$vars = $this->Vars;
+		foreach($this->Conditions as $cond){
+			$vars = array_merge($vars, $cond->vars());
+		}
+		return $vars;
 	}
 }

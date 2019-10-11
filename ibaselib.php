@@ -2,17 +2,24 @@
 
 use dqdp\SQL\Condition;
 
+$IBASE_FETCH_FLAGS = IBASE_TEXT;
 $IBASE_FIELD_TYPES = [ 7=>'SMALLINT', 8=>'INTEGER', 9=>'QUAD', 10=>'FLOAT', 11=>'D_FLOAT', 12=>'DATE', 13=>'TIME',
 14=>'CHAR', 16=>'INT64', 27=>'DOUBLE', 35=>'TIMESTAMP', 37=>'VARCHAR', 40=>'CSTRING', 261=>'BLOB' ];
 
-function ifetch($q, $flags = false){
-	$flags = ($flags === false ? IBASE_TEXT : $flags);
-	return ibase_fetch_object($q, $flags);
+function ibase_set_fetch_flags($flags){
+	$GLOBALS['IBASE_FETCH_FLAGS'] = $flags;
 }
 
-function ifetcha($q, $flags = false){
-	$flags = ($flags === false ? IBASE_TEXT : $flags);
-	return ibase_fetch_assoc($q, $flags);
+function ibase_get_fetch_flags(){
+	return $GLOBALS['IBASE_FETCH_FLAGS'];
+}
+
+function ifetch($q){
+	return ibase_fetch_object($q, ibase_get_fetch_flags());
+}
+
+function ifetcha($q){
+	return ibase_fetch_assoc($q, ibase_get_fetch_flags());
 }
 
 # ibase($sql[, $bind1, $bind2....])
@@ -31,16 +38,15 @@ function ibasea() {
 	if($q = call_user_func_array('ibase_query', $values)){
 		return ifetcha($q);
 	} else {
+		sqlr($values);
 		return false;
 	}
 }
 
-
 # TODO: add transaction param
 function ibase_execute_array($q, $values){
 	array_unshift($values, $q);
-	$ret = call_user_func_array('ibase_execute', $values);
-	if(!$ret){
+	if(!($ret = call_user_func_array('ibase_execute', $values))){
 		sqlr($values);
 	}
 	return $ret;
@@ -57,8 +63,7 @@ function __ibase_params($args){
 
 function ibase_query_array(){
 	$values = __ibase_params(func_get_args());
-	$ret = call_user_func_array('ibase_query', $values);
-	if(!$ret){
+	if(!($ret = call_user_func_array('ibase_query', $values))){
 		sqlr($values);
 	}
 	return $ret;
@@ -67,17 +72,15 @@ function ibase_query_array(){
 # ibase_fetch_all([$tr],$sql[, $bind1, $bind2....])
 # ibase_fetch_all([$tr],$sql[arrray() $binds])
 function ibase_fetch_all(){
-	$ret = [];
 	$values = __ibase_params(func_get_args());
 	if(!($q = call_user_func_array('ibase_query', $values))){
 		sqlr($values);
 		return false;
 	}
-	//$q = call_user_func_array('ibase_query', func_get_args());
 	while($r = ifetch($q)){
 		$ret[] = $r;
 	};
-	return $ret;
+	return $ret??[];
 }
 
 function ibase_build_sql($struct, $data){
