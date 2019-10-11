@@ -899,7 +899,7 @@ function localeMoneyFormat($t, $places = 2){
 	return number_format($t, $places, $point, $sep);
 }
 
-function strippath($service) {
+function strip_path($service) {
 	return preg_replace('/[\/\.\\\]/', '', $service);
 }
 

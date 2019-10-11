@@ -150,18 +150,16 @@ function search_to_sql_cond($q, $fields, $minWordLen = 3){
 		$fields = array($fields);
 	}
 
-	$values = [];
 	$MainCond = new Condition();
 	foreach($words as $word){
-		$Cond = new Condition(Condition::OR);
+		$Cond = new Condition();
 		foreach($fields as $field){
-			$values[] = "%".$word."%";
-			$Cond->add_condition("UPPER($field) LIKE ?");
+			$Cond->add_condition(["UPPER($field) LIKE ?", "%".$word."%"], Condition::OR);
 		}
-		$MainCond->add_condition($Cond);
+		$MainCond->add_condition($Cond, Condition::AND);
 	}
 
-	return [$MainCond, $values];
+	return $MainCond;
 }
 
 /**
