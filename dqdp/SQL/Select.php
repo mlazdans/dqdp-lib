@@ -110,4 +110,14 @@ class Select extends Statement
 
 		return join("\n", $lines);
 	}
+
+	function vars(){
+		$vars = [];
+		foreach($this->parts->join as $j){
+			$vars = array_merge($vars, $j->vars());
+		}
+		$vars = array_merge($vars, $this->parts->where->vars());
+		return $vars;
+	}
+
 }
