@@ -21,7 +21,9 @@ class Condition extends Statement
 		if($argc == 0) {
 		} elseif(gettype($argv[0]) == 'array'){
 			$this->Condition = $argv[0][0];
-			$this->Vars[] = $argv[0][1];
+			for($i=1; $i<count($argv[0]);$i++){
+				$this->Vars[] = $argv[0][$i];
+			}
 			if(isset($argv[1])){
 				$this->Type = $argv[1];
 			}
