@@ -768,9 +768,14 @@ function __looper($data, $func){
 function sqlr(){
 	__looper(func_get_args(), function($v){
 		if(is_climode()){
-			printr($v);
+			printr((string)$v);
 		} else {
-			print '<code class="sql">'.printrr($v).'</code>';
+			if(is_object($v) && (get_class($v) == 'dqdp\SQL\Select')){
+				print '<code class="sql">'.printrr((string)$v).'</code>';
+				printr($v->vars());
+			} else {
+				print '<code class="sql">'.printrr($v).'</code>';
+			}
 		}
 	});
 }

@@ -14,6 +14,7 @@ class Select extends Statement
 		$this->parts->from = [];
 		$this->parts->join = [];
 		$this->parts->where = new Condition;
+		$this->parts->groupby = [];
 		$this->parts->having = [];
 		$this->parts->orderby = [];
 
@@ -73,6 +74,11 @@ class Select extends Statement
 		return $this;
 	}
 
+	function GroupBy($group){
+		$this->parts->groupby[] = $group;
+		return $this;
+	}
+
 	function parse(){
 		$lines = ['SELECT'];
 
@@ -101,6 +107,11 @@ class Select extends Statement
 		if($where = (string)$this->parts->where){
 			$lines[] = 'WHERE';
 			$lines[] = $where;
+		}
+
+		if($this->parts->groupby){
+			$lines[] = 'GROUP BY';
+			$lines[] = join(', ', $this->parts->groupby);
 		}
 
 		if($this->parts->orderby){
