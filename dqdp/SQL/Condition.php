@@ -12,6 +12,16 @@ class Condition extends Statement
 	var $Conditions = [];
 	var $Vars = [];
 
+	protected function add_vars($v){
+		if(is_array($v)){
+			foreach($v as $i){
+				$this->add_vars($i);
+			}
+		} else {
+			$this->Vars[] = $v;
+		}
+	}
+
 	# __construct($type = Condition::AND)
 	# __construct($str = '', $type = Condition::AND)
 	function __construct(){
@@ -22,7 +32,8 @@ class Condition extends Statement
 		} elseif(gettype($argv[0]) == 'array'){
 			$this->Condition = $argv[0][0];
 			for($i=1; $i<count($argv[0]);$i++){
-				$this->Vars[] = $argv[0][$i];
+				$this->add_vars($argv[0][$i]);
+				//$this->Vars[] = $argv[0][$i];
 			}
 			if(isset($argv[1])){
 				$this->Type = $argv[1];

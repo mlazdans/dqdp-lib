@@ -1173,7 +1173,7 @@ function vardiem($int, $CURR_ID){
 function sql_create_int_filter($field, $values){
 	$v = array_map(function($i){
 		return (int)$i;
-	}, explode(",", $values));
+	}, $values); // explode(",", $values)
 
 	return ["$field IN (".join(",", array_fill(0, count($v), "?")).")", $v];
 }
