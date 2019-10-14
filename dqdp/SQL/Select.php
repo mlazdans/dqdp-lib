@@ -7,6 +7,7 @@ class Select extends Statement
 	var $parts = null;
 	var $first = null;
 	var $skip = null;
+	var $distinct = false;
 
 	function __construct(string $fields = ""){
 		$this->parts = (object)[];
@@ -32,6 +33,16 @@ class Select extends Statement
 			}
 		}
 		trigger_error('Call to undefined method '.__CLASS__.'::'.$name.'()', E_USER_ERROR);
+	}
+
+	function Distinct(){
+		$this->distinct = true;
+		return $this;
+	}
+
+	function ResetDistinct(){
+		$this->distinct = false;
+		return $this;
 	}
 
 	function Skip(int $rows){
@@ -81,6 +92,10 @@ class Select extends Statement
 
 	function parse(){
 		$lines = ['SELECT'];
+
+		if($this->distinct){
+			$lines[] = 'DISTINCT';
+		}
 
 		if($this->first){
 			$lines[] = "FIRST $this->first";
