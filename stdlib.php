@@ -1267,7 +1267,7 @@ function is_climode(){
 	return php_sapi_name() === 'cli';
 }
 
-function println($s){
+function println(){
 	call_user_func_array('printf', func_get_args());
 	print is_climode() ? "\n" : "<br>\n";
 }

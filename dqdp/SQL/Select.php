@@ -105,7 +105,7 @@ class Select extends Statement
 			$lines[] = "SKIP $this->skip";
 		}
 
-		$lines[] = $this->parts->select ? join(',', $this->parts->select) : '*';
+		$lines[] = $this->parts->select ? join(",\n", $this->parts->select) : '*';
 
 
 		if(empty($this->parts->from)){
