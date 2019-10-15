@@ -20,7 +20,7 @@ class EmptyObject
 	}
 
 	function isset($v){
-		return isset($this->{$v});
+		return property_exists($this, $v);
 	}
 
 	function merge($o){
