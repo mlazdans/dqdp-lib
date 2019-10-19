@@ -767,15 +767,14 @@ function __looper($data, $func){
 # NOTE: dep on https://highlightjs.org/
 function sqlr(){
 	__looper(func_get_args(), function($v){
-		if(is_climode()){
-			printr((string)$v);
-		} else {
-			if(is_object($v) && (get_class($v) == 'dqdp\SQL\Select')){
-				print '<code class="sql">'.printrr((string)$v).'</code>';
-				printr($v->vars());
+		if(is_object($v) && (get_class($v) == 'dqdp\SQL\Select')){
+			if(is_climode()){
+				printr((string)$v, "Vars:", $v->vars());
 			} else {
-				print '<code class="sql">'.printrr($v).'</code>';
+				print '<pre><code class="sql">'.(string)$v."\n\nVars:".printrr($v->vars()).'</code></pre>';
 			}
+		} else {
+			printf('<pre><code class="sql">%s</code></pre>', $v);
 		}
 	});
 }
@@ -1156,6 +1155,13 @@ function checked($v){
 
 function checkeda($a, $k){
 	return checked($a[$k]??false);
+}
+
+# Hacking POST checkboxes
+function boolcheckbox($NAME, $checked){
+	$ret[] = sprintf('<input type=hidden value=0 name=%s>', $NAME);
+	$ret[] = sprintf('<input type=checkbox value=1 name=%s%s>', $NAME, checked($checked));
+	return join("\n", $ret);
 }
 
 function datediff($d1, $d2, $calc = 3600 * 24){
