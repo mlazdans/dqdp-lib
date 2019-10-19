@@ -39,7 +39,7 @@ class QueueMailer extends PHPMailer
 		$sql = "INSERT INTO MAIL_QUEUE (ID,CREATE_TIME,TIME_TO_SEND,$fieldSQL) VALUES (NEXT VALUE FOR GEN_MAIL_QUEUE_ID,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,$valuesSQL) RETURNING ID";
 
 		if($q = ibase_query_array($sql, $values)){
-			$r = ifetch($q);
+			$r = ibase_fetch($q);
 			return $r->ID;
 		}
 		return false;
@@ -51,7 +51,7 @@ class QueueMailer extends PHPMailer
 			$this->q = ibase_query($sql);
 		}
 
-		if($r = ifetch($this->q)){
+		if($r = ibase_fetch($this->q)){
 			$this->current = $r;
 			if($ObjData = unserialize($r->MAILER_OBJ)){
 				foreach($ObjData as $k=>$v){

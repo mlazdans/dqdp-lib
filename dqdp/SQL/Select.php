@@ -60,8 +60,19 @@ class Select extends Statement
 		return $this;
 	}
 
-	function From(string $table){
-		$this->parts->from[] = $table;
+	function From($arg){
+		//if(is_object($v) && (get_class($v) == 'dqdp\SQL\Select')){
+		if(is_array($arg) && is_object($arg[0]) && (get_class($arg[0]) == 'dqdp\SQL\Select')){
+			list($sql, $alias) = $arg;
+			$this->parts->from[] = "($sql) $alias";
+			//foreach($sql->vars() as $v){
+				$this->parts->where->add_vars($sql->vars());
+			//}
+			//$this->add_vars($sql->vars());
+		} else {
+			$this->parts->from[] = $arg;
+		}
+
 		return $this;
 	}
 

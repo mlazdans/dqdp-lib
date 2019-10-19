@@ -6,27 +6,68 @@ $IBASE_FETCH_FLAGS = IBASE_TEXT;
 $IBASE_FIELD_TYPES = [ 7=>'SMALLINT', 8=>'INTEGER', 9=>'QUAD', 10=>'FLOAT', 11=>'D_FLOAT', 12=>'DATE', 13=>'TIME',
 14=>'CHAR', 16=>'INT64', 27=>'DOUBLE', 35=>'TIMESTAMP', 37=>'VARCHAR', 40=>'CSTRING', 261=>'BLOB' ];
 
-function ibase_set_fetch_flags($flags){
+function __ibase_params($args){
+	foreach($args as $i=>$a){
+		if(is_array($a)){
+			return array_merge(array_slice($args, 0, $i), $a);
+		}
+	}
+	return $args;
+}
+
+function ibase_fetch_flags_set($flags){
 	$GLOBALS['IBASE_FETCH_FLAGS'] = $flags;
 }
 
-function ibase_get_fetch_flags(){
+function ibase_fetch_flags_get(){
 	return $GLOBALS['IBASE_FETCH_FLAGS'];
 }
 
-function ifetch($q){
+function ibase_fetch($q){
+	return ibase_fetch_object($q, ibase_fetch_flags_get());
+}
+
+function ibase_fetcha($q){
+	return ibase_fetch_assoc($q, ibase_fetch_flags_get());
+}
+
+function ibase_fetch_all(...$args){
+	if(count($args) == 1 && gettype($args[0]) == 'resource'){
+		$q = $args[0];
+	} else {
+		if(!($q = call_user_func_array('ibase_query', $args))){
+			sqlr($args);
+			return false;
+		}
+	}
+	while($r = ibase_fetch($q)){
+		$ret[] = $r;
+	};
+	return $ret??[];
+}
+
+/*
+function ibase_fetch($q){
 	return ibase_fetch_object($q, ibase_get_fetch_flags());
 }
 
-function ifetcha($q){
+function ibase_fetcha($q){
 	return ibase_fetch_assoc($q, ibase_get_fetch_flags());
 }
+
+function ibase_fetch_all($q){
+	while($r = ibase_fetch($q)){
+		$ret[] = $r;
+	};
+	return $ret??[];
+}
+*/
 
 # ibase($sql[, $bind1, $bind2....])
 function ibase(){
 	$values = __ibase_params(func_get_args());
 	if($q = call_user_func_array('ibase_query', $values)){
-		return ifetch($q);
+		return ibase_fetch($q);
 	} else {
 		sqlr($values);
 		return false;
@@ -36,7 +77,7 @@ function ibase(){
 function ibasea() {
 	$values = __ibase_params(func_get_args());
 	if($q = call_user_func_array('ibase_query', $values)){
-		return ifetcha($q);
+		return ibase_fetcha($q);
 	} else {
 		sqlr($values);
 		return false;
@@ -52,35 +93,12 @@ function ibase_execute_array($q, $values){
 	return $ret;
 }
 
-function __ibase_params($args){
-	foreach($args as $i=>$a){
-		if(is_array($a)){
-			return array_merge(array_slice($args, 0, $i), $a);
-		}
-	}
-	return $args;
-}
-
 function ibase_query_array(){
 	$values = __ibase_params(func_get_args());
 	if(!($ret = call_user_func_array('ibase_query', $values))){
 		sqlr($values);
 	}
 	return $ret;
-}
-
-# ibase_fetch_all([$tr],$sql[, $bind1, $bind2....])
-# ibase_fetch_all([$tr],$sql[arrray() $binds])
-function ibase_fetch_all(){
-	$values = __ibase_params(func_get_args());
-	if(!($q = call_user_func_array('ibase_query', $values))){
-		sqlr($values);
-		return false;
-	}
-	while($r = ifetch($q)){
-		$ret[] = $r;
-	};
-	return $ret??[];
 }
 
 function ibase_build_sql($struct, $data){
@@ -275,11 +293,11 @@ ORDER BY
 	rf.RDB$FIELD_POSITION
 ', $table);
 
-	$q = $tr ? ibase_query($tr, $sql) : ibase_query($sql);
+	$q = ibase_query(__tr($tr), $sql);
 
 
 	$fields = array();
-	while($r = ifetch($q)){
+	while($r = ibase_fetch($q)){
 		$tmp = new stdclass;
 		$tmp->name = trim($r->{'RDB$FIELD_NAME'});
 		$tmp->relationName = trim($r->{'RDB$RELATION_NAME'});

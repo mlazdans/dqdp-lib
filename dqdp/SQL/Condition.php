@@ -12,7 +12,7 @@ class Condition extends Statement
 	var $Conditions = [];
 	var $Vars = [];
 
-	protected function add_vars($v){
+	function add_vars($v){
 		if(is_array($v)){
 			foreach($v as $i){
 				$this->add_vars($i);
