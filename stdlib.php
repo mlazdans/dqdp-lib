@@ -774,7 +774,7 @@ function sqlr(){
 				print '<pre><code class="sql">'.(string)$v."\n\nVars:".printrr($v->vars()).'</code></pre>';
 			}
 		} else {
-			printf('<pre><code class="sql">%s</code></pre>', $v);
+			printf('<pre><code class="sql">%s</code></pre>', printrr($v));
 		}
 	});
 }
