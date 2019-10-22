@@ -29,19 +29,25 @@ class Select extends Statement
 		if(strpos($name, 'Reset') === 0){
 			$part = strtolower(substr($name, strlen('Reset')));
 			if(isset($this->parts->{$part})){
-				return $this->parts->{$part} = [];
+				$this->parts->{$part} = [];
+				return $this;
 			}
 		}
 		trigger_error('Call to undefined method '.__CLASS__.'::'.$name.'()', E_USER_ERROR);
 	}
 
-	function Distinct(){
-		$this->distinct = true;
+	function ResetDistinct(){
+		$this->parts->where = new Condition;
 		return $this;
 	}
 
-	function ResetDistinct(){
+	function ResetWhere(){
 		$this->distinct = false;
+		return $this;
+	}
+
+	function Distinct(){
+		$this->distinct = true;
 		return $this;
 	}
 
@@ -90,6 +96,16 @@ class Select extends Statement
 		$this->parts->where->add_condition($condition);
 		return $this;
 	}
+
+	function Between($Col, $v1 = NULL, $v2 = NULL){
+		if($v1 && $v2){
+			$this->Where(["$Col BETWEEN ? AND ?", $v1, $v2]);
+		} elseif($v1){
+			$this->Where(["$Col >= ?", $v1]);
+		} elseif($v2){
+			$this->Where(["$Col <= ?", $v2]);
+		}
+}
 
 	function OrderBy($order){
 		$this->parts->orderby[] = Order::factory($order);
