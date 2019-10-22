@@ -1347,9 +1347,12 @@ function build_sql_set($fields, $DATA){
 }
 
 function eo($data = null){
+	return new EmptyObject($data);
+	/*
 	if($data instanceof dqdp\EmptyObject){
 		return $data;
 	} else {
 		return new EmptyObject($data);
 	}
+	*/
 }
