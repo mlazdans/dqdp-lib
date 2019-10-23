@@ -961,6 +961,7 @@ function emailex($params){
 	$from              = $params->from;
 	$subj              = $params->subject;
 	$msg               = $params->message;
+	$msgTxt            = $params->messageTxt??'';
 	$attachments       = (isset($params->attachments) ? $params->attachments : array());
 	$MAIL_PARAMS       = (isset($params->MAIL_PARAMS) ? $params->MAIL_PARAMS : false);
 	$use_queue         = (isset($params->use_queue) ? $params->use_queue : false);
@@ -969,6 +970,7 @@ function emailex($params){
 
 	if($use_queue){
 		$mail = new QueueMailer(true);
+		$mail->set_trans($params->TR);
 	} else {
 		$mail = new PHPMailer(true);
 		$mail->isSMTP();
@@ -990,10 +992,13 @@ function emailex($params){
 	$mail->addAddress($to);
 	$mail->isHTML($params->isHTML??false);
 	$mail->Subject = $subj;
-	if(!empty($params->isHTML)){
-		$mail->msgHTML($msg, $params->basedir??'');
-	} else {
+	if(empty($params->isHTML)){
 		$mail->Body = $msg;
+	} else {
+		$mail->msgHTML($msg, $params->basedir??'');
+		if($msgTxt){
+			$mail->AltBody = $msgTxt;
+		}
 	}
 
 	foreach($attachments as $item){

@@ -7,6 +7,7 @@ use PHPMailer\Exception;
 
 class QueueMailer extends PHPMailer
 {
+	var $TR;
 	private $q;
 	private $current;
 
@@ -15,8 +16,16 @@ class QueueMailer extends PHPMailer
 		$this->Mailer = 'queue';
 	}
 
+	function set_trans($tr){
+		$this->TR = $tr;
+	}
+
+	function get_trans(){
+		return $this->TR;
+	}
+
 	function queueSend($MIMEHeader, $MIMEBody){
-		$serialize = ['From','Sender','to','cc','bcc','all_recipients','SMTPKeepAlive'];
+		$serialize = ['From','Sender','to','cc','bcc','all_recipients','SMTPKeepAlive','ContentType'];
 
 		$ObjData = (object)[];
 		foreach($serialize as $k){
@@ -38,7 +47,7 @@ class QueueMailer extends PHPMailer
 		list($fieldSQL, $valuesSQL, $values) = build_sql($fields, (object)$DATA);
 		$sql = "INSERT INTO MAIL_QUEUE (ID,CREATE_TIME,TIME_TO_SEND,$fieldSQL) VALUES (NEXT VALUE FOR GEN_MAIL_QUEUE_ID,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,$valuesSQL) RETURNING ID";
 
-		if($q = ibase_query_array($sql, $values)){
+		if($q = ibase_query_array($this->get_trans(), $sql, $values)){
 			$r = ibase_fetch($q);
 			return $r->ID;
 		}
@@ -48,7 +57,7 @@ class QueueMailer extends PHPMailer
 	function getQueue(){
 		if(!isset($this->q)){
 			$sql = "SELECT * FROM MAIL_QUEUE WHERE SENT_TIME IS NULL ORDER BY CREATE_TIME DESC";
-			$this->q = ibase_query($sql);
+			$this->q = ibase_query($this->get_trans(), $sql);
 		}
 
 		if($r = ibase_fetch($this->q)){
@@ -77,13 +86,13 @@ class QueueMailer extends PHPMailer
 		try {
 			if($this->smtpSend($r->MIME_HEADERS,$r->MIME_BODY)){
 				$sql = "UPDATE MAIL_QUEUE SET SENT_TIME = CURRENT_TIMESTAMP, ERROR_MSG = NULL WHERE ID = ?";
-				ibase_query($sql, $r->ID);
+				ibase_query($this->get_trans(), $sql, $r->ID);
 				return true;
 			}
 		} catch (Exception $e) {
 			$this->ErrorInfo = $e->getMessage();
 			$sql = "UPDATE MAIL_QUEUE SET TRY_SENT = TRY_SENT + 1, ERROR_MSG = ? WHERE ID = ?";
-			ibase_query($sql, $e->getMessage(), $r->ID);
+			ibase_query($this->get_trans(), $sql, $e->getMessage(), $r->ID);
 			return false;
 		}
 	}
