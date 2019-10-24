@@ -774,7 +774,11 @@ function sqlr(){
 				print '<pre><code class="sql">'.(string)$v."\n\nVars:".printrr($v->vars()).'</code></pre>';
 			}
 		} else {
-			printf('<pre><code class="sql">%s</code></pre>', printrr($v));
+			if(is_climode()){
+				printr($v);
+			} else {
+				printf('<pre><code class="sql">%s</code></pre>', printrr($v));
+			}
 		}
 	});
 }
