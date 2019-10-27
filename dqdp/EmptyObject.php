@@ -27,7 +27,7 @@ class EmptyObject
 	*/
 
 	function merge($o){
-		return merge2($this, $o);
+		return merge($this, $o);
 	}
 /*
 	function merge($o){

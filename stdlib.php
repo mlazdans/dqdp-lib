@@ -1262,6 +1262,7 @@ function kdsort(&$a){
 	}
 }
 
+/*
 function merge(&$o1, $o2){
 	if(is_object($o2)){
 		$a2 = get_object_vars($o2);
@@ -1281,8 +1282,8 @@ function merge(&$o1, $o2){
 
 	return true;
 }
-
-function merge2($o1, $o2){
+*/
+function merge($o1, $o2){
 	if(is_object($o2)){
 		$a2 = get_object_vars($o2);
 	} elseif(is_array($o2)){
@@ -1292,9 +1293,9 @@ function merge2($o1, $o2){
 	}
 
 	if(is_object($o1)){
-		foreach($a2 as $k=>$v)$o1->{$k} = merge2($o1->{$k}, $v);
+		foreach($a2 as $k=>$v)$o1->{$k} = merge($o1->{$k}??null, $v);
 	} elseif(is_array($o1)){
-		foreach($a2 as $k=>$v)$o1[$k] = merge2($o1, $v);
+		foreach($a2 as $k=>$v)$o1[$k] = merge($o1, $v);
 	} else {
 		return $o2;
 	}
