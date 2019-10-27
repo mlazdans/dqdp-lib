@@ -6,8 +6,9 @@ class EmptyObject
 {
 	static $debug = false;
 
-	function __construct($initValues = []){
-		return $this->merge($initValues);
+	function __construct($initValues = null){
+		$this->merge($initValues);
+		return $this;
 	}
 
 	function __get($v){
@@ -19,10 +20,16 @@ class EmptyObject
 		return isset($this->{$v}) ? $this->{$v} : null;
 	}
 
+	/*
 	function isset($v){
 		return property_exists($this, $v);
 	}
+	*/
 
+	function merge($o){
+		return merge2($this, $o);
+	}
+/*
 	function merge($o){
 		if(is_array($o)){
 			$a = $o;
@@ -37,8 +44,10 @@ class EmptyObject
 
 		return $this;
 	}
-
+*/
+/*
 	function is_empty(){
 		return is_empty($this);
 	}
+	*/
 }
