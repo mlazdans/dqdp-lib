@@ -12,6 +12,14 @@ class Condition extends Statement
 	var $Conditions = [];
 	var $Vars = [];
 
+	function non_empty(){
+		return (count($this->Conditions) > 0) || $this->Condition;
+	}
+
+	function is_empty(){
+		return $this->non_empty();
+	}
+
 	function add_vars($v){
 		if(is_array($v)){
 			foreach($v as $i){
