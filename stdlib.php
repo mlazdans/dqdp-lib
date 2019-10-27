@@ -537,12 +537,16 @@ function translit($data){
 	});
 }
 
-function is_empty($data = false){
+function is_empty($data = null){
 	return __object_reduce($data, function($carry, $item){
 		if(is_array($item) || is_object($item))
 			return $carry && is_empty($item);
 		return $carry && empty($item);
 	}, true);
+}
+
+function non_empty($data = null){
+	return !is_empty($data);
 }
 
 function ent($data){
@@ -1377,11 +1381,12 @@ function build_sql_set($fields, $DATA){
 
 function eo($data = null){
 	return new EmptyObject($data);
-	/*
+}
+
+function eoe($data = null){
 	if($data instanceof dqdp\EmptyObject){
 		return $data;
 	} else {
 		return new EmptyObject($data);
 	}
-	*/
 }
