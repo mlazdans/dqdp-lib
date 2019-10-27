@@ -1283,13 +1283,30 @@ function merge(&$o1, $o2){
 	return true;
 }
 */
-function merge($o1, $o2){
+function __merge($o1, $o2, $fields){
+	if(is_null($o1) && is_null($o2)){
+		return null;
+	}
+
+	if(is_null($o2)){
+		$o2 = $o1;
+		$o1 = new stdClass;
+	}
+
 	if(is_object($o2)){
 		$a2 = get_object_vars($o2);
 	} elseif(is_array($o2)){
 		$a2 = $o2;
 	} else {
 		return $o2;
+	}
+
+	if($fields){
+		foreach($a2 as $k=>$v){
+			if(!in_array($k, $fields)){
+				unset($a2[$k]);
+			}
+		}
 	}
 
 	if(is_object($o1)){
@@ -1301,6 +1318,14 @@ function merge($o1, $o2){
 	}
 
 	return $o1;
+}
+
+function merge($o1, $o2 = null){
+	return __merge($o1, $o2, null);
+}
+
+function merge_only($fields, $o1, $o2 = null){
+	return __merge($o1, $o2, $fields);
 }
 
 function is_climode(){
