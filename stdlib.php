@@ -5,6 +5,12 @@ use dqdp\QueueMailer;
 use dqdp\EmptyObject;
 use PHPMailer\PHPMailer;
 
+final class dqdp {
+	static public $DATE_FORMAT = 'd.m.Y';
+	static public $TIME_FORMAT = 'H:i:s';
+	static public $LOCALE_INFO = null;
+}
+
 function netmasks(){
 	return [
 		"0.0.0.0", "128.0.0.0", "192.0.0.0", "224.0.0.0", "240.0.0.0", "248.0.0.0", "252.0.0.0",
@@ -580,11 +586,11 @@ function date_timestamp(){
 }
 
 function get_date_format(){
-	return $GLOBALS['DQDP_DATE_FORMAT'] ?? 'd.m.Y';
+	return dqdp::$DATE_FORMAT;
 }
 
 function set_date_format($f){
-	return $GLOBALS['DQDP_DATE_FORMAT'] = $f;
+	return dqdp::$DATE_FORMAT = $f;
 }
 
 function timef($ts = null){
@@ -592,11 +598,11 @@ function timef($ts = null){
 }
 
 function get_time_format(){
-	return $GLOBALS['DQDP_TIME_FORMAT'] ?? 'H:i:s';
+	return dqdp::$TIME_FORMAT;
 }
 
 function set_time_format($f){
-	return $GLOBALS['DQDP_TIME_FORMAT'] = $f;
+	return dqdp::$TIME_FORMAT = $f;
 }
 
 function datef($ts = null){
@@ -612,7 +618,7 @@ function date_yesterday(){
 }
 
 function date_daycount($m = false, $y = false){
-	return $m ? date('t', mktime(0,0,0, $m, 1, $y ? $y : date('Y'))) : date('t');
+	return $m ? (date('t', mktime(0,0,0, $m, 1, ($y ? $y : date('Y'))))) : date('t');
 }
 
 function date_month_start(){
@@ -656,53 +662,42 @@ function date_startend($DATE){
 	}
 
 	if($ceturksnis){
-		//$DATE2->{"C$ceturksnis"} = true;
-		# TODO: date_qt_month()
-		$start_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 1, 1, date('Y'));
-		$days_in_end_month = date_daycount(($ceturksnis - 1) * 3 + 3);
-		$end_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 3, $days_in_end_month, date('Y'));
-	//} elseif($DATE2->PREV_YEAR = $DATE->PREV_YEAR) {
+		// $start_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 1, 1, date('Y'));
+		// $days_in_end_month = date_daycount(($ceturksnis - 1) * 3 + 3);
+		// $end_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 3, $days_in_end_month, date('Y'));
+		$start_date = mktime(0,0,0, date_qt_month($ceturksnis, 1), 1, date('Y'));
+		$days_in_end_month = date_daycount(date_qt_month($ceturksnis, 3));
+		$end_date = mktime(0,0,0, date_qt_month($ceturksnis, 3), $days_in_end_month, date('Y'));
 	} elseif($DATE->PREV_YEAR) {
 		$start_date = strtotime('first day of January last year');
 		$end_date = strtotime('last day of December last year');
-	//} elseif($DATE2->THIS_YEAR = $DATE->THIS_YEAR){
 	} elseif($DATE->THIS_YEAR){
 		$start_date = strtotime('first day of January');
 		$end_date = time();
-	//} elseif($DATE2->YESTERDAY = $DATE->YESTERDAY) {
 	} elseif($DATE->YESTERDAY) {
 		$start_date = $end_date = strtotime('yesterday');
 		$end_date = time();
-	//} elseif($DATE2->THIS_WEEK = $DATE->THIS_WEEK) {
 	} elseif($DATE->THIS_WEEK) {
 		$start_date = strtotime("last Monday");
 		$end_date = time();
-	//} elseif($DATE2->THIS_MONTH = $DATE->THIS_MONTH) {
 	} elseif($DATE->THIS_MONTH) {
 		$start_date = strtotime("first day of");
 		$end_date = time();
-	//} elseif($DATE2->PREV_MONTH = $DATE->PREV_MONTH) {
 	} elseif($DATE->PREV_MONTH) {
 		$start_date = strtotime("first day of previous month");
 		$end_date = strtotime("last day of previous month");
-	//} elseif($DATE2->PREV_30DAYS = $DATE->PREV_30DAYS){
 	} elseif($DATE->PREV_30DAYS){
 		$start_date = strtotime("-30 days");
 		$end_date = time();
-	//} elseif($DATE2->MONTH = $DATE->MONTH){
 	} elseif($DATE->MONTH){
 		if(empty($DATE->YEAR))$DATE->YEAR = date('Y');
-		//$DATE2->YEAR = $DATE->YEAR;
 		$dc = date_daycount($DATE->MONTH, $DATE->YEAR);
 		$start_date = strtotime("$DATE->YEAR-$DATE->MONTH-01");
 		$end_date = strtotime("$DATE->YEAR-$DATE->MONTH-$dc");
-	//} elseif($DATE2->YEAR = $DATE->YEAR){
 	} elseif($DATE->YEAR){
 		$start_date = strtotime("first day of January $DATE->YEAR");
 		$end_date = strtotime("last day of December $DATE->YEAR");
 	} else {
-		//if($DATE2->START = $DATE->START)$start_date = strtotime($DATE->START);
-		//if($DATE2->END = $DATE->END)$end_date = strtotime($DATE->END);
 		if($DATE->START)$start_date = strtotime($DATE->START);
 		if($DATE->END)$end_date = strtotime($DATE->END);
 	}
@@ -710,7 +705,6 @@ function date_startend($DATE){
 	if($start_date)$start_date = date($format, $start_date);
 	if($end_date)$end_date = date($format, $end_date);
 
-	//return [$start_date, $end_date, $DATE2];
 	return [$start_date, $end_date];
 }
 
@@ -887,26 +881,26 @@ function array_deleter(array &$a, $v1){
 }
 
 
-function localeGetInfo($refresh = false){
-	if($refresh || !isset($GLOBALS['__LOCALE_INFO'])){
-		$GLOBALS['__LOCALE_INFO'] = localeconv();
+function locale_get_info($refresh = false){
+	if($refresh || is_null(dqdp::$LOCALE_INFO)){
+		dqdp::$LOCALE_INFO = localeconv();
 	}
 
-	return $GLOBALS['__LOCALE_INFO'];
+	return dqdp::$LOCALE_INFO;
 }
 
-function localeNumberFormat($t, $places = 2){
-	$LOCALE_INFO = localeGetInfo();
-	$point = !empty($LOCALE_INFO['decimal_point']) ? $LOCALE_INFO['decimal_point'] : '.';
-	$sep = !empty($LOCALE_INFO['thousands_sep']) ? $LOCALE_INFO['thousands_sep'] : '';
+function locale_number_format($t, $places = 2){
+	$LOCALE_INFO = locale_get_info();
+	$point = $LOCALE_INFO['decimal_point']??'.';
+	$sep = $LOCALE_INFO['thousands_sep']??'';
 
 	return number_format($t, $places, $point, $sep);
 }
 
-function localeMoneyFormat($t, $places = 2){
-	$LOCALE_INFO = localeGetInfo();
-	$point = !empty($LOCALE_INFO['mon_decimal_point']) ? $LOCALE_INFO['mon_decimal_point'] : '.';
-	$sep = !empty($LOCALE_INFO['mon_thousands_sep']) ? $LOCALE_INFO['mon_thousands_sep'] : '';
+function locale_money_format($t, $places = 2){
+	$LOCALE_INFO = locale_get_info();
+	$point = $LOCALE_INFO['mon_decimal_point']??'.';
+	$sep = $LOCALE_INFO['mon_thousands_sep']??'';
 
 	return number_format($t, $places, $point, $sep);
 }
@@ -1271,27 +1265,6 @@ function kdsort(&$a){
 	}
 }
 
-/*
-function merge(&$o1, $o2){
-	if(is_object($o2)){
-		$a2 = get_object_vars($o2);
-	} elseif(is_array($o2)){
-		$a2 = $o2;
-	} else {
-		return false;
-	}
-
-	if(is_object($o1)){
-		foreach($a2 as $k=>$v)$o1->{$k} = $v;
-	} elseif(is_array($o1)){
-		foreach($a2 as $k=>$v)$o1[$k] = $v;
-	} else {
-		return false;
-	}
-
-	return true;
-}
-*/
 function __merge($o1, $o2, $fields){
 	if(is_null($o1) && is_null($o2)){
 		return null;
@@ -1339,6 +1312,10 @@ function merge_only($fields, $o1, $o2 = null){
 
 function is_climode(){
 	return php_sapi_name() === 'cli';
+}
+
+function is_webmode(){
+	return !is_climode();
 }
 
 function println(){
