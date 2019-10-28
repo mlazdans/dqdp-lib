@@ -2,9 +2,11 @@
 
 use dqdp\SQL\Condition;
 
-$IBASE_FETCH_FLAGS = IBASE_TEXT;
-$IBASE_FIELD_TYPES = [ 7=>'SMALLINT', 8=>'INTEGER', 9=>'QUAD', 10=>'FLOAT', 11=>'D_FLOAT', 12=>'DATE', 13=>'TIME',
-14=>'CHAR', 16=>'INT64', 27=>'DOUBLE', 35=>'TIMESTAMP', 37=>'VARCHAR', 40=>'CSTRING', 261=>'BLOB' ];
+final class Ibase {
+	static public $IBASE_FETCH_FLAGS = IBASE_TEXT;
+	static public $IBASE_FIELD_TYPES = [ 7=>'SMALLINT', 8=>'INTEGER', 9=>'QUAD', 10=>'FLOAT', 11=>'D_FLOAT', 12=>'DATE', 13=>'TIME',
+	14=>'CHAR', 16=>'INT64', 27=>'DOUBLE', 35=>'TIMESTAMP', 37=>'VARCHAR', 40=>'CSTRING', 261=>'BLOB' ];
+}
 
 function __ibase_params($args){
 	foreach($args as $i=>$a){
@@ -16,11 +18,11 @@ function __ibase_params($args){
 }
 
 function ibase_fetch_flags_set($flags){
-	$GLOBALS['IBASE_FETCH_FLAGS'] = $flags;
+	Ibase::$IBASE_FETCH_FLAGS = $flags;
 }
 
 function ibase_fetch_flags_get(){
-	return $GLOBALS['IBASE_FETCH_FLAGS'];
+	return Ibase::$IBASE_FETCH_FLAGS;
 }
 
 function ibase_fetch($q){
@@ -316,7 +318,7 @@ ORDER BY
 }
 
 function ibase_field_type($r){
-	global $IBASE_FIELD_TYPES;
+	$IBASE_FIELD_TYPES = Ibase::$IBASE_FIELD_TYPES;
 
 	$type = isset($IBASE_FIELD_TYPES[$r->{'RDB$FIELD_TYPE'}]) ? $IBASE_FIELD_TYPES[$r->{'RDB$FIELD_TYPE'}] : false;
 
