@@ -415,7 +415,6 @@ function to_range($val, $range, $default = ''){
 	return $val;
 }
 
-# TODO: test
 function upload_save($id, $save_path){
 	$f = upload($id);
 	return $f && !!move_uploaded_file($f['tmp_name'], $save_path);
@@ -1096,7 +1095,6 @@ function header403($msg = "Forbidden"){
 	print "<h1>$msg!</h1>";
 }
 
-# TODO: smukāk!
 function proc_date($date){
 	$D = ['šodien', 'vakar', 'aizvakar'];
 	$M = ['janvārī', 'februārī', 'martā', 'aprīlī', 'maijā', 'jūnijā', 'jūlijā', 'augustā', 'septembrī', 'oktobrī', 'novembrī', 'decembrī'];
