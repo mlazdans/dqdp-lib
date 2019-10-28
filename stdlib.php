@@ -1093,6 +1093,15 @@ function header404($msg = "Not Found"){
 	print "<h1>$msg!</h1>";
 }
 
+function header403($msg = "Forbidden"){
+	if(!($SERVER_PROTOCOL = env('SERVER_PROTOCOL'))){
+		$SERVER_PROTOCOL = server('SERVER_PROTOCOL');
+	}
+
+	header("$SERVER_PROTOCOL 403 $msg", true, 403);
+	print "<h1>$msg!</h1>";
+}
+
 # TODO: smukāk!
 function proc_date($date){
 	$D = ['šodien', 'vakar', 'aizvakar'];
