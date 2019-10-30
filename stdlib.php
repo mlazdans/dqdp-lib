@@ -572,6 +572,29 @@ function specialchars($data){
 	});
 }
 
+function date_in_periods($date, Array $periods){
+	if(empty($periods)){
+		return false;
+	}
+
+	$ts = empty($date) ? time() : strtotime($date);
+
+	if(($ts === false) || ($ts > time())){
+		return null;
+	}
+
+	foreach($periods as list($s, $e)){
+		$e = is_null($e) ? time() : strtotime($e);
+		$s = strtotime($s);
+
+		if(($ts >= $s) && ($ts <= $e)){
+			return true;
+		}
+	}
+
+	return false;
+}
+
 function date_monthstamp(){
 	return date('Ym');
 }
@@ -984,9 +1007,13 @@ function emailex($params){
 	//$mail->isSMTP();
 	$mail->Host = $MAIL_PARAMS['host'];
 	$mail->Port = $MAIL_PARAMS['port'];
-	$mail->Username = $MAIL_PARAMS['username'];
-	$mail->Password = $MAIL_PARAMS['password'];
-	$mail->SMTPAuth = $MAIL_PARAMS['auth'];
+	if(!empty($MAIL_PARAMS['auth'])){
+		$mail->Username = $MAIL_PARAMS['username'];
+		$mail->Password = $MAIL_PARAMS['password'];
+		$mail->SMTPAuth = $MAIL_PARAMS['auth'];
+	} else {
+		$mail->SMTPAuth = false;
+	}
 	$mail->SMTPSecure = 'tls';
 
 	$mail->setFrom($from);
