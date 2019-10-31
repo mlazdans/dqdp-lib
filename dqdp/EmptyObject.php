@@ -20,34 +20,11 @@ class EmptyObject
 		return isset($this->{$v}) ? $this->{$v} : null;
 	}
 
-	/*
 	function isset($v){
 		return property_exists($this, $v);
 	}
-	*/
 
 	function merge($o){
 		return merge($this, $o);
 	}
-/*
-	function merge($o){
-		if(is_array($o)){
-			$a = $o;
-		} elseif(is_object($o)){
-			$a = get_object_vars($o);
-		} else {
-			return $this;
-		}
-		foreach($a as $k=>$v){
-			$this->{$k} = $v;
-		}
-
-		return $this;
-	}
-*/
-/*
-	function is_empty(){
-		return is_empty($this);
-	}
-	*/
 }

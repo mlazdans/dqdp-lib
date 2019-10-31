@@ -1295,11 +1295,6 @@ function __merge($o1, $o2, $fields){
 		return null;
 	}
 
-	if(is_null($o2)){
-		$o2 = $o1;
-		$o1 = new stdClass;
-	}
-
 	if(is_object($o2)){
 		$a2 = get_object_vars($o2);
 	} elseif(is_array($o2)){
@@ -1327,11 +1322,14 @@ function __merge($o1, $o2, $fields){
 	return $o1;
 }
 
-function merge($o1, $o2 = null){
+function merge($o1, $o2){
 	return __merge($o1, $o2, null);
 }
 
 function merge_only($fields, $o1, $o2 = null){
+	if(is_null($o2)){
+		$o2 = is_array($o1) ? [] : (is_object($o1) ? new stdClass : $o2);
+	}
 	return __merge($o1, $o2, $fields);
 }
 
