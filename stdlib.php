@@ -1422,6 +1422,6 @@ function eoe($data = null){
 	if($data instanceof dqdp\EmptyObject){
 		return $data;
 	} else {
-		return new EmptyObject($data);
+		return eo($data);
 	}
 }
