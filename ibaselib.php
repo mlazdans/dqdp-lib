@@ -2,6 +2,8 @@
 
 use dqdp\SQL\Condition;
 
+require_once("stdlib.php");
+
 final class Ibase {
 	static public $IBASE_FETCH_FLAGS = IBASE_TEXT;
 	static public $IBASE_FIELD_TYPES = [ 7=>'SMALLINT', 8=>'INTEGER', 9=>'QUAD', 10=>'FLOAT', 11=>'D_FLOAT', 12=>'DATE', 13=>'TIME',
@@ -269,10 +271,6 @@ function ibase_db_restore($db_backup_file, $db_file, $db_user, $db_password){
 function ibase_db_backup($db_file, $db_backup_file, $db_user, $db_password){
 	$cmd = "gbak -USER $db_user -PASSWORD $db_password -B $db_file $db_backup_file";
 	my_exec($cmd);
-}
-
-function ibase_genpass(){
-	return strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 8));
 }
 
 function ibase_table_info($table, $tr = null){
