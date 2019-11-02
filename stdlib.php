@@ -1425,3 +1425,18 @@ function eoe($data = null){
 		return eo($data);
 	}
 }
+
+function escape_shell(Array $args, $glue = ' '){
+	foreach($args as $k => $part){
+		if(is_string($k)){
+			$params[] = escapeshellarg($k).$glue.escapeshellarg($part);
+		} else {
+			$params[] = escapeshellarg($part);
+		}
+	}
+	return $args;
+}
+
+function is_windows(){
+	return strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
+}
