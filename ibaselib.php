@@ -5,8 +5,8 @@ use dqdp\SQL\Condition;
 require_once("stdlib.php");
 
 final class Ibase {
-	static public $IBASE_FETCH_FLAGS = IBASE_TEXT;
-	static public $IBASE_FIELD_TYPES = [ 7=>'SMALLINT', 8=>'INTEGER', 9=>'QUAD', 10=>'FLOAT', 11=>'D_FLOAT', 12=>'DATE', 13=>'TIME',
+	static public $FETCH_FLAGS = IBASE_TEXT;
+	static public $FIELD_TYPES = [ 7=>'SMALLINT', 8=>'INTEGER', 9=>'QUAD', 10=>'FLOAT', 11=>'D_FLOAT', 12=>'DATE', 13=>'TIME',
 	14=>'CHAR', 16=>'INT64', 27=>'DOUBLE', 35=>'TIMESTAMP', 37=>'VARCHAR', 40=>'CSTRING', 261=>'BLOB' ];
 }
 
@@ -20,11 +20,11 @@ function __ibase_params($args){
 }
 
 function ibase_fetch_flags_set($flags){
-	Ibase::$IBASE_FETCH_FLAGS = $flags;
+	Ibase::$FETCH_FLAGS = $flags;
 }
 
 function ibase_fetch_flags_get(){
-	return Ibase::$IBASE_FETCH_FLAGS;
+	return Ibase::$FETCH_FLAGS;
 }
 
 function ibase_fetch($q){
@@ -260,9 +260,6 @@ function ibase_db_create($db_name, $db_user, $db_password, $add_sql = array()){
 }
 */
 
-function ibase_isql(){
-}
-
 function ibase_db_restore($db_backup_file, $db_file, $db_user, $db_password){
 	$cmd = "gbak -USER $db_user -PASSWORD $db_password -R $db_backup_file $db_file";
 	my_exec($cmd);
@@ -316,9 +313,9 @@ ORDER BY
 }
 
 function ibase_field_type($r){
-	$IBASE_FIELD_TYPES = Ibase::$IBASE_FIELD_TYPES;
+	$FIELD_TYPES = Ibase::$FIELD_TYPES;
 
-	$type = isset($IBASE_FIELD_TYPES[$r->{'RDB$FIELD_TYPE'}]) ? $IBASE_FIELD_TYPES[$r->{'RDB$FIELD_TYPE'}] : false;
+	$type = isset($FIELD_TYPES[$r->{'RDB$FIELD_TYPE'}]) ? $FIELD_TYPES[$r->{'RDB$FIELD_TYPE'}] : false;
 
 	# Integer
 	if($r->{'RDB$FIELD_TYPE'} == 8){
@@ -422,4 +419,74 @@ function ibase_replace_sql($replaces, $field){
 		$sql = "REPLACE($sql, '$f', '$r')";
 	}
 	return $sql;
+}
+
+function __ibase_get($tr, $sql){
+	$q = ibase_query(__tr($tr), $sql);
+	while($r = ibase_fetch($q)){
+		$ret[] = trim($r->NAME);
+	}
+	return $ret??[];
+}
+
+function ibase_get_generators($tr = null){
+	return __ibase_get($tr, 'SELECT RDB$GENERATOR_NAME AS NAME
+	FROM RDB$GENERATORS
+	WHERE RDB$SYSTEM_FLAG = 0
+	ORDER BY RDB$GENERATOR_NAME');
+}
+
+function ibase_get_tables($tr = null){
+	return __ibase_get($tr, 'SELECT r.RDB$RELATION_NAME AS NAME FROM RDB$RELATIONS AS r
+	LEFT JOIN RDB$VIEW_RELATIONS v ON v.RDB$VIEW_NAME = r.RDB$RELATION_NAME
+	WHERE v.RDB$VIEW_NAME IS NULL AND r.RDB$SYSTEM_FLAG = 0
+	ORDER BY r.RDB$RELATION_NAME');
+}
+
+// args = ['DB', 'ISQL', 'USER', 'PASS', 'SQL', 'OUTPUT'];
+// returns exit code and output
+function ibase_isql($DATA){
+	$DEFAULTS = [
+		'ISQL'=>is_windows() ? "isql.exe" : "isql",
+		'USER'=>"sysdba",
+		'PASS'=>"masterkey",
+		'STDIN'=>["pipe", "r"],
+		'STDOUT'=>["pipe", "w"],
+		'STDERR'=>["file", getenv('TMPDIR')."./isql-output.txt", "a"],
+	];
+	$DATA = eo($DEFAULTS)->merge($DATA);
+
+	if(empty($DATA->DB)){
+		trigger_error("DB parameter not set", E_USER_WARNING);
+		return false;
+	}
+
+	$args = ['-e', '-noautocommit', '-m2', '-merge', '-bail'];
+	if($DATA->USER){
+		$args[] = '-user';
+		$args[] = "'$DATA->USER'";
+	}
+	if($DATA->PASS){
+		$args[] = '-pass';
+		$args[] = "'$DATA->PASS'";
+	}
+	if($DATA->DB)$args[] = $DATA->DB;
+
+	$descriptorspec = [$DATA->STDIN, $DATA->STDOUT, $DATA->STDERR];
+
+	$process_cmd = '"'.$DATA->ISQL.'"'.' '.join(" ", escape_shell($args));
+	$process = proc_open($process_cmd, $descriptorspec, $pipes);
+	if(is_resource($process)){
+		fwrite($pipes[0], $DATA->SQL);
+		fclose($pipes[0]);
+
+		$output = null;
+		if(isset($pipes[1])){
+			$output = stream_get_contents($pipes[1]);
+			fclose($pipes[1]);
+		}
+
+		return [proc_close($process), $output];
+	}
+	return false;
 }
