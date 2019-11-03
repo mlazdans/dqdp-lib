@@ -28,11 +28,11 @@ function ibase_fetch_flags_get(){
 }
 
 function ibase_fetch($q){
-	return ibase_fetch_object($q, ibase_fetch_flags_get());
+	return $q ? ibase_fetch_object($q, ibase_fetch_flags_get()) : false;
 }
 
 function ibase_fetcha($q){
-	return ibase_fetch_assoc($q, ibase_fetch_flags_get());
+	return $q ? ibase_fetch_assoc($q, ibase_fetch_flags_get()) : false;
 }
 
 function ibase_fetch_all(...$args){
