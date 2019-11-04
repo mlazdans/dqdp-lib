@@ -1104,22 +1104,25 @@ function csv_find_value($map, $line, $field){
 	return false;
 }
 
-function header404($msg = "Not Found"){
-	if(!($SERVER_PROTOCOL = env('SERVER_PROTOCOL'))){
-		$SERVER_PROTOCOL = server('SERVER_PROTOCOL');
-	}
+function __header($code, $msg_header, $msg_display = null){
+	$SERVER_PROTOCOL = $_ENV['SERVER_PROTOCOL']??($_SERVER['SERVER_PROTOCOL']??'');
 
-	header("$SERVER_PROTOCOL 404 $msg", true, 404);
-	print "<h1>$msg!</h1>";
+	header("$SERVER_PROTOCOL $code $msg_header", true, $code);
+	if(!is_null($msg_display)){
+		print "<h1>$msg_display!</h1>";
+	}
 }
 
 function header403($msg = "Forbidden"){
-	if(!($SERVER_PROTOCOL = env('SERVER_PROTOCOL'))){
-		$SERVER_PROTOCOL = server('SERVER_PROTOCOL');
-	}
+	__header(403, "Forbidden", $msg);
+}
 
-	header("$SERVER_PROTOCOL 403 $msg", true, 403);
-	print "<h1>$msg!</h1>";
+function header404($msg = "Not Found"){
+	__header(404, "Not Found", $msg);
+}
+
+function header503($msg = "Server error"){
+	__header(503, "Server error", $msg);
 }
 
 function proc_date($date){
