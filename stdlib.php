@@ -1440,3 +1440,20 @@ function escape_shell(Array $args, $glue = ' '){
 function is_windows(){
 	return strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
 }
+
+function get_include_paths(){
+	return array_map(function($i){
+		return realpath($i);
+	}, explode(PATH_SEPARATOR, ini_get('include_path')));
+}
+
+function trim_includes_path($path){
+	$path = realpath($path);
+	foreach(get_include_paths() as $root){
+		$root = $root.DIRECTORY_SEPARATOR;
+		if(strpos($path, $root) === 0){
+			return str_replace($root, '', $path);
+		}
+	}
+}
+
