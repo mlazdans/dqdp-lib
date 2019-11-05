@@ -494,3 +494,70 @@ function ibase_isql($DATA){
 function ibase_current_role($tr = null){
 	return ibase(__tr($tr), 'SELECT CURRENT_ROLE AS RLE FROM RDB$DATABASE')->RLE;
 }
+
+function ibase_strip_rdb($data){
+	__object_walk_ref($data, function(&$item, &$k){
+		if((strpos($k, 'RDB$') === 0) || (strpos($k, 'SEC$') === 0)){
+			$k = substr($k, 4);
+			$item = trim($item);
+		}
+	});
+	return $data;
+}
+
+function ibase_get_users($tr = null){
+	return ibase_strip_rdb(ibase_fetch_all(__tr($tr), 'SELECT DISTINCT SEC$USER_NAME FROM SEC$USERS'));
+}
+
+function ibase_get_privileges($user, $tr = null){
+	$ret = [];
+	$vars[] = strtoupper($user);
+
+	# TODO: trigeri, view, tables, proc var pārklāties nosaukumi, vai nevar? Hmm...
+	$sql = 'SELECT * FROM RDB$USER_PRIVILEGES u WHERE u.RDB$USER = ?';
+	$q = ibase_query_array(__tr($tr), $sql, $vars);
+	while($r = ibase_fetch($q)){
+		$r = ibase_strip_rdb($r);
+		if(!isset($ret[$r->RELATION_NAME])){
+			$ret[$r->RELATION_NAME] = (object)[
+				'GRANTOR'=>$r->GRANTOR,
+				'GRANT_OPTION'=>$r->GRANT_OPTION,
+				'USER_TYPE'=>$r->USER_TYPE,
+				'OBJECT_TYPE'=>$r->OBJECT_TYPE,
+			];
+		}
+
+		$p = &$ret[$r->RELATION_NAME];
+
+		# UPDATE, REFERENCE
+		if(($r->PRIVILEGE == 'U') || ($r->PRIVILEGE == 'R')){
+			$p->PRIVILEGES = $p->PRIVILEGES ?? [];
+			if(!in_array($r->PRIVILEGE, $p->PRIVILEGES)){
+				array_push($p->PRIVILEGES, $r->PRIVILEGE);
+			}
+			if($r->FIELD_NAME){
+				$k = $r->PRIVILEGE.'_FIELDS';
+				$p->{$k} = $p->{$k} ?? [];
+				array_push($p->{$k}, $r->FIELD_NAME);
+			}
+		# ROLE
+		} elseif($r->PRIVILEGE == 'M'){
+			$ret = array_merge(ibase_get_privileges($r->RELATION_NAME, $tr), $ret);
+		} else {
+			$p->PRIVILEGES = $p->PRIVILEGES ?? [];
+			if(!in_array($r->PRIVILEGE, $p->PRIVILEGES)){
+				array_push($p->PRIVILEGES, $r->PRIVILEGE);
+			}
+		}
+	}
+	return $ret;
+}
+
+function ibase_get_object_types($tr = null){
+	$sql = 'SELECT RDB$TYPE, RDB$TYPE_NAME FROM RDB$TYPES WHERE RDB$FIELD_NAME=\'RDB$OBJECT_TYPE\'';
+	$data = ibase_strip_rdb(ibase_fetch_all(__tr($tr), $sql));
+	foreach($data as $r){
+		$ret[$r->TYPE] = $r->TYPE_NAME;
+	}
+	return $ret??[];
+}

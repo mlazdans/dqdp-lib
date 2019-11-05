@@ -477,13 +477,38 @@ function compacto($data){
 	});
 }
 
-function __object_walk($data, $func, $i = null){
+# TODO: pielikt visiem __object_*() key parametru tāpat kā __object_walk_ref()
+function __object_walk($data, $func){
 	if(is_array($data)){
-		foreach($data as $k=>$v){
-			__object_walk($v, $func, $k);
+		foreach($data as $v){
+			__object_walk($v, $func);
 		}
 	} elseif(is_object($data)) {
 		__object_walk(get_object_vars($data), $func);
+	} else {
+		$func($data);
+	}
+}
+
+function __object_walk_ref(&$data, $func, &$i = null){
+	if(is_array($data)){
+		foreach($data as $k=>&$v){
+			$oldK = $k;
+			__object_walk_ref($v, $func, $k);
+			if($oldK !== $k){
+				$data[$k] = $data[$oldK];
+				unset($data[$oldK]);
+			}
+		}
+	} elseif(is_object($data)) {
+		foreach(get_object_vars($data) as $k=>$v){
+			$oldK = $k;
+			__object_walk_ref($data->{$k}, $func, $k);
+			if($oldK !== $k){
+				$data->{$k} = $data->{$oldK};
+				unset($data->{$oldK});
+			}
+		}
 	} else {
 		$func($data, $i);
 	}
@@ -514,7 +539,7 @@ function __object_map($data, $func){
 		foreach($data as $k=>$v){
 			$ndata[$k] = __object_map($v, $func);
 		}
-	} elseif(is_object($data)) {
+	} elseif(is_object($data)){
 		$ndata = (object)__object_map(get_object_vars($data), $func);
 	} else {
 		$ndata = $func($data);
@@ -1482,3 +1507,8 @@ function trim_includes_path($path){
 	}
 }
 
+function trimmer($data){
+	return __object_map($data, function($item){
+		return trim($item);
+	});
+}
