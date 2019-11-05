@@ -477,6 +477,18 @@ function compacto($data){
 	});
 }
 
+function __object_walk($data, $func, $i = null){
+	if(is_array($data)){
+		foreach($data as $k=>$v){
+			__object_walk($v, $func, $k);
+		}
+	} elseif(is_object($data)) {
+		__object_walk(get_object_vars($data), $func);
+	} else {
+		$func($data, $i);
+	}
+}
+
 function __object_filter($data, $func){
 	$ndata = null;
 	if(is_array($data)){
@@ -769,46 +781,56 @@ function __query($query_string = '', $format = '', $delim = '&amp;', $allowed = 
 	return join($delim, $ret);
 }
 
-function __looper($data, $func){
-	if(is_climode()){
-		foreach($data as $v){
+function format_debug($v){
+	$vars = __object_map($v, function($item){
+		if(is_scalar($item) && mb_detect_encoding($item)){
+			return mb_substr($item, 0, 500);
+		} elseif(is_null($item)) {
+			return "NULL";
+		} elseif(is_resource($item)) {
+			return "$item";
+		} else {
+			return "[BLOB]";
+		}
+	});
+	return $vars;
+}
+
+# NOTE: dep on https://highlightjs.org/
+function sqlr(){
+	__output_wrapper(func_get_args(), function($v){
+		if(is_webmode())print '<code class="sql">';
+		if(is_object($v) && (get_class($v) == 'dqdp\SQL\Select')){
+			$vars = format_debug($v->vars());
+			print_r((string)$v);
+			print ("\n\n[Bind vars]\n");
+			print_r($vars);
+		} else {
+			print_r(format_debug($v));
+		}
+		if(is_webmode())print '</code>';
+	});
+}
+
+function dumpr(){
+	__output_wrapper(func_get_args(), "var_dump");
+}
+
+function printr(){
+	__output_wrapper(func_get_args(), "print_r");
+}
+
+function __output_wrapper($data, $func){
+	foreach($data as $v){
+		if(is_climode()){
 			$func($v);
 			print "\n";
-		}
-	} else {
-		foreach($data as $v){
+		} else {
 			print "<pre>";
 			$func($v);
 			print "</pre>";
 		}
 	}
-}
-
-# NOTE: dep on https://highlightjs.org/
-function sqlr(){
-	__looper(func_get_args(), function($v){
-		if(is_object($v) && (get_class($v) == 'dqdp\SQL\Select')){
-			if(is_climode()){
-				printr((string)$v, "Vars:", $v->vars());
-			} else {
-				print '<pre><code class="sql">'.(string)$v."\n\nVars:".printrr($v->vars()).'</code></pre>';
-			}
-		} else {
-			if(is_climode()){
-				printr($v);
-			} else {
-				printf('<pre><code class="sql">%s</code></pre>', printrr($v));
-			}
-		}
-	});
-}
-
-function dumpr(){
-	__looper(func_get_args(), "var_dump");
-}
-
-function printr(){
-	__looper(func_get_args(), "print_r");
 }
 
 function printrr(){

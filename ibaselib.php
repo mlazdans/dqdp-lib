@@ -490,3 +490,7 @@ function ibase_isql($DATA){
 	}
 	return false;
 }
+
+function ibase_current_role($tr = null){
+	return ibase(__tr($tr), 'SELECT CURRENT_ROLE AS RLE FROM RDB$DATABASE')->RLE;
+}
