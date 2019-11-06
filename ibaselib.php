@@ -184,9 +184,6 @@ function search_to_sql_cond($q, $fields, $minWordLen = 3){
 	return $MainCond;
 }
 
-/**
- * @return array
- */
 function search_to_sql($q, $fields, $minWordLen = 3){
 	$words = parse_search_q($q, $minWordLen);
 	if(!is_array($fields)){
@@ -260,6 +257,7 @@ function ibase_db_create($db_name, $db_user, $db_password, $add_sql = array()){
 }
 */
 
+# TODO: aaaaaaarrrrrghhhh! :E
 function ibase_db_restore($db_backup_file, $db_file, $db_user, $db_password){
 	$cmd = "gbak -USER $db_user -PASSWORD $db_password -R $db_backup_file $db_file";
 	my_exec($cmd);
@@ -272,44 +270,23 @@ function ibase_db_backup($db_file, $db_backup_file, $db_user, $db_password){
 
 function ibase_table_info($table, $tr = null){
 	$table = strtoupper($table);
-	$sql = sprintf('
-SELECT
-	rf.*,
-	f.RDB$FIELD_SUB_TYPE,
-	f.RDB$FIELD_TYPE,
-	f.RDB$FIELD_LENGTH,
-	f.RDB$CHARACTER_LENGTH,
-	f.RDB$FIELD_PRECISION
-FROM
-	RDB$RELATION_FIELDS rf
-JOIN
-	RDB$FIELDS f ON f.RDB$FIELD_NAME = rf.RDB$FIELD_SOURCE
-WHERE
-	rf.RDB$RELATION_NAME = UPPER(\'%s\')
-ORDER BY
-	rf.RDB$FIELD_POSITION
-', $table);
+	$sql = 'SELECT rf.*,
+		f.RDB$FIELD_SUB_TYPE,
+		f.RDB$FIELD_TYPE,
+		f.RDB$FIELD_LENGTH,
+		f.RDB$CHARACTER_LENGTH,
+		f.RDB$FIELD_PRECISION
+	FROM RDB$RELATION_FIELDS rf
+	JOIN RDB$FIELDS f ON f.RDB$FIELD_NAME = rf.RDB$FIELD_SOURCE
+	WHERE rf.RDB$RELATION_NAME = ?
+	ORDER BY rf.RDB$FIELD_POSITION';
 
-	$q = ibase_query(__tr($tr), $sql);
-
-
-	$fields = array();
+	$q = ibase_query(__tr($tr), $sql, $table);
 	while($r = ibase_fetch($q)){
-		$tmp = new stdclass;
-		$tmp->name = trim($r->{'RDB$FIELD_NAME'});
-		$tmp->relationName = trim($r->{'RDB$RELATION_NAME'});
-		$tmp->domain = trim($r->{'RDB$FIELD_SOURCE'});
-		$tmp->notNull = $r->{'RDB$NULL_FLAG'} == 1 ? true : false;
-		$tmp->position = $r->{'RDB$FIELD_POSITION'};
-		$tmp->clength = $r->{'RDB$CHARACTER_LENGTH'};
-		$tmp->length = $r->{'RDB$FIELD_LENGTH'};
-		$tmp->updateFlag = $r->{'RDB$UPDATE_FLAG'};
-		$tmp->type = ibase_field_type($r);
-
-		$fields[] = $tmp;
+		$ret[] = ibase_strip_rdb($r);
 	}
 
-	return $fields;
+	return $ret??[];
 }
 
 function ibase_field_type($r){
@@ -451,7 +428,8 @@ function ibase_isql($DATA){
 		'USER'=>"sysdba",
 		'PASS'=>"masterkey",
 		'STDIN'=>["pipe", "r"],
-		'STDOUT'=>["pipe", "w"],
+		//'STDOUT'=>["pipe", "w"],
+		'STDOUT'=>['file', 'php://stdout', 'w'],
 		'STDERR'=>["file", getenv('TMPDIR')."./isql-output.txt", "a"],
 	];
 	$DATA = eo($DEFAULTS)->merge($DATA);
