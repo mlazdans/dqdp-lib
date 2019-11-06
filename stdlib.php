@@ -1512,3 +1512,7 @@ function trimmer($data){
 		return trim($item);
 	});
 }
+
+function php_err_is_fatal($errno){
+	return in_array($errno, [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR]);
+}
