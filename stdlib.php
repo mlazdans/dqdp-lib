@@ -824,7 +824,7 @@ function format_debug($v){
 # NOTE: dep on https://highlightjs.org/
 function sqlr(){
 	__output_wrapper(func_get_args(), function($v){
-		if(is_webmode())print '<code class="sql">';
+		if(!is_climode())print '<code class="sql">';
 		if(is_object($v) && (get_class($v) == 'dqdp\SQL\Select')){
 			$vars = format_debug($v->vars());
 			print_r((string)$v);
@@ -833,7 +833,7 @@ function sqlr(){
 		} else {
 			print_r(format_debug($v));
 		}
-		if(is_webmode())print '</code>';
+		if(!is_climode())print '</code>';
 	});
 }
 
@@ -1385,10 +1385,6 @@ function merge_only($fields, $o1, $o2 = null){
 
 function is_climode(){
 	return php_sapi_name() === 'cli';
-}
-
-function is_webmode(){
-	return !is_climode();
 }
 
 function println(){
