@@ -768,15 +768,15 @@ function date_startend($DATE){
 }
 
 function php_self(){
-	return isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+	return $_SERVER['REQUEST_URI'] ?? '';
 }
 
 function queryl($format = '', $allowed = []){
-	return __query($_SERVER['QUERY_STRING'], $format, '&', $allowed);
+	return __query($_SERVER['QUERY_STRING'] ?? '', $format, '&', $allowed);
 }
 
 function query($format = '', $allowed = []){
-	return __query($_SERVER['QUERY_STRING'], $format, '&amp;', $allowed);
+	return __query($_SERVER['QUERY_STRING'] ?? '', $format, '&amp;', $allowed);
 }
 
 function __query($query_string = '', $format = '', $delim = '&amp;', $allowed = []){
