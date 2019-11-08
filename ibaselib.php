@@ -544,14 +544,20 @@ function ibase_get_object_types($tr = null){
 	return $ret??[];
 }
 
-function ibase_connect_config($params){
+function ibase_connect_config($args){
+	if(is_object($args)){
+		$params = get_object_vars($args);
+	} else {
+		$params = $args;
+	}
+
 	$database = $params['database'] ?? '';
 	$username = $params['username'] ?? '';
 	$password = $params['password'] ?? '';
 	$charset = $params['charset'] ?? 'utf8';
 	$buffers = $params['buffers'] ?? 0;
 	$dialect = $params['buffers'] ?? 0;
-	$role = $params['buffers'] ?? '';
+	$role = $params['role'] ?? '';
 
 	return ibase_connect($database, $username, $password, $charset, $buffers, $dialect, $role);
 }
