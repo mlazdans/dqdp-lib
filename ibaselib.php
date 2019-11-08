@@ -5,9 +5,13 @@ use dqdp\SQL\Condition;
 require_once("stdlib.php");
 
 final class Ibase {
+	static public $DB;
 	static public $FETCH_FLAGS = IBASE_TEXT;
 	static public $FIELD_TYPES = [ 7=>'SMALLINT', 8=>'INTEGER', 9=>'QUAD', 10=>'FLOAT', 11=>'D_FLOAT', 12=>'DATE', 13=>'TIME',
 	14=>'CHAR', 16=>'INT64', 27=>'DOUBLE', 35=>'TIMESTAMP', 37=>'VARCHAR', 40=>'CSTRING', 261=>'BLOB' ];
+	static function __tr($tr){
+		return $tr ? $tr : Ibase::$DB;
+	}
 }
 
 function __ibase_params($args){
@@ -281,7 +285,7 @@ function ibase_table_info($table, $tr = null){
 	WHERE rf.RDB$RELATION_NAME = ?
 	ORDER BY rf.RDB$FIELD_POSITION';
 
-	$q = ibase_query(__tr($tr), $sql, $table);
+	$q = ibase_query(Ibase::__tr($tr), $sql, $table);
 	while($r = ibase_fetch($q)){
 		$ret[] = ibase_strip_rdb($r);
 	}
@@ -399,7 +403,7 @@ function ibase_replace_sql($replaces, $field){
 }
 
 function __ibase_get($tr, $sql){
-	$q = ibase_query(__tr($tr), $sql);
+	$q = ibase_query(Ibase::__tr($tr), $sql);
 	while($r = ibase_fetch($q)){
 		$ret[] = trim($r->NAME);
 	}
@@ -470,7 +474,7 @@ function ibase_isql($DATA){
 }
 
 function ibase_current_role($tr = null){
-	return ibase(__tr($tr), 'SELECT CURRENT_ROLE AS RLE FROM RDB$DATABASE')->RLE;
+	return ibase(Ibase::__tr($tr), 'SELECT CURRENT_ROLE AS RLE FROM RDB$DATABASE')->RLE;
 }
 
 function ibase_strip_rdb($data){
@@ -484,7 +488,7 @@ function ibase_strip_rdb($data){
 }
 
 function ibase_get_users($tr = null){
-	return ibase_strip_rdb(ibase_fetch_all(__tr($tr), 'SELECT DISTINCT SEC$USER_NAME FROM SEC$USERS'));
+	return ibase_strip_rdb(ibase_fetch_all(Ibase::__tr($tr), 'SELECT DISTINCT SEC$USER_NAME FROM SEC$USERS'));
 }
 
 function ibase_get_privileges($user, $tr = null){
@@ -493,7 +497,7 @@ function ibase_get_privileges($user, $tr = null){
 
 	# TODO: trigeri, view, tables, proc var pārklāties nosaukumi, vai nevar? Hmm...
 	$sql = 'SELECT * FROM RDB$USER_PRIVILEGES u WHERE u.RDB$USER = ?';
-	$q = ibase_query_array(__tr($tr), $sql, $vars);
+	$q = ibase_query_array(Ibase::__tr($tr), $sql, $vars);
 	while($r = ibase_fetch($q)){
 		$r = ibase_strip_rdb($r);
 		if(!isset($ret[$r->RELATION_NAME])){
@@ -533,7 +537,7 @@ function ibase_get_privileges($user, $tr = null){
 
 function ibase_get_object_types($tr = null){
 	$sql = 'SELECT RDB$TYPE, RDB$TYPE_NAME FROM RDB$TYPES WHERE RDB$FIELD_NAME=\'RDB$OBJECT_TYPE\'';
-	$data = ibase_strip_rdb(ibase_fetch_all(__tr($tr), $sql));
+	$data = ibase_strip_rdb(ibase_fetch_all(Ibase::__tr($tr), $sql));
 	foreach($data as $r){
 		$ret[$r->TYPE] = $r->TYPE_NAME;
 	}
@@ -550,4 +554,8 @@ function ibase_connect_config($params){
 	$role = $params['buffers'] ?? '';
 
 	return ibase_connect($database, $username, $password, $charset, $buffers, $dialect, $role);
+}
+
+function ibase_register_default_tr($tr){
+	Ibase::$DB = $tr;
 }
