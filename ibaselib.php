@@ -6,6 +6,7 @@ require_once("stdlib.php");
 
 final class Ibase {
 	static public $DB;
+	static public $DEV;
 	static public $FETCH_FLAGS = IBASE_TEXT;
 	static public $FIELD_TYPES = [ 7=>'SMALLINT', 8=>'INTEGER', 9=>'QUAD', 10=>'FLOAT', 11=>'D_FLOAT', 12=>'DATE', 13=>'TIME',
 	14=>'CHAR', 16=>'INT64', 27=>'DOUBLE', 35=>'TIMESTAMP', 37=>'VARCHAR', 40=>'CSTRING', 261=>'BLOB' ];
@@ -44,7 +45,7 @@ function ibase_fetch_all(...$args){
 		$q = $args[0];
 	} else {
 		if(!($q = call_user_func_array('ibase_query', $args))){
-			sqlr($args);
+			if(Ibase::$DEV)sqlr($args);
 			return false;
 		}
 	}
@@ -77,7 +78,7 @@ function ibase(){
 	if($q = call_user_func_array('ibase_query', $values)){
 		return ibase_fetch($q);
 	} else {
-		sqlr($values);
+		if(Ibase::$DEV)sqlr($values);
 		return false;
 	}
 }
@@ -87,7 +88,7 @@ function ibasea() {
 	if($q = call_user_func_array('ibase_query', $values)){
 		return ibase_fetcha($q);
 	} else {
-		sqlr($values);
+		if(Ibase::$DEV)sqlr($values);
 		return false;
 	}
 }
@@ -96,7 +97,7 @@ function ibasea() {
 function ibase_execute_array($q, $values){
 	array_unshift($values, $q);
 	if(!($ret = call_user_func_array('ibase_execute', $values))){
-		sqlr($values);
+		if(Ibase::$DEV)sqlr($values);
 	}
 	return $ret;
 }
@@ -104,7 +105,7 @@ function ibase_execute_array($q, $values){
 function ibase_query_array(){
 	$values = __ibase_params(func_get_args());
 	if(!($ret = call_user_func_array('ibase_query', $values))){
-		sqlr($values);
+		if(Ibase::$DEV)sqlr($values);
 	}
 	return $ret;
 }

@@ -69,6 +69,15 @@ class Engine
 		return isset(Engine::$MODULES[$MID]);
 	}
 
+	static function get_msgs(){
+		return [
+			'ERR'=>Engine::$ERR_MSG,
+			'INFO'=>Engine::$INFO_MSG,
+			'WARN'=>Engine::$WARN_MSG,
+			'DEBUG'=>Engine::$DEBUG_MSG,
+		];
+	}
+
 	static function __msg($key, $msg = null){
 		if($msg === null){
 			return Engine::${$key.'_MSG'};
@@ -104,7 +113,8 @@ class Engine
 
 		$msg = ini_get('error_prepend_string').join(ini_get('html_errors') ? "<br>" : "\n", $outp).ini_get('error_append_string');
 
-		if(php_err_is_fatal($errno)){
+		# !$errno - exception
+		if(php_err_is_fatal($errno) || !$errno){
 			Engine::$ERR_MSG[] = $msg;
 		} else {
 			Engine::$DEBUG_MSG[] = $msg;
