@@ -21,6 +21,7 @@ class Engine
 	static public $MODULES;
 
 	static function init(){
+		Engine::$START_TIME = microtime(true);
 		set_error_handler('dqdp\Engine::error_handler');
 		set_exception_handler('dqdp\Engine::exception_handler');
 		register_shutdown_function('dqdp\Engine::shutdown');

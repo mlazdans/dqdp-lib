@@ -36,8 +36,6 @@ class PHPTemplate
 	function include($template){
 		$this->set('TPL', $this);
 		extract($this->getVars());
-		//ob_start();
 		include($template);
-		//return ob_get_clean();
 	}
 }
