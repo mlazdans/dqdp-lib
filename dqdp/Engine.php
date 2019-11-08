@@ -179,5 +179,16 @@ class Engine
 				Engine::error_handler($err['type'], $err['message'], $err['file'], $err['line']);
 			}
 		}
+
+		if(ob_get_level()){
+			$MODULE_DATA = ob_get_clean();
+		}
+
+		if(Engine::$TEMPLATE_FILE){
+			Engine::$TEMPLATE->set('MODULE_DATA', $MODULE_DATA??'');
+			Engine::$TEMPLATE->include(Engine::$TEMPLATE_FILE);
+		} else {
+			print $MODULE_DATA??'';
+		}
 	}
 }
