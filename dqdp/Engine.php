@@ -57,7 +57,7 @@ class Engine
 	}
 
 	static function module_filter_chars($MID){
-		$module_chars = '/[^a-z_\/]/';
+		$module_chars = '/[^a-z_\/0-9]/';
 		return preg_replace($module_chars, "", $MID);
 	}
 
@@ -102,9 +102,7 @@ class Engine
 			}
 		}
 
-		$msg = join("\n", $outp);
-
-		$msg = is_climode() ? $msg : "<pre>$msg</pre>";
+		$msg = ini_get('error_prepend_string').join(ini_get('html_errors') ? "<br>" : "\n", $outp).ini_get('error_append_string');
 
 		if(php_err_is_fatal($errno)){
 			Engine::$ERR_MSG[] = $msg;
@@ -145,9 +143,9 @@ class Engine
 	}
 
 	static function error_handler_msgformat($errtype, $errstr, $errfile, $errline){
-		$msg = '<b>%s:</b> %s in <b>%s</b> on line <b>%s</b>';
-		if(is_climode()){
-			$msg = '%s: %s in %s on line %s';
+		$msg = '%s: %s in %s on line %s';
+		if(ini_get('html_errors')){
+			$msg = '<b>%s:</b> %s in <b>%s</b> on line <b>%s</b>';
 		}
 		return sprintf($msg, $errtype, $errstr, trim_includes_path($errfile), $errline);
 	}
@@ -166,9 +164,9 @@ class Engine
 		}
 
 		# TODO: formāts konfigurējams
-		$msg = "\t%s(%s) in <b>%s</b> on line <b>%s</b>";
-		if(is_climode()){
-			$msg = "\t%s(%s) in %s on line %s";
+		$msg = "\t%s(%s) in %s on line %s";
+		if(ini_get('html_errors')){
+			$msg = "\t%s(%s) in <b>%s</b> on line <b>%s</b>";
 		}
 
 		return sprintf($msg, $trace['function'], $args, trim_includes_path($trace['file']), $trace['line']);
