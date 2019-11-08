@@ -4,7 +4,7 @@ namespace dqdp;
 
 class PHPTemplate
 {
-	var $Vars;
+	var $Vars = [];
 
 	function __construct(){
 		return $this;
