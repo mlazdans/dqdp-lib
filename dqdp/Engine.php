@@ -19,6 +19,8 @@ class Engine
 	static public $TMP_ROOT;
 	static public $PUBLIC_ROOT;
 	static public $MODULES;
+	static public $TEMPLATE_FILE;
+	static public $TEMPLATE;
 
 	static function init(){
 		Engine::$START_TIME = microtime(true);
@@ -139,7 +141,7 @@ class Engine
 	}
 
 	static function exception_handler($e) {
-		Engine::__error_handler(0, "Uncaught Exception", $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTrace());
+		Engine::__error_handler(0, sprintf("Uncaught Exception(%s)", get_class($e)), $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTrace());
 	}
 
 	static function error_handler_msgformat($errtype, $errstr, $errfile, $errline){

@@ -37,5 +37,6 @@ class PHPTemplate
 		$this->set('TPL', $this);
 		extract($this->getVars());
 		include($template);
+		return $this;
 	}
 }
