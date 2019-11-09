@@ -93,6 +93,16 @@ function ibasea() {
 	}
 }
 
+function ibaseq(){
+	$values = __ibase_params(func_get_args());
+	if($q = call_user_func_array('ibase_query', $values)){
+		return $q;
+	} else {
+		if(Ibase::$DEV)sqlr($values);
+		return false;
+	}
+}
+
 # TODO: add transaction param
 function ibase_execute_array($q, $values){
 	array_unshift($values, $q);
@@ -488,6 +498,7 @@ function ibase_strip_rdb($data){
 	return $data;
 }
 
+# TODO: plugin Srp, utt
 function ibase_get_users($tr = null){
 	return ibase_strip_rdb(ibase_fetch_all(Ibase::__tr($tr), 'SELECT DISTINCT SEC$USER_NAME FROM SEC$USERS'));
 }
@@ -533,6 +544,7 @@ function ibase_get_privileges($user, $tr = null){
 			}
 		}
 	}
+
 	return $ret;
 }
 

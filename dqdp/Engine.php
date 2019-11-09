@@ -7,6 +7,8 @@ class Engine
 	static public $START_TIME;
 	static public $DB;
 	static public $REQ;
+	static public $GET;
+	static public $POST;
 	static public $IP;
 	static public $DEV;
 	static public $DOMAIN;
@@ -28,6 +30,8 @@ class Engine
 		set_exception_handler('dqdp\Engine::exception_handler');
 		register_shutdown_function('dqdp\Engine::shutdown');
 		Engine::$REQ = eo();
+		Engine::$GET = eo();
+		Engine::$POST = eo();
 		if(is_climode()){
 			Engine::$IP = 'localhost';
 			# Parse parameters passed as --param=value
@@ -43,6 +47,8 @@ class Engine
 			}
 		} else {
 			Engine::$IP = getenv('REMOTE_ADDR');
+			Engine::$GET->merge(entdecode($_GET));
+			Engine::$POST->merge(entdecode($_POST));
 			Engine::$REQ->merge(entdecode($_GET));
 			Engine::$REQ->merge(entdecode($_POST));
 		}
