@@ -435,53 +435,33 @@ function ibase_get_tables($tr = null){
 	ORDER BY r.RDB$RELATION_NAME');
 }
 
-// args = ['DB', 'ISQL', 'USER', 'PASS', 'SQL', 'OUTPUT'];
+// args = ['DB', 'USER', 'PASS'];
 // returns exit code and output
-function ibase_isql($DATA){
+function ibase_isql($SQL, $params = null){
+	$cmd = getenv('ISQL')??(is_windows() ? "isql.exe" : "isql");
 	$DEFAULTS = [
-		'ISQL'=>is_windows() ? "isql.exe" : "isql",
 		'USER'=>"sysdba",
 		'PASS'=>"masterkey",
-		'STDIN'=>["pipe", "r"],
-		//'STDOUT'=>["pipe", "w"],
-		'STDOUT'=>['file', 'php://stdout', 'w'],
-		'STDERR'=>["file", getenv('TMPDIR')."./isql-output.txt", "a"],
 	];
-	$DATA = eo($DEFAULTS)->merge($DATA);
+	$params = eo($DEFAULTS)->merge($params);
 
-	if(empty($DATA->DB)){
+	if(empty($params->DB)){
 		trigger_error("DB parameter not set", E_USER_WARNING);
 		return false;
 	}
 
-	$args = ['-e', '-noautocommit', '-m2', '-merge', '-bail'];
-	if($DATA->USER){
+	$args = ['-e', '-noautocommit', '-bail'];
+	if($params->USER){
 		$args[] = '-user';
-		$args[] = "'$DATA->USER'";
+		$args[] = "'$params->USER'";
 	}
-	if($DATA->PASS){
+	if($params->PASS){
 		$args[] = '-pass';
-		$args[] = "'$DATA->PASS'";
+		$args[] = "'$params->PASS'";
 	}
-	if($DATA->DB)$args[] = $DATA->DB;
+	if($params->DB)$args[] = $params->DB;
 
-	$descriptorspec = [$DATA->STDIN, $DATA->STDOUT, $DATA->STDERR];
-
-	$process_cmd = '"'.$DATA->ISQL.'"'.' '.join(" ", escape_shell($args));
-	$process = proc_open($process_cmd, $descriptorspec, $pipes);
-	if(is_resource($process)){
-		fwrite($pipes[0], $DATA->SQL);
-		fclose($pipes[0]);
-
-		$output = null;
-		if(isset($pipes[1])){
-			$output = stream_get_contents($pipes[1]);
-			fclose($pipes[1]);
-		}
-
-		return [proc_close($process), $output];
-	}
-	return false;
+	return proc_exec($SQL, $cmd, $args);
 }
 
 function ibase_current_role($tr = null){
