@@ -34,10 +34,8 @@ class PHPTemplate
 	}
 
 	function include($template){
-		//$this->set('TPL', $this);
-		//$TPL = &$this;
 		extract($this->getVars());
-		$TPL = &$this;
+		$TPL = $this;
 		include($template);
 		return $this;
 	}
