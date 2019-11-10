@@ -1504,8 +1504,12 @@ function trimmer($data){
 	});
 }
 
-function php_err_is_fatal($errno){
+function is_fatal_error($errno){
 	return in_array($errno, [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR]);
+}
+
+function is_php_fatal_error($errno){
+	return in_array($errno, [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR]);
 }
 
 function wkhtmltopdf($HTML){

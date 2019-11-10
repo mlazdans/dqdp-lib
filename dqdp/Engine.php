@@ -129,7 +129,7 @@ class Engine
 		$msg = ini_get('error_prepend_string').join(ini_get('html_errors') ? "<br>" : "\n", $outp).ini_get('error_append_string');
 
 		# !$errno - exception
-		if(php_err_is_fatal($errno) || !$errno){
+		if(is_fatal_error($errno) || !$errno){
 			self::err_msg($msg);
 		} else {
 			self::debug_msg($msg);
@@ -138,7 +138,7 @@ class Engine
 
 	static function error_handler(int $errno, string $errstr, string $errfile, int $errline){
 		$errtype = $errno;
-		if(php_err_is_fatal($errno)){
+		if(is_fatal_error($errno)){
 			$errtype = 'Fatal error';
 		} elseif(in_array($errno, [E_WARNING, E_USER_WARNING])){
 			$errtype = 'Warning';
@@ -199,7 +199,7 @@ class Engine
 
 	static function shutdown(){
 		if($err = error_get_last()){
-			if(php_err_is_fatal($err['type'])){
+			if(is_php_fatal_error($err['type'])){
 				if(!is_climode())header503(null);
 				self::error_handler($err['type'], $err['message'], $err['file'], $err['line']);
 			}
