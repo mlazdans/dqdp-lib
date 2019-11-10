@@ -1507,3 +1507,31 @@ function trimmer($data){
 function php_err_is_fatal($errno){
 	return in_array($errno, [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR]);
 }
+
+# TODO: $params
+function wkhtmltopdf($HTML){
+	$descriptorspec = [
+		0 =>["pipe", "r"],
+		1 =>["pipe", "w"],
+		2 =>["file", getenv('TMPDIR')."./wkhtmltopdf-output.txt", "a"]
+	];
+
+	$args = ["-", "-"];
+	$wkhtmltopdf = App::$WKHTMLTOPDF??(is_windows() ? "wkhtmltopdf.exe" : "wkhtmltopdf");
+	$process_cmd = '"'.$wkhtmltopdf.'"'.' '.join(" ", escape_shell($args));
+
+	$process = proc_open($process_cmd, $descriptorspec, $pipes);
+	if(is_resource($process)){
+		fwrite($pipes[0], $HTML);
+		fclose($pipes[0]);
+
+		$pdf_data = stream_get_contents($pipes[1]);
+		fclose($pipes[1]);
+
+		if(proc_close($process) != 0){
+			return false;
+		}
+	}
+
+	return $pdf_data;
+}

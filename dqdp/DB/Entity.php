@@ -5,7 +5,7 @@ namespace dqdp\DB;
 interface Entity {
 	function fetch();
 	function fetch_all();
-	function get(Int $ID);
+	function get($ID);
 	function search();
 	function save();
 	function delete($IDS);
