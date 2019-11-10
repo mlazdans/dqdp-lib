@@ -30,15 +30,15 @@ class Engine
 	}
 
 	static function init(){
-		Engine::$START_TIME = microtime(true);
+		self::$START_TIME = microtime(true);
 		set_error_handler('dqdp\Engine::error_handler');
 		set_exception_handler('dqdp\Engine::exception_handler');
 		register_shutdown_function('dqdp\Engine::shutdown');
-		Engine::$REQ = eo();
-		Engine::$GET = eo();
-		Engine::$POST = eo();
+		self::$REQ = eo();
+		self::$GET = eo();
+		self::$POST = eo();
 		if(is_climode()){
-			Engine::$IP = 'localhost';
+			self::$IP = 'localhost';
 			# Parse parameters passed as --param=value
 			$argv = $GLOBALS['argv'] ?? [];
 			if(count($argv) > 1){
@@ -46,25 +46,25 @@ class Engine
 					if(strpos($argv[$i], '--') === 0){
 						$parts = explode("=", $argv[$i]);
 						$param = substr(array_shift($parts), 2); // remove "--"
-						Engine::$REQ->{$param} = join("=", $parts); // restore 'value' in case value contains "="
+						self::$REQ->{$param} = join("=", $parts); // restore 'value' in case value contains "="
 					}
 				}
 			}
 		} else {
-			Engine::$IP = getenv('REMOTE_ADDR');
-			Engine::$GET->merge(entdecode($_GET));
-			Engine::$POST->merge(entdecode($_POST));
-			Engine::$REQ->merge(entdecode($_GET));
-			Engine::$REQ->merge(entdecode($_POST));
+			self::$IP = getenv('REMOTE_ADDR');
+			self::$GET->merge(entdecode($_GET));
+			self::$POST->merge(entdecode($_POST));
+			self::$REQ->merge(entdecode($_GET));
+			self::$REQ->merge(entdecode($_POST));
 		}
 	}
 
 	static function db_connect($params){
-		return Engine::$DB = ibase_connect_config($params);
+		return self::$DB = ibase_connect_config($params);
 	}
 
 	static function get_module($MID){
-		return Engine::$MODULES[$MID]??false;
+		return self::$MODULES[$MID]??false;
 	}
 
 	static function module_filter_chars($MID){
@@ -73,19 +73,19 @@ class Engine
 	}
 
 	static function module_path($MID){
-		return realpath(Engine::$SYS_ROOT).DIRECTORY_SEPARATOR."./modules/$MID.php";
+		return realpath(self::$SYS_ROOT).DIRECTORY_SEPARATOR."./modules/$MID.php";
 	}
 
 	static function module_exists($MID){
-		return isset(Engine::$MODULES[$MID]);
+		return isset(self::$MODULES[$MID]);
 	}
 
 	static function get_msgs(){
 		return [
-			'ERR'=>Engine::$ERR_MSG,
-			'INFO'=>Engine::$INFO_MSG,
-			'WARN'=>Engine::$WARN_MSG,
-			'DEBUG'=>Engine::$DEBUG_MSG,
+			'ERR'=>self::$ERR_MSG,
+			'INFO'=>self::$INFO_MSG,
+			'WARN'=>self::$WARN_MSG,
+			'DEBUG'=>self::$DEBUG_MSG,
 		];
 	}
 
@@ -94,34 +94,34 @@ class Engine
 			fprintf(STDERR, "[%s] %s\n", $key, translit($msg));
 		}
 		if($msg === null){
-			return Engine::${$key.'_MSG'};
+			return self::${$key.'_MSG'};
 		} else {
-			return Engine::${$key.'_MSG'}[] = $msg;
+			return self::${$key.'_MSG'}[] = $msg;
 		}
 	}
 
 	static function debug_msg($msg = null){
-		return Engine::__msg("DEBUG", $msg);
+		return self::__msg("DEBUG", $msg);
 	}
 
 	static function warn_msg($msg = null){
-		return Engine::__msg("WARN", $msg);
+		return self::__msg("WARN", $msg);
 	}
 
 	static function err_msg($msg = null){
-		return Engine::__msg("ERR", $msg);
+		return self::__msg("ERR", $msg);
 	}
 
 	static function info_msg($msg = null){
-		return Engine::__msg("INFO", $msg);
+		return self::__msg("INFO", $msg);
 	}
 
 	static function __error_handler($errno, $errtype, $errstr, $errfile, $errline, $trace = null){
-		$outp[] = Engine::error_handler_msgformat($errtype, $errstr, $errfile, $errline);
+		$outp[] = self::error_handler_msgformat($errtype, $errstr, $errfile, $errline);
 
 		if($trace) {
 			foreach($trace as $t){
-				$outp[] = Engine::error_handler_traceformat($t);
+				$outp[] = self::error_handler_traceformat($t);
 			}
 		}
 
@@ -157,13 +157,13 @@ class Engine
 			$trace = array_slice($trace, 1);
 		}
 
-		Engine::__error_handler($errno, $errtype, $errstr, $errfile, $errline, $trace);
+		self::__error_handler($errno, $errtype, $errstr, $errfile, $errline, $trace);
 
 		return false;
 	}
 
 	static function exception_handler($e) {
-		Engine::__error_handler(0, sprintf("Uncaught Exception(%s)", get_class($e)), $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTrace());
+		self::__error_handler(0, sprintf("Uncaught Exception(%s)", get_class($e)), $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTrace());
 	}
 
 	static function error_handler_msgformat($errtype, $errstr, $errfile, $errline){
@@ -200,7 +200,7 @@ class Engine
 		if($err = error_get_last()){
 			if(php_err_is_fatal($err['type'])){
 				if(!is_climode())header503(null);
-				Engine::error_handler($err['type'], $err['message'], $err['file'], $err['line']);
+				self::error_handler($err['type'], $err['message'], $err['file'], $err['line']);
 			}
 		}
 
@@ -208,9 +208,9 @@ class Engine
 			$MODULE_DATA = ob_get_clean();
 		}
 
-		if(Engine::$TEMPLATE_FILE){
-			Engine::$TEMPLATE->set('MODULE_DATA', $MODULE_DATA??'');
-			Engine::$TEMPLATE->include(Engine::$TEMPLATE_FILE);
+		if(self::$TEMPLATE_FILE){
+			self::$TEMPLATE->set('MODULE_DATA', $MODULE_DATA??'');
+			self::$TEMPLATE->include(self::$TEMPLATE_FILE);
 		} else {
 			print $MODULE_DATA??'';
 		}
