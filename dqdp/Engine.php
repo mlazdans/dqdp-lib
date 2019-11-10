@@ -31,6 +31,7 @@ class Engine
 
 	static function init(){
 		self::$START_TIME = microtime(true);
+		ini_set('display_errors', 0); // 1, ja iebūvētais
 		set_error_handler('dqdp\Engine::error_handler');
 		set_exception_handler('dqdp\Engine::exception_handler');
 		register_shutdown_function('dqdp\Engine::shutdown');
@@ -204,15 +205,16 @@ class Engine
 			}
 		}
 
-		if(ob_get_level()){
-			$MODULE_DATA = ob_get_clean();
+		$MODULE_DATA = '';
+		while(ob_get_level()){
+			$MODULE_DATA .= ob_get_clean();
 		}
 
 		if(self::$TEMPLATE_FILE){
-			self::$TEMPLATE->set('MODULE_DATA', $MODULE_DATA??'');
+			self::$TEMPLATE->set('MODULE_DATA', $MODULE_DATA);
 			self::$TEMPLATE->include(self::$TEMPLATE_FILE);
 		} else {
-			print $MODULE_DATA??'';
+			print $MODULE_DATA;
 		}
 	}
 }

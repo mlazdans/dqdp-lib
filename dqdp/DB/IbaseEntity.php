@@ -35,6 +35,11 @@ class IbaseEntity implements Entity {
 	protected function before_search(&$DATA){
 		$DATA = eoe($DATA);
 
+		if($DATA->isset($this->PK) && is_empty($DATA->{$this->PK})){
+			trigger_error("$this->PK must be *NOT* empty", E_USER_ERROR);
+			return false;
+		}
+
 		if($DATA->isset($this->PK)){
 			$this->SearchSQL->Where(["$this->Table.{$this->PK} = ?", $DATA->{$this->PK}]);
 		}
