@@ -1508,30 +1508,41 @@ function php_err_is_fatal($errno){
 	return in_array($errno, [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR]);
 }
 
-# TODO: $params
 function wkhtmltopdf($HTML){
-	$descriptorspec = [
-		0 =>["pipe", "r"],
-		1 =>["pipe", "w"],
-		2 =>["file", getenv('TMPDIR')."./wkhtmltopdf-output.txt", "a"]
-	];
-
 	$args = ["-", "-"];
-	$wkhtmltopdf = App::$WKHTMLTOPDF??(is_windows() ? "wkhtmltopdf.exe" : "wkhtmltopdf");
-	$process_cmd = '"'.$wkhtmltopdf.'"'.' '.join(" ", escape_shell($args));
+	$wkhtmltopdf = getenv('WKHTMLTOPDF')??(is_windows() ? "wkhtmltopdf.exe" : "wkhtmltopdf");
+
+	return proc_exec($HTML, $wkhtmltopdf, $args);
+}
+
+function proc_exec($input, $cmd, $args = [], $descriptorspec = []){
+	if(empty($descriptorspec[0]))$descriptorspec[0] = ["pipe", "r"];
+	if(empty($descriptorspec[1]))$descriptorspec[1] = ["pipe", "w"];
+	if(empty($descriptorspec[2]))$descriptorspec[2] = ['file', getenv('TMPDIR')."./proc_exec-stderr.log", 'a'];
+
+	$process_cmd = '"'.$cmd.'"';
+	if($args){
+		$process_cmd .= ' '.join(" ", escape_shell($args));
+	}
 
 	$process = proc_open($process_cmd, $descriptorspec, $pipes);
 	if(is_resource($process)){
-		fwrite($pipes[0], $HTML);
+		if(isset($pipes[1]))stream_set_blocking($pipes[1], 0);
+		if(isset($pipes[2]))stream_set_blocking($pipes[2], 0);
+		fwrite($pipes[0], $input);
 		fclose($pipes[0]);
 
-		$pdf_data = stream_get_contents($pipes[1]);
-		fclose($pipes[1]);
-
-		if(proc_close($process) != 0){
-			return false;
+		$output = null;
+		if(isset($pipes[1])){
+			$output = stream_get_contents($pipes[1]);
+			fclose($pipes[1]);
 		}
-	}
 
-	return $pdf_data;
+		return [proc_close($process), $output];
+	}
+	return false;
+}
+
+function debug2file($msg){
+	file_put_contents(getenv('TMPDIR').'./debug.log', sprintf("[%s] %s\n", date('c'), $msg), FILE_APPEND);
 }

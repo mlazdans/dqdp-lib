@@ -129,9 +129,9 @@ class Engine
 
 		# !$errno - exception
 		if(php_err_is_fatal($errno) || !$errno){
-			Engine::$ERR_MSG[] = $msg;
+			self::err_msg($msg);
 		} else {
-			Engine::$DEBUG_MSG[] = $msg;
+			self::debug_msg($msg);
 		}
 	}
 
