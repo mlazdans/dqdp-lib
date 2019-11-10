@@ -22,7 +22,10 @@ class IbaseEntity implements Entity {
 	}
 
 	function fetch_all(){
-		return call_user_func_array('ibase_fetch_all', func_get_args());
+		while($r = call_user_func_array([$this, 'fetch'], func_get_args())){
+			$ret[] = $r;
+		}
+		return $ret??[];
 	}
 
 	function get($ID){
