@@ -6,6 +6,7 @@ class Engine
 {
 	static public $START_TIME;
 	static public $DB;
+	static public $DB_PARAMS;
 	static public $REQ;
 	static public $GET;
 	static public $POST;
@@ -23,6 +24,10 @@ class Engine
 	static public $MODULES;
 	static public $TEMPLATE_FILE;
 	static public $TEMPLATE;
+
+	# TODO: dažādi eventi: before init, after init, etc
+	static function addEvent(){
+	}
 
 	static function init(){
 		Engine::$START_TIME = microtime(true);
@@ -85,6 +90,9 @@ class Engine
 	}
 
 	static function __msg($key, $msg = null){
+		if(is_climode() && $msg){
+			fprintf(STDERR, "[%s] %s\n", $key, translit($msg));
+		}
 		if($msg === null){
 			return Engine::${$key.'_MSG'};
 		} else {
