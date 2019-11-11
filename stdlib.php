@@ -461,14 +461,19 @@ function md5uniqid(){
 	return md5(uniqid(rand(), true));
 }
 
-function browse($path, callable $function){
-	$entries = array_filter(scandir($path), function($entry){
-		return $entry != '.' && $entry != '..';
-	});
+function browse_tree($path, callable $function){
+	foreach(scandir($path) as $entry){
+		($r = $function($path, $entry, $function)) && $ret[$entry] = $r;
+	}
+	return $ret??[];
+}
 
-	array_map(function($entry) use ($path, $function) {
-		$function($path, $entry);
-	}, $entries);
+function browse_flat($path, callable $function){
+	$ret = [];
+	foreach(scandir($path) as $entry){
+		($r = $function($path, $entry, $function)) && $ret = array_merge($ret, is_array($r) ? $r : [$r]);
+	}
+	return $ret??[];
 }
 
 function compacto($data){
@@ -1549,4 +1554,12 @@ function proc_exec($input, $cmd, $args = [], $descriptorspec = []){
 
 function debug2file($msg){
 	file_put_contents(getenv('TMPDIR').'./debug.log', sprintf("[%s] %s\n", date('c'), $msg), FILE_APPEND);
+}
+
+function array_flatten(Array $a){
+	$ret = [];
+	array_walk_recursive($a, function($item) use (&$ret) {
+		$ret[] = $item;
+	});
+	return $ret;
 }
