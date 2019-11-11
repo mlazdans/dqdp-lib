@@ -437,6 +437,7 @@ function ibase_get_tables($tr = null){
 
 // args = ['DB', 'USER', 'PASS'];
 // returns exit code and output
+//cat 0CREATE.sql | isql -q -e -noautocommit -bail -user sysdba -pass masterkey -o CON 127.0.0.1:E:\dbf30\vienpatis\dev\vienpatis-dev.fdb 1>0stdout 2>0stderr
 function ibase_isql($SQL, $params = null){
 	$cmd = getenv('ISQL')??(is_windows() ? "isql.exe" : "isql");
 	$DEFAULTS = [
@@ -450,7 +451,17 @@ function ibase_isql($SQL, $params = null){
 		return false;
 	}
 
-	$args = ['-e', '-noautocommit', '-bail'];
+	$args = ['-e', '-noautocommit', '-bail', '-q'];
+
+	# TODO: -o CON only on Windows, need fix and test on linux
+	if(defined('STDOUT')){
+		$args[] = '-o';
+		$args[] = 'CON';
+	} else {
+		$args[] = '-o';
+		$tmpfname = tempnam(sys_get_temp_dir(), 'isql');
+		$args[] = $tmpfname;
+	}
 	if($params->USER){
 		$args[] = '-user';
 		$args[] = "'$params->USER'";
@@ -461,7 +472,14 @@ function ibase_isql($SQL, $params = null){
 	}
 	if($params->DB)$args[] = $params->DB;
 
-	return proc_exec($SQL, $cmd, $args);
+	# Capture isql output. isql tends to keep isql in interactive mode if no -i or -o specified
+	if($exe = proc_exec($SQL, $cmd, $args)){
+		if(isset($tmpfname)){
+			$exe[1] = file_get_contents($tmpfname);
+			//unlink($tmpfname);
+		}
+	}
+	return $exe;
 }
 
 function ibase_current_role($tr = null){
