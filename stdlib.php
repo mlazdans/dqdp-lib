@@ -814,7 +814,7 @@ function __query($query_string = '', $format = '', $delim = '&amp;', $allowed = 
 function format_debug($v){
 	$vars = __object_map($v, function($item){
 		if(is_scalar($item) && mb_detect_encoding($item)){
-			return mb_substr($item, 0, 500);
+			return mb_substr($item, 0, 1024).(mb_strlen($item) > 1024 ? '...' : '');
 		} elseif(is_null($item)) {
 			return "NULL";
 		} elseif(is_resource($item)) {
