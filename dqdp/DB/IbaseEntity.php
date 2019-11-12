@@ -36,7 +36,7 @@ class IbaseEntity implements Entity {
 		$DATA = eoe($DATA);
 
 		if($DATA->isset($this->PK) && is_empty($DATA->{$this->PK})){
-			trigger_error("$this->PK must be *NOT* empty", E_USER_ERROR);
+			trigger_error("Illegal PRIMARY KEY value for $this->PK", E_USER_ERROR);
 			return false;
 		}
 
