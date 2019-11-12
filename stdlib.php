@@ -1527,11 +1527,13 @@ function wkhtmltopdf($HTML){
 function proc_exec($input, $cmd, $args = [], $descriptorspec = []){
 	if(empty($descriptorspec[0]))$descriptorspec[0] = ["pipe", "r"];
 	if(empty($descriptorspec[1]))$descriptorspec[1] = ["pipe", "w"];
-	//if(empty($descriptorspec[1]))$descriptorspec[1] = ['file', 'php://stdout', 'w'];
-
-	if(empty($descriptorspec[2]))$descriptorspec[2] = ["pipe", "w"];
-	//if(empty($descriptorspec[2]))$descriptorspec[2] = ['file', 'php://stdout', 'w'];
-	//if(empty($descriptorspec[2]))$descriptorspec[2] = ['file', getenv('TMPDIR')."./proc_exec-stderr.log", 'a'];
+	if(empty($descriptorspec[2])){
+		if(defined('STDERR')){
+			$descriptorspec[2] = ["pipe", "w"];
+		} else {
+			$descriptorspec[2] = ['file', getenv('TMPDIR')."./proc_exec-stderr.log", 'a'];
+		}
+	}
 
 	$process_cmd = '"'.$cmd.'"';
 	if($args){
@@ -1547,53 +1549,8 @@ function proc_exec($input, $cmd, $args = [], $descriptorspec = []){
 	fwrite($pipes[0], $input);
 	fclose($pipes[0]);
 
-	$stdout = is_resource($pipes[1]) ? stream_get_contents($pipes[1]) : null;
-	$stderr = is_resource($pipes[2]) ? stream_get_contents($pipes[2]) : null;
-	/*
-	$buf_size = 1;
-	$stdout = $stderr = '';
-	while (
-		(is_resource($pipes[1]) && !feof($pipes[1])) ||
-		(is_resource($pipes[2]) && !feof($pipes[2]))
-	){
-		if($buf = fread($pipes[1], $buf_size)){
-			$stdout .= $buf;
-		}
-
-		if($buf = fread($pipes[2], $buf_size)){
-			$stderr .= $buf;
-		}
-	}
-	fclose($pipes[1]);
-	fclose($pipes[2]);
-	*/
-	/*
-	fwrite($pipes[0], $input);
-	fclose($pipes[0]);
-
-	$stdout = $stderr = '';
-	while (!feof($pipes[1]) || !feof($pipes[2])){
-		$stdout .= fread($pipes[1], 1024);
-		$stderr .= fread($pipes[2], 1024);
-	}
-	fclose($pipes[1]);
-	fclose($pipes[2]);
-	*/
-
-	/*
-	if(isset($pipes[0]))stream_set_blocking($pipes[0], 0);
-	if(isset($pipes[1]))stream_set_blocking($pipes[1], 0);
-	if(isset($pipes[2]))stream_set_blocking($pipes[2], 0);
-	fwrite($pipes[0], $input);
-	fclose($pipes[0]);
-
-	printr($pipes);
-	$output = null;
-	if(isset($pipes[1])){
-		$output = stream_get_contents($pipes[1]);
-		fclose($pipes[1]);
-	}
-	*/
+	$stdout = (isset($pipes[1]) && is_resource($pipes[1])) ? stream_get_contents($pipes[1]) : null;
+	$stderr = (isset($pipes[2]) && is_resource($pipes[2])) ? stream_get_contents($pipes[2]) : null;
 
 	return [proc_close($process), $stdout, $stderr];
 }
