@@ -459,7 +459,7 @@ function ibase_isql($SQL, $params = null){
 		$args[] = 'CON';
 	} else {
 		$args[] = '-o';
-		$tmpfname = tempnam(sys_get_temp_dir(), 'isql');
+		$tmpfname = tempnam(getenv('TMPDIR'), 'isql');
 		$args[] = $tmpfname;
 	}
 	if($params->USER){

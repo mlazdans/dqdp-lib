@@ -2,6 +2,7 @@
 
 namespace dqdp;
 
+# TODO: implementēt Entity
 class Settings
 {
 	var $classId = null;
