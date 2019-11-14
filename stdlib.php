@@ -1440,6 +1440,20 @@ function within($v, $s, $e){
 	return ($v > $s) && ($v < $e);
 }
 
+# NOTE: variants ar skipot neuzstādītiem laukiem
+function build_sql($fields, $DATA = null){
+	foreach($fields as $i=>$k){
+		if(isset($DATA->{$k})){
+			$values[] = $DATA->{$k};
+		} else {
+			unset($fields[$i]);
+		}
+	}
+
+	return [join(",", $fields), join(",", array_fill(0, count($fields), "?")), $values??[]];
+}
+/*
+# NOTE: variants ar set nulll neuzstādītiem laukiem
 function build_sql($fields, $DATA = null){
 	foreach($fields as $k){
 		$values[] = $DATA->{$k} ?? null;
@@ -1447,6 +1461,7 @@ function build_sql($fields, $DATA = null){
 
 	return [join(",", $fields), join(",", array_fill(0, count($fields), "?")), $values??[]];
 }
+*/
 
 function build_sql_set($fields, $DATA){
 	$values = $nfields = [];
@@ -1565,4 +1580,21 @@ function array_flatten(Array $a){
 		$ret[] = $item;
 	});
 	return $ret;
+}
+
+function get_ex_rate($CURR_ID, $date = false){
+	$ts = $date ? strtotime($date) : time();
+
+	$url = "http://www.bank.lv/vk/ecb.xml";
+	if($ts)$url .= "?date=".date('Ymd', $ts);
+
+	if($xml = simplexml_load_file(rawurlencode($url))){
+		foreach($xml->Currencies->Currency as $Item){
+			if((string)$Item->ID == $CURR_ID){
+				return (float)$Item->Rate;
+			}
+		}
+	}
+
+	return false;
 }
