@@ -1540,15 +1540,21 @@ function proc_exec($input, $cmd, $args = [], $descriptorspec = []){
 	if(!is_resource($process)){
 		return false;
 	}
-	//if(isset($pipes[1]))stream_set_blocking($pipes[1], 0);
-	//if(isset($pipes[2]))stream_set_blocking($pipes[2], 0);
-	fwrite($pipes[0], $input);
-	fclose($pipes[0]);
+	//stream_set_timeout
+	// if(isset($pipes[0]))stream_set_blocking($pipes[0], 0);
+	// if(isset($pipes[1]))stream_set_blocking($pipes[1], 0);
+	// if(isset($pipes[2]))stream_set_blocking($pipes[2], 0);
+	if(isset($pipes[0]) && is_resource($pipes[0])){
+		fwrite($pipes[0], $input);
+		fclose($pipes[0]);
+	}
 
 	$stdout = (isset($pipes[1]) && is_resource($pipes[1])) ? stream_get_contents($pipes[1]) : null;
 	$stderr = (isset($pipes[2]) && is_resource($pipes[2])) ? stream_get_contents($pipes[2]) : null;
 
-	return [proc_close($process), $stdout, $stderr];
+	$errcode = proc_close($process);
+
+	return [$errcode, $stdout, $stderr];
 }
 
 function debug2file($msg){
