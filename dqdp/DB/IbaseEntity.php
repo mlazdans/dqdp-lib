@@ -35,25 +35,33 @@ class IbaseEntity implements Entity {
 	protected function before_search(&$DATA){
 		$DATA = eoe($DATA);
 
-		if($DATA->isset($this->PK) && is_empty($DATA->{$this->PK})){
-			trigger_error("Illegal PRIMARY KEY value for $this->PK", E_USER_ERROR);
-			return false;
-		}
-
-		if($DATA->isset($this->PK)){
-			$this->SearchSQL->Where(["$this->Table.{$this->PK} = ?", $DATA->{$this->PK}]);
-		}
-
-		$k = $this->PK."S";
-		if($DATA->isset($k)){
-			if(is_array($DATA->{$k})){
-				$IDS = $DATA->{$k};
-			} elseif(is_string($DATA->{$k})){
-				$IDS = explode(',',$DATA->{$k});
-			} else {
-				$IDS = [$IDS];
+		if(is_array($this->PK)){
+		} else {
+			if($DATA->isset($this->PK) && is_empty($DATA->{$this->PK})){
+				trigger_error("Illegal PRIMARY KEY value for $this->PK", E_USER_ERROR);
+				return false;
 			}
-			call_user_func([$this->SearchSQL, 'Where'], sql_create_int_filter("$this->Table.{$this->PK}", $IDS));
+		}
+
+		$pks = array_wrap($this->PK);
+		foreach($pks as $k){
+			if($DATA->{$k}){
+				$this->SearchSQL->Where(["$this->Table.$k = ?", $DATA->{$k}]);
+			}
+		}
+
+		if(!is_array($this->PK)){
+			$k = $this->PK."S";
+			if($DATA->isset($k)){
+				if(is_array($DATA->{$k})){
+					$IDS = $DATA->{$k};
+				} elseif(is_string($DATA->{$k})){
+					$IDS = explode(',',$DATA->{$k});
+				} else {
+					$IDS = [$IDS];
+				}
+				call_user_func([$this->SearchSQL, 'Where'], sql_create_int_filter("$this->Table.{$this->PK}", $IDS));
+			}
 		}
 
 		if($DATA->ORDER_BY){
@@ -77,18 +85,36 @@ class IbaseEntity implements Entity {
 	function save(){
 		list($fields, $DATA) = func_get_args();
 
-		$DATA->{$this->PK} = $DATA->{$this->PK} ?? "NEXT VALUE FOR $this->Gen";
+		$PK_fields_str = $this->PK;
+		$Gen_value_str = $Gen_field_str = '';
+
+		if(is_array($this->PK)){
+			$PK_fields_str = join(",", $this->PK);
+		} else {
+			if(empty($DATA->{$this->PK})){
+				if(isset($this->Gen)){
+					$Gen_field_str = "$this->PK,";
+					$Gen_value_str = "NEXT VALUE FOR $this->Gen,";
+				}
+			} else {
+				if(!in_array($this->PK, $fields)){
+					$fields[] = $this->PK;
+				}
+			}
+		}
 
 		list($fieldSQL, $valuesSQL, $values) = build_sql($fields, $DATA, true);
 
 		# TODO: ja vajadzēs nodalīt GRANT tiesības pa INSERT/UPDATE, tad jāatdala UPDATE OR INSERT atsevišķos pieprasījumos
-		$sql = sprintf(
-			"UPDATE OR INSERT INTO $this->Table ($this->PK,$fieldSQL) VALUES (%s,$valuesSQL) RETURNING $this->PK",
-			$DATA->{$this->PK}
-		);
+		$sql = "UPDATE OR INSERT INTO $this->Table ($Gen_field_str$fieldSQL) VALUES ($Gen_value_str$valuesSQL) MATCHING ($PK_fields_str) RETURNING $PK_fields_str";
 
 		if($q = ibase_query_array($this->get_trans(), $sql, $values)){
-			return ibase_fetch($q)->{$this->PK};
+			$retPK = ibase_fetch($q);
+			if(is_array($this->PK)){
+				return $retPK;
+			} else {
+				return $retPK->{$this->PK};
+			}
 		} else {
 			return false;
 		}
