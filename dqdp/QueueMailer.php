@@ -44,7 +44,7 @@ class QueueMailer extends PHPMailer
 
 		$fields = array_keys($DATA);
 
-		list($fieldSQL, $valuesSQL, $values) = build_sql($fields, (object)$DATA);
+		list($fieldSQL, $valuesSQL, $values) = build_sql($fields, (object)$DATA, true);
 		$sql = "INSERT INTO MAIL_QUEUE (ID,CREATE_TIME,TIME_TO_SEND,$fieldSQL) VALUES (NEXT VALUE FOR GEN_MAIL_QUEUE_ID,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,$valuesSQL) RETURNING ID";
 
 		if($q = ibase_query_array($this->get_trans(), $sql, $values)){

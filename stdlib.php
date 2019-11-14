@@ -1440,39 +1440,20 @@ function within($v, $s, $e){
 	return ($v > $s) && ($v < $e);
 }
 
-# NOTE: variants ar skipot neuzstādītiem laukiem
-function build_sql($fields, $DATA = null){
+function build_sql($fields, $DATA = null, $skip_nulls = false){
 	foreach($fields as $i=>$k){
-		if(isset($DATA->{$k})){
-			$values[] = $DATA->{$k};
+		if($skip_nulls){
+			if(isset($DATA->{$k})){
+				$values[] = $DATA->{$k};
+			} else {
+				unset($fields[$i]);
+			}
 		} else {
-			unset($fields[$i]);
+			$values[] = $DATA->{$k} ?? null;
 		}
 	}
 
 	return [join(",", $fields), join(",", array_fill(0, count($fields), "?")), $values??[]];
-}
-/*
-# NOTE: variants ar set nulll neuzstādītiem laukiem
-function build_sql($fields, $DATA = null){
-	foreach($fields as $k){
-		$values[] = $DATA->{$k} ?? null;
-	}
-
-	return [join(",", $fields), join(",", array_fill(0, count($fields), "?")), $values??[]];
-}
-*/
-
-function build_sql_set($fields, $DATA){
-	$values = $nfields = [];
-	foreach($fields as $k){
-		if(isset($DATA->{$k})){
-			$values[] = $DATA->{$k};
-			$nfields[] = $k;
-		}
-	}
-
-	return [join(",", $nfields), join(",", array_fill(0, count($nfields), "?")), $values];
 }
 
 function eo($data = null){
