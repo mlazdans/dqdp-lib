@@ -1585,3 +1585,7 @@ function get_ex_rate($CURR_ID, $date = false){
 
 	return false;
 }
+
+function array_wrap($v){
+	return is_array($v) ? $v : [$v];
+}
