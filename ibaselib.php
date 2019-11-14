@@ -225,6 +225,29 @@ function search_to_sql($q, $fields, $minWordLen = 3){
 	return ["", []];
 }
 
+function ibase_db_create($db_name, $db_user, $db_password){
+	$sql = sprintf(
+		"CREATE DATABASE '%s' USER '%s' PASSWORD '%s' PAGE_SIZE 8192 DEFAULT CHARACTER SET UTF8;\nEXIT;\n",
+		ibase_quote($db_name),
+		ibase_quote($db_user),
+		ibase_quote($db_password)
+	);
+
+	if($exe = ibase_isql($sql, [
+		'USER'=>$db_user,
+		'PASS'=>$db_password,
+	])){
+		list($errcode, $stdout, $stderr) = $exe;
+		if($errcode){
+			trigger_error("ibase_db_create error: $stderr");
+			return false;
+		}
+	} else {
+		return false;
+	}
+	return true;
+}
+
 # TODO: abstract out config!
 /*
 function ibase_user_add($new_user, $new_password){
@@ -436,8 +459,7 @@ function ibase_get_tables($tr = null){
 }
 
 // args = ['DB', 'USER', 'PASS'];
-// returns exit code and output
-//cat 0CREATE.sql | isql -q -e -noautocommit -bail -user sysdba -pass masterkey -o CON 127.0.0.1:E:\dbf30\vienpatis\dev\vienpatis-dev.fdb 1>0stdout 2>0stderr
+# TODO: Notestēt palaišanu caur web. Karās pie kļūdas.
 function ibase_isql($SQL, $params = null){
 	$cmd = getenv('ISQL')??(is_windows() ? "isql.exe" : "isql");
 	$DEFAULTS = [
@@ -445,11 +467,6 @@ function ibase_isql($SQL, $params = null){
 		'PASS'=>"masterkey",
 	];
 	$params = eo($DEFAULTS)->merge($params);
-
-	if(empty($params->DB)){
-		trigger_error("DB parameter not set", E_USER_WARNING);
-		return false;
-	}
 
 	$args = ['-e', '-noautocommit', '-bail', '-q'];
 
@@ -462,6 +479,12 @@ function ibase_isql($SQL, $params = null){
 		$tmpfname = tempnam(getenv('TMPDIR'), 'isql');
 		$args[] = $tmpfname;
 	}
+
+	// $args[] = '-i';
+	// $tmpfname = tempnam(getenv('TMPDIR'), 'isql');
+	// file_put_contents($tmpfname, $SQL);
+	// $args[] = $tmpfname;
+
 	if($params->USER){
 		$args[] = '-user';
 		$args[] = "'$params->USER'";
