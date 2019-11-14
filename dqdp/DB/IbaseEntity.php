@@ -79,7 +79,7 @@ class IbaseEntity implements Entity {
 
 		$DATA->{$this->PK} = $DATA->{$this->PK} ?? "NEXT VALUE FOR $this->Gen";
 
-		list($fieldSQL, $valuesSQL, $values) = build_sql($fields, $DATA);
+		list($fieldSQL, $valuesSQL, $values) = build_sql($fields, $DATA, true);
 
 		# TODO: ja vajadzēs nodalīt GRANT tiesības pa INSERT/UPDATE, tad jāatdala UPDATE OR INSERT atsevišķos pieprasījumos
 		$sql = sprintf(
