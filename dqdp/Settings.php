@@ -8,13 +8,36 @@ class Settings extends IbaseEntity
 {
 	var $CLASS;
 	var $DB_STRUCT;
-	var $DATA = [];
+	protected $LDATA = [];
+	protected $SDATA = [];
+	protected $loaded = false;
 
 	function __construct($class){
 		$this->Table = 'SETTINGS';
 		$this->PK = ['SET_CLASS','SET_KEY'];
 		$this->CLASS = $class;
 		return parent::__construct();
+	}
+
+	function load(){
+		$this->LDATA = $this->fetch_all($this->search());
+		# NOTE: varbūt jāuzstāda tikai ja izpildās search() un fetch(), bet no otras puses tas var izraisīt nemitīgu ielādēšanu pie katra get()
+		$this->loaded = true;
+		return $this;
+	}
+
+	function get($k = null){
+		if(isset($this->SDATA[$k])){
+			return $this->SDATA[$k];
+		} else {
+			if(!$this->loaded){
+				$this->load();
+			}
+			if($k === null){
+				return array_merge($this->LDATA, $this->SDATA);
+			}
+			return $this->LDATA[$k]??null;
+		}
 	}
 
 	function set_struct($struct){
@@ -28,22 +51,23 @@ class Settings extends IbaseEntity
 	}
 
 	function reset(){
-		$this->DATA = [];
+		$this->LDATA = [];
+		$this->SDATA = [];
 		return $this;
 	}
 
 	function set($k, $v){
-		$this->DATA[$k] = $v;
+		$this->SDATA[$k] = $v;
 		return $this;
 	}
 
 	function set_array($new_data){
-		$this->DATA = array_merge($this->DATA, $new_data);
+		$this->SDATA = array_merge($this->SDATA, $new_data);
 		return $this;
 	}
 
 	function save(){
-		$DATA = eoe($this->DATA);
+		$SDATA = eoe($this->SDATA);
 
 		$fields = [
 			'SET_CLASS', 'SET_KEY', 'SET_INT', 'SET_BOOLEAN', 'SET_FLOAT', 'SET_STRING', 'SET_DATE', 'SET_BINARY', 'SET_SERIALIZE'
@@ -51,7 +75,7 @@ class Settings extends IbaseEntity
 
 		$ret = true;
 		foreach($this->DB_STRUCT as $k=>$v){
-			if($DATA->isset($k)){
+			if($SDATA->isset($k)){
 				$v = strtoupper($v);
 				$DB_DATA = eo([
 					'SET_CLASS'=>$this->CLASS,
@@ -59,9 +83,9 @@ class Settings extends IbaseEntity
 				]);
 
 				if($v == 'SERIALIZE'){
-					$DB_DATA->{"SET_$v"} = serialize($DATA->{$k});
+					$DB_DATA->{"SET_$v"} = serialize($SDATA->{$k});
 				} else {
-					$DB_DATA->{"SET_$v"} = $DATA->{$k};
+					$DB_DATA->{"SET_$v"} = $SDATA->{$k};
 				}
 
 				$ret = $ret && parent::save($fields, $DB_DATA);
@@ -94,11 +118,11 @@ class Settings extends IbaseEntity
 		return (object)($ret??[]);
 	}
 
-	function search($DATA = null){
-		$DATA = eoe($DATA);
-		$DATA->SET_CLASS = $this->CLASS; // part of PK, parent will take care
+	function search($PARAMS = null){
+		$PARAMS = eoe($PARAMS);
+		$PARAMS->SET_CLASS = $this->CLASS; // part of PK, parent will take care
 
-		parent::before_search($DATA);
+		parent::before_search($PARAMS);
 		return parent::do_search();
 	}
 }
