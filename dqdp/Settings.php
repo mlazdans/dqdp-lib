@@ -102,6 +102,14 @@ class Settings extends IbaseEntity
 		return $ret;
 	}
 
+	function fetch_all(){
+		$ret = [];
+		while($r = call_user_func_array([$this, 'fetch'], func_get_args())){
+			$ret = merge($ret, $r);
+		}
+		return $ret;
+	}
+
 	function fetch(){
 		list($q) = func_get_args();
 		if(!($r = parent::fetch($q))){
