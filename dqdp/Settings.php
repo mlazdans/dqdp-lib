@@ -56,8 +56,15 @@ class Settings extends IbaseEntity
 		return $this;
 	}
 
-	function set($k, $v){
-		$this->SDATA[$k] = $v;
+	# $k = key | arr | obj
+	function set($k, $v = null){
+		if(is_array($k)){
+			$this->set_array($k);
+		} elseif(is_object($k)){
+			$this->set_array(get_object_vars($k));
+		} else {
+			$this->SDATA[$k] = $v;
+		}
 		return $this;
 	}
 
