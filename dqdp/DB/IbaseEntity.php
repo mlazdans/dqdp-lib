@@ -67,6 +67,8 @@ class IbaseEntity implements Entity {
 		if($DATA->ORDER_BY){
 			$this->ResetOrderBy()->OrderBy($DATA->ORDER_BY);
 		}
+
+		return $this;
 	}
 
 	function search($DATA = null){
