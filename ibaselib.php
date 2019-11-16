@@ -461,7 +461,7 @@ function ibase_get_tables($tr = null){
 // args = ['DB', 'USER', 'PASS'];
 # TODO: Notestēt palaišanu caur web. Karās pie kļūdas.
 function ibase_isql($SQL, $params = null){
-	$cmd = getenv('ISQL')??(is_windows() ? "isql.exe" : "isql");
+	$cmd = prepend_path(getenv('IBASE_BIN', true), "isql");
 	$DEFAULTS = [
 		'USER'=>"sysdba",
 		'PASS'=>"masterkey",

@@ -1468,10 +1468,10 @@ function eoe($data = null){
 	}
 }
 
-function escape_shell(Array $args, $glue = ' '){
-	foreach($args as $k => $part){
+function escape_shell(Array $args){
+	foreach($args as $k=>$part){
 		if(is_string($k)){
-			$params[] = escapeshellarg($k).$glue.escapeshellarg($part);
+			$params[] = escapeshellarg($k).'='.escapeshellarg($part);
 		} else {
 			$params[] = escapeshellarg($part);
 		}
@@ -1513,44 +1513,63 @@ function is_php_fatal_error($errno){
 	return in_array($errno, [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR]);
 }
 
-function wkhtmltopdf($HTML){
-	$args = ["-", "-"];
-	$wkhtmltopdf = getenv('WKHTMLTOPDF')??(is_windows() ? "wkhtmltopdf.exe" : "wkhtmltopdf");
-
-	return proc_exec($HTML, $wkhtmltopdf, $args);
+function prepend_path($path, $cmd){
+	$cmd = is_windows() ? "$cmd.exe" : $cmd;
+	if($path = realpath($path)){
+		return $path.DIRECTORY_SEPARATOR.$cmd;
+	} else {
+		return $cmd;
+	}
 }
 
-function proc_exec($input, $cmd, $args = [], $descriptorspec = []){
+function wkhtmltopdf($HTML){
+	$args = ["-", "-"];
+
+	$wkhtmltopdf = prepend_path(getenv('WKHTMLTOPDF_BIN', true), "wkhtmltopdf");
+
+	return proc_exec('"'.$wkhtmltopdf.'"', $args, $HTML);
+}
+
+function proc_prepare_args($cmd, $args = []){
+	if($args){
+		$cmd .= ' '.join(" ", escape_shell($args));
+	}
+	return $cmd;
+}
+
+function proc_exec($cmd, $args = [], $input = '', $descriptorspec = []){
 	if(empty($descriptorspec[0]))$descriptorspec[0] = ["pipe", "r"];
 	if(empty($descriptorspec[1]))$descriptorspec[1] = ["pipe", "w"];
-	if(empty($descriptorspec[2])){
-		if(defined('STDERR')){
-			$descriptorspec[2] = ["pipe", "w"];
-		} else {
-			$descriptorspec[2] = ['file', getenv('TMPDIR')."./proc_exec-stderr.log", 'a'];
-		}
-	}
+	if(empty($descriptorspec[2]))$descriptorspec[2] = ["pipe", "w"];
 
-	$process_cmd = '"'.$cmd.'"';
-	if($args){
-		$process_cmd .= ' '.join(" ", escape_shell($args));
-	}
+	// Wrapperis
+	// $cmd = 'C:\bin\createprocess.exe';
+	// $cp_args = ['/w=5000', '/term', '"'.$cmd.'"'];
+	// $process_cmd = proc_prepare_args($cmd, array_merge($cp_args, $args));
+
+	$process_cmd = proc_prepare_args($cmd, $args);
 
 	$process = proc_open($process_cmd, $descriptorspec, $pipes);
 	if(!is_resource($process)){
 		return false;
 	}
-	//stream_set_timeout
-	// if(isset($pipes[0]))stream_set_blocking($pipes[0], 0);
-	// if(isset($pipes[1]))stream_set_blocking($pipes[1], 0);
-	// if(isset($pipes[2]))stream_set_blocking($pipes[2], 0);
+
 	if(isset($pipes[0]) && is_resource($pipes[0])){
-		fwrite($pipes[0], $input);
+		if($input){
+			fwrite($pipes[0], $input);
+		}
 		fclose($pipes[0]);
 	}
 
-	$stdout = (isset($pipes[1]) && is_resource($pipes[1])) ? stream_get_contents($pipes[1]) : null;
-	$stderr = (isset($pipes[2]) && is_resource($pipes[2])) ? stream_get_contents($pipes[2]) : null;
+	$stdout = $stderr = null;
+	if(isset($pipes[1]) && is_resource($pipes[1])){
+		$stdout = stream_get_contents($pipes[1]);
+		fclose($pipes[1]);
+	}
+	if(isset($pipes[2]) && is_resource($pipes[2])){
+		$stderr = stream_get_contents($pipes[2]);
+		fclose($pipes[2]);
+	}
 
 	$errcode = proc_close($process);
 
