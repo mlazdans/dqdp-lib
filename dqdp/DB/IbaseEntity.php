@@ -29,11 +29,19 @@ class IbaseEntity implements Entity {
 	}
 
 	function get($ID){
-		return $this->fetch($this->search([$this->PK=>$ID]));
+		if($q = $this->search([$this->PK=>$ID])){
+			return $this->fetch($q);
+		}
+
+		return false;
 	}
 
 	function get_all(){
-		return $this->fetch_all($this->search());
+		if($q = $this->search()){
+			return $this->fetch_all($q);
+		}
+
+		return false;
 	}
 
 	protected function before_search(&$DATA){
