@@ -97,7 +97,12 @@ class Engine
 		if($msg === null){
 			return self::${$key.'_MSG'};
 		} else {
-			return self::${$key.'_MSG'}[] = $msg;
+			if(is_array($msg)){
+				self::${$key.'_MSG'} = array_merge(self::${$key.'_MSG'}, $msg);
+				return $msg;
+			} else {
+				return self::${$key.'_MSG'}[] = $msg;
+			}
 		}
 	}
 
