@@ -8,9 +8,7 @@ class Settings extends IbaseEntity
 {
 	var $CLASS;
 	var $DB_STRUCT;
-	protected $LDATA = [];
 	protected $SDATA = [];
-	protected $loaded = false;
 
 	function __construct($class){
 		$this->Table = 'SETTINGS';
@@ -19,24 +17,11 @@ class Settings extends IbaseEntity
 		return parent::__construct();
 	}
 
-	function load(){
-		$this->LDATA = $this->fetch_all($this->search());
-		# NOTE: varbūt jāuzstāda tikai ja izpildās search() un fetch(), bet no otras puses tas var izraisīt nemitīgu ielādēšanu pie katra get()
-		$this->loaded = true;
-		return $this;
-	}
-
-	function get($k = null){
+	function get($k){
 		if(isset($this->SDATA[$k])){
 			return $this->SDATA[$k];
 		} else {
-			if(!$this->loaded){
-				$this->load();
-			}
-			if($k === null){
-				return array_merge($this->LDATA, $this->SDATA);
-			}
-			return $this->LDATA[$k]??null;
+			return $this->fetch($this->search(['SET_KEY'=>$k]));
 		}
 	}
 
@@ -51,7 +36,6 @@ class Settings extends IbaseEntity
 	}
 
 	function reset(){
-		$this->LDATA = [];
 		$this->SDATA = [];
 		return $this;
 	}
@@ -104,6 +88,10 @@ class Settings extends IbaseEntity
 
 	function fetch_all(){
 		$ret = [];
+		foreach($this->DB_STRUCT as $k=>$v){
+			$ret[$k] = null;
+		}
+
 		while($r = call_user_func_array([$this, 'fetch'], func_get_args())){
 			$ret = merge($ret, $r);
 		}
