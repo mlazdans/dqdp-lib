@@ -32,6 +32,10 @@ class IbaseEntity implements Entity {
 		return $this->fetch($this->search([$this->PK=>$ID]));
 	}
 
+	function get_all(){
+		return $this->fetch_all($this->search());
+	}
+
 	protected function before_search(&$DATA){
 		$DATA = eoe($DATA);
 

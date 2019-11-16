@@ -1543,6 +1543,7 @@ function proc_exec($cmd, $args = [], $input = '', $descriptorspec = []){
 	if(empty($descriptorspec[2]))$descriptorspec[2] = ["pipe", "w"];
 
 	// Wrapperis
+	// https://github.com/cubiclesoft/createprocess-windows
 	// $cmd = 'C:\bin\createprocess.exe';
 	// $cp_args = ['/w=5000', '/term', '"'.$cmd.'"'];
 	// $process_cmd = proc_prepare_args($cmd, array_merge($cp_args, $args));

@@ -6,6 +6,7 @@ interface Entity {
 	function fetch();
 	function fetch_all();
 	function get($ID);
+	function get_all();
 	function search();
 	function save();
 	function delete($IDS);
