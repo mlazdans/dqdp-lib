@@ -118,7 +118,7 @@ class Settings extends IbaseEntity
 		}
 
 
-		return (object)($ret??[]);
+		return $ret??(object)[];
 	}
 
 	function search($PARAMS = null){
