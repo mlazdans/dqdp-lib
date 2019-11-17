@@ -227,7 +227,7 @@ function search_to_sql($q, $fields, $minWordLen = 3){
 
 function ibase_db_create($db_name, $db_user, $db_password){
 	$sql = sprintf(
-		"CREATE DATABASE '%s' USER '%s' PASSWORD '%s' PAGE_SIZE 8192 DEFAULT CHARACTER SET UTF8;\nEXIT;\n",
+		"CREATE DATABASE '%s' USER '%s' PASSWORD '%s' PAGE_SIZE 8192 DEFAULT CHARACTER SET UTF8;",
 		ibase_quote($db_name),
 		ibase_quote($db_user),
 		ibase_quote($db_password)
@@ -458,32 +458,42 @@ function ibase_get_tables($tr = null){
 	ORDER BY r.RDB$RELATION_NAME');
 }
 
-// args = ['DB', 'USER', 'PASS'];
-# TODO: Notestēt palaišanu caur web. Karās pie kļūdas.
-function ibase_isql($SQL, $params = null){
-	$cmd = prepend_path(getenv('IBASE_BIN', true), "isql");
-	$DEFAULTS = [
-		'USER'=>"sysdba",
-		'PASS'=>"masterkey",
-	];
-	$params = eo($DEFAULTS)->merge($params);
-
-	$args = ['-e', '-noautocommit', '-bail', '-q'];
-
-	# TODO: -o CON only on Windows, need fix and test on linux
+function ibase_isql_exec($args = [], $input = '', $descriptorspec = []){
+	# TODO: -o CON only on Windows, need test on linux
 	if(defined('STDOUT')){
 		$args[] = '-o';
-		$args[] = 'CON';
+		$args[] = is_windows()? 'CON' : '/dev/stdout';
 	} else {
 		$args[] = '-o';
 		$tmpfname = tempnam(getenv('TMPDIR'), 'isql');
 		$args[] = $tmpfname;
 	}
 
-	// $args[] = '-i';
-	// $tmpfname = tempnam(getenv('TMPDIR'), 'isql');
-	// file_put_contents($tmpfname, $SQL);
-	// $args[] = $tmpfname;
+	$cmd = '"'.prepend_path(getenv('IBASE_BIN', true), "isql").'"';
+	// Wrapperis
+	// https://github.com/cubiclesoft/createprocess-windows
+	if(!is_climode()){
+		$args = array_merge(['/w=5000', '/term', $cmd], $args);
+		$cmd = 'C:\bin\createprocess.exe';
+	}
+
+	# Capture isql output. isql tends to keep isql in interactive mode if no -i or -o specified
+	print "$cmd";
+	if($exe = proc_exec($cmd, $args, $input, $descriptorspec)){
+		if(isset($tmpfname)){
+			$exe[1] = file_get_contents($tmpfname);
+			//unlink($tmpfname);
+		}
+	}
+	return $exe;
+}
+
+function __ibase_isql_args($params = null, $args = []){
+	$DEFAULTS = [
+		'USER'=>"sysdba",
+		'PASS'=>"masterkey",
+	];
+	$params = eoe($DEFAULTS)->merge($params);
 
 	if($params->USER){
 		$args[] = '-user';
@@ -493,16 +503,32 @@ function ibase_isql($SQL, $params = null){
 		$args[] = '-pass';
 		$args[] = "'$params->PASS'";
 	}
-	if($params->DB)$args[] = $params->DB;
-
-	# Capture isql output. isql tends to keep isql in interactive mode if no -i or -o specified
-	if($exe = proc_exec($SQL, $cmd, $args)){
-		if(isset($tmpfname)){
-			$exe[1] = file_get_contents($tmpfname);
-			//unlink($tmpfname);
-		}
+	if($params->DB){
+		$args[] = $params->DB;
 	}
-	return $exe;
+
+	return $args??[];
+}
+
+// args = ['DB', 'USER', 'PASS'];
+# NOTE: Caur web karās pie kļūdas (nevar dabūt STDERR), tāpēc wrappers un killers.
+# NOTE: timeout jāmaina lielākiem/lēnākiem skriptiem :E
+function ibase_isql($SQL, $params = null){
+	$args = __ibase_isql_args($params, ['-e', '-noautocommit', '-bail', '-q']);
+
+	// $args[] = '-i';
+	// $tmpfname = tempnam(getenv('TMPDIR'), 'isql');
+	// file_put_contents($tmpfname, $SQL);
+	// $args[] = $tmpfname;
+
+	return ibase_isql_exec($args, $SQL);
+}
+
+function ibase_isql_meta($database, $params = null){
+	$params = eoe($params);
+	$params->DB = $database;
+
+	return ibase_isql_exec(__ibase_isql_args($params, ['-x']));
 }
 
 function ibase_current_role($tr = null){
