@@ -225,14 +225,23 @@ function search_to_sql($q, $fields, $minWordLen = 3){
 	return ["", []];
 }
 
-function ibase_db_create($db_name, $db_user, $db_password){
+function ibase_db_create($db_name, $db_user, $db_password, $body = ''){
 	$sql = sprintf(
-		"CREATE DATABASE '%s' USER '%s' PASSWORD '%s' PAGE_SIZE 8192 DEFAULT CHARACTER SET UTF8;",
+		"CREATE DATABASE '%s' USER '%s' PASSWORD '%s' PAGE_SIZE 8192 DEFAULT CHARACTER SET UTF8;\n",
 		ibase_quote($db_name),
 		ibase_quote($db_user),
-		ibase_quote($db_password)
+		ibase_quote($db_password),
 	);
 
+	if($body){
+		$sql .= $body."\n";
+	}
+
+	return ibase_isql($sql, [
+		'USER'=>$db_user,
+		'PASS'=>$db_password,
+	]);
+	/*
 	if($exe = ibase_isql($sql, [
 		'USER'=>$db_user,
 		'PASS'=>$db_password,
@@ -246,6 +255,7 @@ function ibase_db_create($db_name, $db_user, $db_password){
 		return false;
 	}
 	return true;
+	*/
 }
 
 # TODO: abstract out config!
@@ -459,10 +469,10 @@ function ibase_get_tables($tr = null){
 }
 
 function ibase_isql_exec($args = [], $input = '', $descriptorspec = []){
-	# TODO: -o CON only on Windows, need test on linux
 	if(defined('STDOUT')){
 		$args[] = '-o';
-		$args[] = is_windows()? 'CON' : '/dev/stdout';
+		# TODO: -o CON only on Windows, need test on linux
+		$args[] = is_windows() ? 'CON' : '/dev/stdout';
 	} else {
 		$args[] = '-o';
 		$tmpfname = tempnam(getenv('TMPDIR'), 'isql');
@@ -470,18 +480,19 @@ function ibase_isql_exec($args = [], $input = '', $descriptorspec = []){
 	}
 
 	$cmd = '"'.prepend_path(getenv('IBASE_BIN', true), "isql").'"';
-	// Wrapperis
+	// Wrapper
 	// https://github.com/cubiclesoft/createprocess-windows
-	if(!is_climode()){
+	if(is_windows() && !is_climode()){
 		$args = array_merge(['/w=5000', '/term', $cmd], $args);
 		$cmd = 'C:\bin\createprocess.exe';
 	}
 
 	# Capture isql output. isql tends to keep isql in interactive mode if no -i or -o specified
-	print "$cmd";
 	if($exe = proc_exec($cmd, $args, $input, $descriptorspec)){
 		if(isset($tmpfname)){
-			$exe[1] = file_get_contents($tmpfname);
+			if($outp = file_get_contents($tmpfname)){
+				$exe[1] = $outp;
+			}
 			//unlink($tmpfname);
 		}
 	}
@@ -624,4 +635,22 @@ function ibase_connect_config($args){
 
 function ibase_register_default_tr($tr){
 	Ibase::$DB = $tr;
+}
+
+function ibase_path_info($DB_PATH){
+	if(count($parts = explode(":", $DB_PATH)) > 1){
+		$host = array_shift($parts);
+		$path = join(":", $parts);
+	} else {
+		$path = $DB_PATH;
+	}
+
+	$pi = pathinfo($path);
+
+	$pi['path'] = $path;
+	if(isset($host)){
+		$pi['host'] = $host;
+	}
+
+	return $pi;
 }
