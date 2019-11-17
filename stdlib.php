@@ -1609,3 +1609,18 @@ function get_ex_rate($CURR_ID, $date = false){
 function array_wrap($v){
 	return is_array($v) ? $v : [$v];
 }
+
+# Select from key value pairs array
+function html_select_prepare($data, $k_field, $l_field = null){
+	$datas = eoe($data);
+	foreach($datas as $v){
+		yield $v->{$k_field} => $v->{$l_field??$k_field};
+	}
+}
+
+function __options_select_kv($data, $selected){
+	foreach($data as $k=>$v){
+		$ret[] = "<option".selected($k, $selected).">$v</option>";
+	}
+	return join("", $ret??[]);
+}

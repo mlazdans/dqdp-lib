@@ -1,6 +1,7 @@
 <?php
 
 use dqdp\SQL\Condition;
+use dqdp\SQL\Select;
 
 require_once("stdlib.php");
 
@@ -561,17 +562,46 @@ function ibase_get_users($tr = null){
 	return ibase_strip_rdb(ibase_fetch_all(Ibase::__tr($tr), 'SELECT DISTINCT SEC$USER_NAME FROM SEC$USERS'));
 }
 
-function ibase_get_privileges($user, $tr = null){
+function ibase_get_users_remote($args){
+	if(!($conn = ibase_connect_config($args))){
+		return false;
+	}
+
+	$users =  ibase_get_users($conn);
+
+	ibase_close($conn);
+
+	return $users;
+}
+
+function ibase_get_privileges_remote($args, $user = null){
+	if(!($conn = ibase_connect_config($args))){
+		return false;
+	}
+
+	$users =  ibase_get_privileges($user, $conn);
+
+	ibase_close($conn);
+
+	return $users;
+}
+
+function ibase_get_privileges($user = null, $tr = null){
 	$ret = [];
-	$vars[] = strtoupper($user);
 
 	# TODO: trigeri, view, tables, proc var pārklāties nosaukumi, vai nevar? Hmm...
-	$sql = 'SELECT * FROM RDB$USER_PRIVILEGES u WHERE u.RDB$USER = ?';
-	$q = ibase_query_array(Ibase::__tr($tr), $sql, $vars);
+	$sql = (new Select)->From('RDB$USER_PRIVILEGES');
+	$sql->Where(['RDB$USER != ?', 'SYSDBA']);
+	$sql->Where(['RDB$USER != ?', 'PUBLIC']);
+	if($user){
+		$sql->Where(['RDB$USER = ?', $user]);
+	}
+
+	$q = ibase_query_array(Ibase::__tr($tr), $sql, $sql->vars());
 	while($r = ibase_fetch($q)){
 		$r = ibase_strip_rdb($r);
-		if(!isset($ret[$r->RELATION_NAME])){
-			$ret[$r->RELATION_NAME] = (object)[
+		if(!isset($ret[$r->USER][$r->RELATION_NAME])){
+			$ret[$r->USER][$r->RELATION_NAME] = (object)[
 				'GRANTOR'=>$r->GRANTOR,
 				'GRANT_OPTION'=>$r->GRANT_OPTION,
 				'USER_TYPE'=>$r->USER_TYPE,
@@ -579,7 +609,7 @@ function ibase_get_privileges($user, $tr = null){
 			];
 		}
 
-		$p = &$ret[$r->RELATION_NAME];
+		$p = &$ret[$r->USER][$r->RELATION_NAME];
 
 		# UPDATE, REFERENCE
 		if(($r->PRIVILEGE == 'U') || ($r->PRIVILEGE == 'R')){
@@ -653,4 +683,15 @@ function ibase_path_info($DB_PATH){
 	}
 
 	return $pi;
+}
+
+function ibase_db_exists($db_path, $db_user, $db_password){
+	if(
+		($pi = ibase_path_info($db_path)) &&
+		($service = ibase_service_attach($pi['host'], $db_user, $db_password)) &&
+		ibase_db_info($service, $pi['path'], IBASE_STS_HDR_PAGES)
+	){
+		return true;
+	}
+	return false;
 }

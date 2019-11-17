@@ -36,8 +36,8 @@ class IbaseEntity implements Entity {
 		return false;
 	}
 
-	function get_all(){
-		if($q = $this->search()){
+	function get_all($params = null){
+		if($q = $this->search($params)){
 			return $this->fetch_all($q);
 		}
 
