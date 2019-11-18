@@ -586,22 +586,34 @@ function ibase_get_privileges_remote($args, $user = null){
 	return $users;
 }
 
-function ibase_get_privileges($user = null, $tr = null){
+function ibase_get_privileges($PARAMS, $tr = null){
 	$ret = [];
+
+	if(is_scalar($PARAMS)){
+		$PARAMS = eo(['USER'=>$PARAMS]);
+	} else {
+		$PARAMS = eoe($PARAMS);
+	}
 
 	# TODO: trigeri, view, tables, proc var pārklāties nosaukumi, vai nevar? Hmm...
 	$sql = (new Select)->From('RDB$USER_PRIVILEGES');
+	if($PARAMS->USER)$sql->Where(['RDB$USER = ?', $PARAMS->USER]);
+	//if($PARAMS->EXCLUDE_SYSDBA)$sql->Where(['RDB$USER != ?', 'SYSDBA']);
+	//if($PARAMS->EXCLUDE_PUBLIC)$sql->Where(['RDB$USER != ?', 'PUBLIC']);
 	$sql->Where(['RDB$USER != ?', 'SYSDBA']);
 	$sql->Where(['RDB$USER != ?', 'PUBLIC']);
-	if($user){
-		$sql->Where(['RDB$USER = ?', $user]);
-	}
 
 	$q = ibase_query_array(Ibase::__tr($tr), $sql, $sql->vars());
 	while($r = ibase_fetch($q)){
 		$r = ibase_strip_rdb($r);
-		if(!isset($ret[$r->USER][$r->RELATION_NAME])){
-			$ret[$r->USER][$r->RELATION_NAME] = (object)[
+
+		$k = $r->USER;
+		if($r->USER_TYPE == 13){
+			$k = "ROLE:$r->USER";
+		}
+
+		if(!isset($ret[$k][$r->RELATION_NAME])){
+			$ret[$k][$r->RELATION_NAME] = (object)[
 				'GRANTOR'=>$r->GRANTOR,
 				'GRANT_OPTION'=>$r->GRANT_OPTION,
 				'USER_TYPE'=>$r->USER_TYPE,
@@ -609,7 +621,7 @@ function ibase_get_privileges($user = null, $tr = null){
 			];
 		}
 
-		$p = &$ret[$r->USER][$r->RELATION_NAME];
+		$p = &$ret[$k][$r->RELATION_NAME];
 
 		# UPDATE, REFERENCE
 		if(($r->PRIVILEGE == 'U') || ($r->PRIVILEGE == 'R')){
@@ -624,7 +636,7 @@ function ibase_get_privileges($user = null, $tr = null){
 			}
 		# ROLE
 		} elseif($r->PRIVILEGE == 'M'){
-			$ret = array_merge(ibase_get_privileges($r->RELATION_NAME, $tr), $ret);
+			//$ret = array_merge(ibase_get_privileges($r->RELATION_NAME, $tr), $ret);
 		} else {
 			$p->PRIVILEGES = $p->PRIVILEGES ?? [];
 			if(!in_array($r->PRIVILEGE, $p->PRIVILEGES)){
