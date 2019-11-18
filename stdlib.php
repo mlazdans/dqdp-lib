@@ -1624,3 +1624,19 @@ function __options_select_kv($data, $selected){
 	}
 	return join("", $ret??[]);
 }
+
+function array_search_k($arr, $k, $v){
+	foreach($arr as $i=>$item){
+		if(is_object($item)){
+			$cmpv = $item->{$k}??null;
+		} elseif(is_array($item)){
+			$cmpv = $item[$k]??null;
+		} else {
+			$cmpv = $item;
+		}
+		if($cmpv === $v){
+			return $i;
+		}
+	}
+	return null;
+}
