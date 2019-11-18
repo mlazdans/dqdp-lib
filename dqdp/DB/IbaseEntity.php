@@ -203,8 +203,11 @@ class IbaseEntity implements Entity {
 			$IDS = [$IDS];
 		}
 
+		if(!($smt = ibase_prepare($this->get_trans(), $sql))){
+			return false;
+		}
+
 		$ret = true;
-		$smt = ibase_prepare($this->get_trans(), $sql);
 		foreach($IDS as $ID){
 			$params = array_merge([$smt], $args, [$ID]);
 			$ret = $ret && call_user_func_array('ibase_execute', $params);
