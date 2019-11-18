@@ -557,17 +557,46 @@ function ibase_strip_rdb($data){
 	return $data;
 }
 
-# TODO: plugin Srp, utt
-function ibase_get_users($tr = null){
-	return ibase_strip_rdb(ibase_fetch_all(Ibase::__tr($tr), 'SELECT DISTINCT SEC$USER_NAME FROM SEC$USERS'));
+# TODO: plugins, etc
+# NOTE: from VPA/bin/createdb
+function ibase_get_users($PARAMS = null, $tr = null){
+	if(is_scalar($PARAMS)){
+		$PARAMS = eo(['USER_NAME'=>$PARAMS]);
+	} else {
+		$PARAMS = eoe($PARAMS);
+	}
+
+	$sql = (new Select)->From('SEC$USERS')
+	->Select('SEC$USER_NAME, SEC$FIRST_NAME, SEC$MIDDLE_NAME,SEC$LAST_NAME')
+	->Select('SEC$DESCRIPTION, SEC$PLUGIN')
+	->Select('IIF(SEC$ACTIVE, 1, 0) AS IS_ACTIVE')
+	->Select('IIF(SEC$ADMIN, 1, 0) AS IS_ADMIN')
+	->Where('SEC$PLUGIN = \'Srp\'');
+
+	if($PARAMS->USER_NAME){
+		$sql->Where(['SEC$USER_NAME = ?', $PARAMS->USER_NAME]);
+	} else {
+		$sql->Where('SEC$USER_NAME = CURRENT_USER');
+		//(SEC$USER_NAME = CURRENT_USER OR CURRENT_USER = \'SYSDBA\') AND
+	}
+
+	if(!($q = ibase_query_array(Ibase::__tr($tr), $sql, $sql->vars()))){
+		return false;
+	}
+
+	return ibase_strip_rdb(ibase_fetch_all($q));
 }
 
-function ibase_get_users_remote($args){
+function ibase_get_user($USER_NAME = null, $tr = null){
+	return ($u = ibase_get_users($USER_NAME, $tr)) ? $u[0] : $u;
+}
+
+function ibase_get_users_remote($args, $PARAMS = null){
 	if(!($conn = ibase_connect_config($args))){
 		return false;
 	}
 
-	$users =  ibase_get_users($conn);
+	$users =  ibase_get_users($PARAMS, $conn);
 
 	ibase_close($conn);
 
@@ -597,13 +626,19 @@ function ibase_get_privileges($PARAMS, $tr = null){
 
 	# TODO: trigeri, view, tables, proc var pārklāties nosaukumi, vai nevar? Hmm...
 	$sql = (new Select)->From('RDB$USER_PRIVILEGES');
-	if($PARAMS->USER)$sql->Where(['RDB$USER = ?', $PARAMS->USER]);
-	//if($PARAMS->EXCLUDE_SYSDBA)$sql->Where(['RDB$USER != ?', 'SYSDBA']);
-	//if($PARAMS->EXCLUDE_PUBLIC)$sql->Where(['RDB$USER != ?', 'PUBLIC']);
-	$sql->Where(['RDB$USER != ?', 'SYSDBA']);
-	$sql->Where(['RDB$USER != ?', 'PUBLIC']);
+	if($PARAMS->USER){
+		$sql->Where(['RDB$USER = ?', $PARAMS->USER]);
+	} else {
+		//if($PARAMS->EXCLUDE_SYSDBA)$sql->Where(['RDB$USER != ?', 'SYSDBA']);
+		//if($PARAMS->EXCLUDE_PUBLIC)$sql->Where(['RDB$USER != ?', 'PUBLIC']);
+		$sql->Where(['RDB$USER != ?', 'SYSDBA']);
+		$sql->Where(['RDB$USER != ?', 'PUBLIC']);
+	}
 
-	$q = ibase_query_array(Ibase::__tr($tr), $sql, $sql->vars());
+	if(!($q = ibase_query_array(Ibase::__tr($tr), $sql, $sql->vars()))){
+		return false;
+	}
+
 	while($r = ibase_fetch($q)){
 		$r = ibase_strip_rdb($r);
 
