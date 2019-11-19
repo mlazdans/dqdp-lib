@@ -738,6 +738,9 @@ function date_startend($DATE){
 	} elseif($DATE->THIS_YEAR){
 		$start_date = strtotime('first day of January');
 		$end_date = time();
+	} elseif($DATE->TODAY) {
+		$start_date = strtotime('today');
+		$end_date = strtotime('tomorrow');
 	} elseif($DATE->YESTERDAY) {
 		$start_date = $end_date = strtotime('yesterday');
 		$end_date = time();

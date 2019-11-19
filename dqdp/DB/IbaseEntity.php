@@ -8,13 +8,17 @@ class IbaseEntity implements Entity {
 	var $Table;
 	var $PK;
 	var $Gen;
-	var $SearchSQL;
+	//var $SearchSQL;
 
 	protected $TR;
 
 	function __construct(){
 		$this->init();
 		return $this;
+	}
+
+	function sql_select(){
+		return (new Select())->From($this->Table);
 	}
 
 	function fetch(){
@@ -44,9 +48,7 @@ class IbaseEntity implements Entity {
 		return false;
 	}
 
-	protected function before_search(&$DATA){
-		$DATA = eoe($DATA);
-
+	function set_filters($sql, $DATA = null){
 		if(is_array($this->PK)){
 		} else {
 			if($DATA->isset($this->PK) && is_empty($DATA->{$this->PK})){
@@ -58,7 +60,7 @@ class IbaseEntity implements Entity {
 		$pks = array_wrap($this->PK);
 		foreach($pks as $k){
 			if($DATA->{$k}){
-				$this->SearchSQL->Where(["$this->Table.$k = ?", $DATA->{$k}]);
+				$sql->Where(["$this->Table.$k = ?", $DATA->{$k}]);
 			}
 		}
 
@@ -72,27 +74,30 @@ class IbaseEntity implements Entity {
 				} else {
 					$IDS = [$IDS];
 				}
-				call_user_func([$this->SearchSQL, 'Where'], sql_create_int_filter("$this->Table.{$this->PK}", $IDS));
+				call_user_func([$sql, 'Where'], sql_create_int_filter("$this->Table.{$this->PK}", $IDS));
 			}
 		}
 
 		if($DATA->ORDER_BY){
-			$this->ResetOrderBy()->OrderBy($DATA->ORDER_BY);
+			$sql->OrderBy($DATA->ORDER_BY);
 		}
 
-		return $this;
+		if($DATA->FIRST){
+			$sql->first($DATA->FIRST);
+		}
+
+		return true;
 	}
 
 	function search($DATA = null){
-		$this->before_search($DATA);
-		return $this->do_search();
-	}
-
-	protected function do_search(){
-		if($this->get_trans()){
-			return ibase_query_array($this->get_trans(), $this->SearchSQL, $this->SearchSQL->vars());
-		} else {
-			return false;
+		$DATA = eoe($DATA);
+		$sql = $this->sql_select();
+		if($this->set_filters($sql, $DATA)){
+			//if($this->get_trans()){
+			return ibase_query_array($this->get_trans(), $sql, $sql->vars());
+			// } else {
+			// 	return false;
+			// }
 		}
 	}
 
@@ -171,28 +176,14 @@ class IbaseEntity implements Entity {
 		return $this->set_trans(ibase_trans());
 	}
 
-
-	function __call($name, $arguments){
-		call_user_func_array([$this->SearchSQL, $name], $arguments);
-		return $this;
-	}
-
-	protected function reset_searchSQL(){
-		$this->SearchSQL = (new Select())->From($this->Table);
-		return $this;
-	}
+	// function __call($name, $arguments){
+	// 	call_user_func_array([$this->SearchSQL, $name], $arguments);
+	// 	return $this;
+	// }
 
 	protected function init(){
-		// $parts = explode('\\', get_class($this));
-		// $this->ModID = strtolower($parts[count($parts) - 1]);
-		// $this->Table = strtoupper($this->ModID);
-		// $this->PK = $this->Table."_ID";
+		# TODO: abstract out
 		$this->set_trans(\App::$DB);
-		$this->reset_searchSQL();
-		//$json = file_get_contents(\App::$root."/public/schemas/".strtolower($serviceName).".json");
-		//$this->Schema = json_decode($json);
-		//$this->Table = strtoupper($this->Schema->id);
-		//$this->Struct = &$this->Schema->properties;
 		return $this;
 	}
 
