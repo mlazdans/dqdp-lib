@@ -117,7 +117,6 @@ class Settings extends IbaseEntity
 			$ret[$r->SET_KEY] = $r->{"SET_$v"};
 		}
 
-
 		return $ret??(object)[];
 	}
 
@@ -125,7 +124,6 @@ class Settings extends IbaseEntity
 		$PARAMS = eoe($PARAMS);
 		$PARAMS->SET_CLASS = $this->CLASS; // part of PK, parent will take care
 
-		parent::before_search($PARAMS);
-		return parent::do_search();
+		return parent::search($PARAMS);
 	}
 }
