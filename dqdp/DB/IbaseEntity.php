@@ -8,7 +8,6 @@ class IbaseEntity implements Entity {
 	var $Table;
 	var $PK;
 	var $Gen;
-	//var $SearchSQL;
 
 	protected $TR;
 
@@ -175,11 +174,6 @@ class IbaseEntity implements Entity {
 	function new_trans(){
 		return $this->set_trans(ibase_trans());
 	}
-
-	// function __call($name, $arguments){
-	// 	call_user_func_array([$this->SearchSQL, $name], $arguments);
-	// 	return $this;
-	// }
 
 	protected function init(){
 		# TODO: abstract out
