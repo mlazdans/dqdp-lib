@@ -1249,8 +1249,8 @@ function checked($v){
 	return ($v ? ' checked' : '');
 }
 
-function checkeda($a, $k){
-	return checked($a[$k]??false);
+function checkeda(Array $a, $k){
+	return checked($a[$k]??null);
 }
 
 # Hacking POST checkboxes
