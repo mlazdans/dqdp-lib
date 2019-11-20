@@ -739,11 +739,9 @@ function date_startend($DATE){
 		$start_date = strtotime('first day of January');
 		$end_date = time();
 	} elseif($DATE->TODAY) {
-		$start_date = strtotime('today');
-		$end_date = strtotime('tomorrow');
+		$start_date = $end_date = strtotime('today');
 	} elseif($DATE->YESTERDAY) {
 		$start_date = $end_date = strtotime('yesterday');
-		$end_date = time();
 	} elseif($DATE->THIS_WEEK) {
 		$start_date = strtotime("last Monday");
 		$end_date = time();
