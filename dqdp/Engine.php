@@ -95,21 +95,26 @@ class Engine
 	static function module_exists($ROUTES){
 		if(is_scalar($ROUTES)){
 			$ROUTES = explode("/", $ROUTES);
+		} if(!is_array($ROUTES)){
+			return false;
 		}
+
+		$ROUTES = array_reverse($ROUTES);
 
 		$ret = false;
 		$MODULES = self::$MODULES;
-		foreach($ROUTES as $r){
+		do {
+			$r = array_pop($ROUTES);
 			if(isset($MODULES[$r])){
-				return true;
+				$ret = true;
 			} else {
-				return false;
+				$ret = false;
 				break;
 			}
-			$MODULES = $MODULES[$r]['sub_modules'];
-		}
+			$MODULES = $MODULES[$r]['sub_modules']??[];
+		} while($ROUTES);
+
 		return $ret;
-		//return isset(self::$MODULES[$MID]);
 	}
 
 	static function get_msgs(){
