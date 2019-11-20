@@ -1256,6 +1256,10 @@ function checkeda(Array $a, $k){
 	return checked($a[$k]??null);
 }
 
+function checkedina(Array $a, $k){
+	return checked(in_array($k, $a));
+}
+
 # Hacking POST checkboxes
 function boolcheckbox($NAME, $checked){
 	$ret[] = sprintf('<input type=hidden value=0 name=%s>', $NAME);

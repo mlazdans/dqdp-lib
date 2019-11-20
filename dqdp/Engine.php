@@ -22,6 +22,7 @@ class Engine
 	static public $TMP_ROOT;
 	static public $PUBLIC_ROOT;
 	static public $MODULES;
+	static public $ROUTES;
 	static public $TEMPLATE_FILE;
 	static public $TEMPLATE;
 
@@ -73,12 +74,42 @@ class Engine
 		return preg_replace($module_chars, "", $MID);
 	}
 
-	static function module_path($MID){
-		return realpath(self::$SYS_ROOT).DIRECTORY_SEPARATOR."./modules/$MID.php";
+	static function module_path($ROUTES, $max_d){
+		$path = [
+			//realpath(self::$SYS_ROOT),
+			//".",
+			"modules"
+		];
+
+		if(is_scalar($ROUTES)){
+			$ROUTES = explode("/", $ROUTES);
+		}
+
+		if($ep = array_slice($ROUTES, 0, $max_d)){
+			$path = array_merge($path, $ep);
+		}
+
+		return join('/', $path).".php";
 	}
 
-	static function module_exists($MID){
-		return isset(self::$MODULES[$MID]);
+	static function module_exists($ROUTES){
+		if(is_scalar($ROUTES)){
+			$ROUTES = explode("/", $ROUTES);
+		}
+
+		$ret = false;
+		$MODULES = self::$MODULES;
+		foreach($ROUTES as $r){
+			if(isset($MODULES[$r])){
+				return true;
+			} else {
+				return false;
+				break;
+			}
+			$MODULES = $MODULES[$r]['sub_modules'];
+		}
+		return $ret;
+		//return isset(self::$MODULES[$MID]);
 	}
 
 	static function get_msgs(){
