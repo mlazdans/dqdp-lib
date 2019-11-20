@@ -78,7 +78,7 @@ class IbaseEntity implements Entity {
 		}
 
 		if($DATA->ORDER_BY){
-			$sql->OrderBy($DATA->ORDER_BY);
+			$sql->ResetOrderBy()->OrderBy($DATA->ORDER_BY);
 		}
 
 		if($DATA->FIRST){
