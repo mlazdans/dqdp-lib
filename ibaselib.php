@@ -242,21 +242,16 @@ function ibase_db_create($db_name, $db_user, $db_password, $body = ''){
 		'USER'=>$db_user,
 		'PASS'=>$db_password,
 	]);
-	/*
-	if($exe = ibase_isql($sql, [
+}
+
+function ibase_db_drop($db_name, $db_user, $db_password){
+	$sql = "DROP DATABASE;\n";
+
+	return ibase_isql($sql, [
 		'USER'=>$db_user,
 		'PASS'=>$db_password,
-	])){
-		list($errcode, $stdout, $stderr) = $exe;
-		if($errcode){
-			trigger_error("ibase_db_create error: $stderr");
-			return false;
-		}
-	} else {
-		return false;
-	}
-	return true;
-	*/
+		'DB'=>$db_name
+	]);
 }
 
 # TODO: abstract out config!
@@ -277,32 +272,6 @@ function ibase_user_del($user){
 	extract($GLOBALS['config'], EXTR_SKIP);
 	$cmd = "gsec -user $db_user -password $db_password -delete $user";
 	return my_exec($cmd);
-}
-
-function ibase_db_create($db_name, $db_user, $db_password, $add_sql = array()){
-	$db_root = $GLOBALS['config']['db_root'];
-	$db_schema = $GLOBALS['config']['db_schema'];
-
-	$ret = ibase_user_add($db_user, $db_password);
-
-	$schema_data = join('', file($db_schema));
-	$sql_file = tempnam('', 'onlinetrader');
-	$data = "CREATE DATABASE '$db_root$db_name.gdb' USER '$db_user' PASSWORD '$db_password';\r\n";
-	$data .= "CONNECT '$db_root$db_name.gdb' USER '$db_user' PASSWORD '$db_password';\r\n";
-	$data .= $schema_data;
-	$data .= join("\r\n", $add_sql)."\r\n";
-	$data .= "COMMIT;\r\n";
-
-	if(!($f = fopen($sql_file, 'w'))){
-		user_error("Cannot create '$sql_file'\r\n");
-		return false;
-	}
-
-	fputs($f, $data);
-	fclose($f);
-
-	$ret = exec("isql -m -i ".escapeshellarg($sql_file), $output, $retval);
-	return file_exists("$db_root$db_name.gdb");
 }
 */
 
