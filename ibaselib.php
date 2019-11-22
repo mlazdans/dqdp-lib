@@ -121,53 +121,6 @@ function ibase_query_array(){
 	return $ret;
 }
 
-function ibase_build_sql($struct, $data){
-	$sql = '';
-	if(isset($struct['char'])){
-		foreach($struct['char'] as $s_char){
-			if(isset($data[$s_char])){
-				$sql .= " $s_char = '$data[$s_char]', ";
-			}
-		}
-	}
-
-	if(isset($struct['int'])){
-		foreach($struct['int'] as $s_int){
-			if(isset($data[$s_int])){
-				$sql .= " $s_int = ".intval($data[$s_int]).", ";
-			}
-		}
-	}
-
-	if(isset($struct['float'])){
-		foreach($struct['float'] as $s_float){
-			if(isset($data[$s_float])){
-				$sql .= " $s_float = ".to_float($data[$s_float]).", ";
-			}
-		}
-	}
-
-	if(isset($struct['func'])){
-		foreach($struct['func'] as $s_func){
-			if(isset($data[$s_func])){
-				$sql .= " $s_func = ".$data[$s_func].", ";
-			}
-		}
-	}
-
-	if(isset($struct['blob'])){
-		foreach($struct['blob'] as $s_func)	{
-			if(isset($data[$s_func])){
-				$sql .= " $s_func = ?, ";
-			}
-		}
-	}
-
-	$sql = substr($sql, 0, -2);
-
-	return $sql;
-}
-
 function parse_search_q($q, $minWordLen = 3){
 	$q = preg_replace('/[%,\'\.]/', ' ', $q);
 	$words = explode(' ', $q);

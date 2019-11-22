@@ -14,7 +14,6 @@ class Settings extends IbaseEntity
 		$this->Table = 'SETTINGS';
 		$this->PK = ['SET_CLASS','SET_KEY'];
 		$this->CLASS = $class;
-		return parent::__construct();
 	}
 
 	function get($k){
