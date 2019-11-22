@@ -11,11 +11,6 @@ class IbaseEntity implements Entity {
 
 	protected $TR;
 
-	function __construct(){
-		$this->init();
-		return $this;
-	}
-
 	function sql_select(){
 		return (new Select())->From($this->Table);
 	}
@@ -173,12 +168,6 @@ class IbaseEntity implements Entity {
 
 	function new_trans(){
 		return $this->set_trans(ibase_trans());
-	}
-
-	protected function init(){
-		# TODO: abstract out
-		$this->set_trans(\App::$DB);
-		return $this;
 	}
 
 	protected function ids_process(...$args){
