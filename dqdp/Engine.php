@@ -14,10 +14,12 @@ class Engine
 	static public $DEV;
 	static public $DOMAIN;
 	static public $LOCALE;
-	static public $DEBUG_MSG = [];
-	static public $WARN_MSG = [];
-	static public $ERR_MSG = [];
-	static public $INFO_MSG = [];
+	static public $MSG = [
+		'DEBUG'=>[],
+		'WARN'=>[],
+		'ERR'=>[],
+		'INFO'=>[],
+	];
 	static public $SYS_ROOT;
 	static public $TMP_ROOT;
 	static public $PUBLIC_ROOT;
@@ -117,27 +119,19 @@ class Engine
 		return $ret;
 	}
 
-	static function get_msgs(){
-		return [
-			'ERR'=>self::$ERR_MSG,
-			'INFO'=>self::$INFO_MSG,
-			'WARN'=>self::$WARN_MSG,
-			'DEBUG'=>self::$DEBUG_MSG,
-		];
-	}
-
 	static function __msg($key, $msg = null){
 		if(is_climode() && $msg){
-			fprintf(STDERR, "[%s] %s\n", $key, translit($msg));
+			$io = in_array($key, ['ERR', 'DEBUG']) ? STDERR : STDOUT;
+			fprintf($io, "[%s] %s\n", $key, translit($msg));
 		}
 		if($msg === null){
-			return self::${$key.'_MSG'};
+			return self::$MSG[$key];
 		} else {
 			if(is_array($msg)){
-				self::${$key.'_MSG'} = array_merge(self::${$key.'_MSG'}, $msg);
+				self::$MSG[$key] = array_merge(self::$MSG[$key], $msg);
 				return $msg;
 			} else {
-				return self::${$key.'_MSG'}[] = $msg;
+				return self::$MSG[$key][] = $msg;
 			}
 		}
 	}
@@ -251,11 +245,22 @@ class Engine
 			$MODULE_DATA .= ob_get_clean();
 		}
 
-		if(self::$TEMPLATE_FILE){
-			self::$TEMPLATE->set('MODULE_DATA', $MODULE_DATA);
-			self::$TEMPLATE->include(self::$TEMPLATE_FILE);
-		} else {
-			print $MODULE_DATA;
+		try {
+			if(self::$TEMPLATE_FILE){
+				self::$TEMPLATE->set('MODULE_DATA', $MODULE_DATA);
+				self::$TEMPLATE->include(self::$TEMPLATE_FILE);
+			} else {
+				print $MODULE_DATA;
+			}
+		} catch(\Error $ex){
+			self::exception_handler($ex);
+			println("Fatal error:");
+			foreach(self::$MSG as $k=>$m){
+				println("$k:");
+				foreach($m as $msg){
+					println($msg);
+				}
+			}
 		}
 	}
 }

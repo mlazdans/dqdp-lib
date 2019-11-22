@@ -6,10 +6,12 @@ abstract class API {
 	static $URL;
 	static $KEY;
 	static $SID;
+	static $RAW_RESPONSE_DATA;
 
 	abstract static function set_host($host);
 
 	static function decode_response($data){
+		self::$RAW_RESPONSE_DATA = $data;
 		return json_decode($data);
 	}
 
