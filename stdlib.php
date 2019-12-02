@@ -714,7 +714,8 @@ function date_qt_month($C, $m = 1){
 	return ($C - 1) * 3 + $m;
 }
 
-function date_startend($DATE){
+function date_startend($D){
+	$DATE = eoe($D);
 	$format = get_date_format();
 	$start_date = $end_date = false;
 
