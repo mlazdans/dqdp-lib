@@ -121,7 +121,7 @@ function ibase_query_array(){
 	return $ret;
 }
 
-function parse_search_q($q, $minWordLen = 3){
+function parse_search_q($q, $minWordLen = 0){
 	$q = preg_replace('/[%,\'\.]/', ' ', $q);
 	$words = explode(' ', $q);
 
@@ -135,7 +135,7 @@ function parse_search_q($q, $minWordLen = 3){
 	return array_unique($words);
 }
 
-function search_to_sql_cond($q, $fields, $minWordLen = 3){
+function search_to_sql_cond($q, $fields, $minWordLen = 0){
 	$words = parse_search_q($q, $minWordLen);
 	if(!is_array($fields)){
 		$fields = array($fields);
@@ -153,7 +153,7 @@ function search_to_sql_cond($q, $fields, $minWordLen = 3){
 	return $MainCond;
 }
 
-function search_to_sql($q, $fields, $minWordLen = 3){
+function search_to_sql($q, $fields, $minWordLen = 0){
 	$words = parse_search_q($q, $minWordLen);
 	if(!is_array($fields)){
 		$fields = array($fields);
