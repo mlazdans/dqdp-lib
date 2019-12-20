@@ -919,7 +919,7 @@ function long2net($net){
 # $ip      = 192.168.1.2
 # $network = 192.168.1.0/24
 function ipInNet($pIp, $pNetwork){
-	list($net, $cidr) = split('/', $pNetwork);
+	list($net, $cidr) = explode('/', $pNetwork);
 
 	$ipLong = net2long($pIp);
 	$netLong = net2long($net);
