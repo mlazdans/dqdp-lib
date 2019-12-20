@@ -230,13 +230,13 @@ function ibase_user_del($user){
 
 # TODO: aaaaaaarrrrrghhhh! :E
 function ibase_db_restore($db_backup_file, $db_file, $db_user, $db_password){
-	$cmd = "gbak -USER $db_user -PASSWORD $db_password -R $db_backup_file $db_file";
-	my_exec($cmd);
+	// $cmd = "gbak -USER $db_user -PASSWORD $db_password -R $db_backup_file $db_file";
+	// my_exec($cmd);
 }
 
 function ibase_db_backup($db_file, $db_backup_file, $db_user, $db_password){
-	$cmd = "gbak -USER $db_user -PASSWORD $db_password -B $db_file $db_backup_file";
-	my_exec($cmd);
+	// $cmd = "gbak -USER $db_user -PASSWORD $db_password -B $db_file $db_backup_file";
+	// my_exec($cmd);
 }
 
 function ibase_table_info($table, $tr = null){
