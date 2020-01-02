@@ -1449,7 +1449,8 @@ function within($v, $s, $e){
 function build_sql($fields, $DATA = null, $skip_nulls = false){
 	foreach($fields as $i=>$k){
 		if($skip_nulls){
-			if(isset($DATA->{$k})){
+			//if(isset($DATA->{$k})){
+			if(property_exists($DATA, $k)){
 				$values[] = $DATA->{$k};
 			} else {
 				unset($fields[$i]);
