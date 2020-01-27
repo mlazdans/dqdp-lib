@@ -1034,6 +1034,7 @@ function ip_blacklisted($ip){
 	return false;
 }
 
+# TODO: savest kārtībā params
 function emailex($params){
 	$to                = $params->to;
 	$from              = $params->from;
@@ -1053,6 +1054,14 @@ function emailex($params){
 		$mail = new PHPMailer(true);
 		$mail->isSMTP();
 	}
+
+	if(is_array($params->headers)){
+		foreach($params->headers as $k=>$v){
+			$mail->addCustomHeader($k, $v);
+		}
+	}
+
+	if(!empty($params->Sender))$mail->Sender = $params->Sender;
 
 	$mail->Encoding = QueueMailer::ENCODING_QUOTED_PRINTABLE;
 	$mail->CharSet = 'utf-8';
@@ -1095,7 +1104,7 @@ function emailex($params){
 		$mail->send();
 		return true;
 	} catch (Exception $e) {
-		return $e;
+		throw $e;
 	}
 }
 
@@ -1173,6 +1182,10 @@ function header403($msg = "Forbidden"){
 
 function header404($msg = "Not Found"){
 	__header(404, "Not Found", $msg);
+}
+
+function header410($msg = "Gone"){
+	__header(410, "Gone", $msg);
 }
 
 function header503($msg = "Server error"){

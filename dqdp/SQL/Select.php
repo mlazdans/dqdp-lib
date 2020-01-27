@@ -7,6 +7,7 @@ class Select extends Statement
 	var $parts = null;
 	var $first = null;
 	var $skip = null;
+	var $limit = null;
 	var $distinct = false;
 
 	function __construct(string $fields = ""){
@@ -59,6 +60,11 @@ class Select extends Statement
 	function First(int $rows){
 		$this->first = $rows;
 		return $this;
+	}
+
+	function Limit($limit){
+		$this->limit = $limit;
+		return $limit;
 	}
 
 	function Select(string $fields){
@@ -159,6 +165,10 @@ class Select extends Statement
 		if($this->parts->orderby){
 			$lines[] = 'ORDER BY';
 			$lines[] = join(', ', $this->parts->orderby);
+		}
+
+		if($this->limit){
+			$lines[] = "LIMIT $this->limit";
 		}
 
 		return join("\n", $lines);
