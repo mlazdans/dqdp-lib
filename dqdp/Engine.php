@@ -5,8 +5,6 @@ namespace dqdp;
 class Engine
 {
 	static public $START_TIME;
-	static public $DB;
-	static public $DB_PARAMS;
 	static public $REQ;
 	static public $GET;
 	static public $POST;
@@ -24,6 +22,7 @@ class Engine
 	static public $TMP_ROOT;
 	static public $PUBLIC_ROOT;
 	static public $MODULES;
+	static public $MODULE_PATH = ["modules"];
 	static public $ROUTES;
 	static public $TEMPLATE_FILE;
 	static public $TEMPLATE;
@@ -63,10 +62,6 @@ class Engine
 		}
 	}
 
-	static function db_connect($params){
-		return self::$DB = ibase_connect_config($params);
-	}
-
 	static function get_module($MID){
 		return self::$MODULES[$MID]??false;
 	}
@@ -77,11 +72,7 @@ class Engine
 	}
 
 	static function module_path($ROUTES, $max_d){
-		$path = [
-			//realpath(self::$SYS_ROOT),
-			//".",
-			"modules"
-		];
+		$path = self::$MODULE_PATH;
 
 		if(is_scalar($ROUTES)){
 			$ROUTES = explode("/", $ROUTES);

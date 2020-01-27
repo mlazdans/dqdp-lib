@@ -15,7 +15,5 @@ interface Entity {
 	function get_trans();
 	function new_trans();
 	function commit();
-	function commit_ret();
 	function rollback();
-	function rollback_ret();
 }
