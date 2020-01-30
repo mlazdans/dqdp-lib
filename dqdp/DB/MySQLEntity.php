@@ -11,7 +11,7 @@ abstract class MySQLEntity implements Entity {
 	protected $TR;
 
 	function sql_select(){
-		return (new Select())->From($this->Table);
+		return (new Select("*"))->From($this->Table);
 	}
 
 	function fetch(){
@@ -25,8 +25,10 @@ abstract class MySQLEntity implements Entity {
 		return $ret??[];
 	}
 
-	function get($ID){
-		if($q = $this->search([$this->PK=>$ID])){
+	function get($ID, $params = []){
+		$params = eoe($params);
+		$params->{$this->PK} = $ID;
+		if($q = $this->search($params)){
 			return $this->fetch($q);
 		}
 
@@ -41,7 +43,7 @@ abstract class MySQLEntity implements Entity {
 		return false;
 	}
 
-	function get_multi_filter($DATA, $k){
+	static function get_multi_filter($DATA, $k){
 		if(is_array($DATA->{$k})){
 			$IDS = $DATA->{$k};
 		} elseif(is_string($DATA->{$k})){
@@ -53,10 +55,11 @@ abstract class MySQLEntity implements Entity {
 	}
 
 	function set_filters($sql, $DATA = null){
+		//print "mysqlentity->set_filters()\n";
 		if(is_array($this->PK)){
 		} else {
 			if($DATA->isset($this->PK) && is_empty($DATA->{$this->PK})){
-				trigger_error("Illegal PRIMARY KEY value for $this->PK", E_USER_ERROR);
+				trigger_error("Illegal PRIMARY KEY value for ".$this->PK, E_USER_ERROR);
 				return false;
 			}
 		}
@@ -64,7 +67,7 @@ abstract class MySQLEntity implements Entity {
 		$pks = array_wrap($this->PK);
 		foreach($pks as $k){
 			if($DATA->{$k}){
-				$sql->Where(["$this->Table.$k = ?", $DATA->{$k}]);
+				$sql->Where([$this->Table.".".$this->PK." = ?", $DATA->{$k}]);
 			}
 		}
 
@@ -72,7 +75,7 @@ abstract class MySQLEntity implements Entity {
 			$k = $this->PK."s";
 			if($DATA->isset($k)){
 				$IDS = $this->get_multi_filter($DATA, $k);
-				call_user_func([$sql, 'Where'], sql_create_int_filter("$this->Table.{$this->PK}", $IDS));
+				call_user_func([$sql, 'Where'], sql_create_int_filter($this->Table.".".$this->PK, $IDS));
 			}
 		}
 
@@ -81,7 +84,11 @@ abstract class MySQLEntity implements Entity {
 		}
 
 		if($DATA->fields){
-			$sql->Select($DATA->fields);
+			if(is_array($DATA->fields)){
+				$sql->ResetSelect()->Select(join(", ", $DATA->fields));
+			} else {
+				$sql->ResetSelect()->Select($DATA->fields);
+			}
 		}
 
 		if(!isset($DATA->limit)){
@@ -93,19 +100,20 @@ abstract class MySQLEntity implements Entity {
 		if($DATA->limit){
 			$sql->limit($DATA->limit);
 		}
-
-		return true;
 	}
 
 	function search($DATA = null){
 		$DATA = eoe($DATA);
 		$sql = $this->sql_select();
-		if($this->set_filters($sql, $DATA)){
-			//sqlr($sql);
-			//return $this->get_trans()->PrepareAndExecute($sql, $sql->vars());
-			$q = $this->get_trans()->Prepare($sql);
-			return ($q ? $this->get_trans()->Execute($q, $sql->vars()) : false);
-		}
+		$this->set_filters($sql, $DATA);
+		// printr($DATA);
+		// sqlr($sql);
+		// printr($this);
+		// die;
+		//sqlr($sql);
+		//return $this->get_trans()->PrepareAndExecute($sql, $sql->vars());
+		$q = $this->get_trans()->Prepare($sql);
+		return ($q ? $this->get_trans()->Execute($q, $sql->vars()) : false);
 	}
 
 	function save(){
@@ -119,8 +127,8 @@ abstract class MySQLEntity implements Entity {
 		} else {
 			if(empty($DATA->{$this->PK})){
 				if(isset($this->Gen)){
-					$Gen_field_str = "$this->PK,";
-					$Gen_value_str = "NEXT VALUE FOR $this->Gen,";
+					$Gen_field_str = $this->PK.",";
+					$Gen_value_str = "NULL,";
 				}
 			} else {
 				if(!in_array($this->PK, $fields)){
@@ -129,18 +137,28 @@ abstract class MySQLEntity implements Entity {
 			}
 		}
 
-		list($fieldSQL, $valuesSQL, $values) = build_sql($fields, $DATA, true);
+		list($fieldSQL, $valuesSQL, $values, $fields) = build_sql($fields, $DATA, true);
+
+		$updateSQL = [];
+		foreach($fields as $field){
+			$updateSQL[] = "$field = ?";
+		}
+		$updateSQL = join(", ",$updateSQL);
 
 		# TODO: ja vajadzēs nodalīt GRANT tiesības pa INSERT/UPDATE, tad jāatdala UPDATE OR INSERT atsevišķos pieprasījumos
-		$sql = "UPDATE OR INSERT INTO $this->Table ($Gen_field_str$fieldSQL) VALUES ($Gen_value_str$valuesSQL) MATCHING ($PK_fields_str) RETURNING $PK_fields_str";
+		//$sql = "REPLACE INTO ".$this->Table." ($Gen_field_str$fieldSQL) VALUES ($Gen_value_str$valuesSQL)";
+		$sql = "INSERT INTO `$this->Table` ($Gen_field_str$fieldSQL) VALUES ($Gen_value_str$valuesSQL) ON DUPLICATE KEY UPDATE $updateSQL";
+		//printr($sql, $values);
 
-		if($q = ibase_query_array($this->get_trans(), $sql, $values)){
-			$retPK = ibase_fetch($q);
-			if(is_array($this->PK)){
-				return $retPK;
-			} else {
-				return $retPK->{$this->PK};
-			}
+		//if($q = ibase_query_array($this->get_trans(), $sql, $values))
+		if($this->get_trans()->PrepareAndExecute($sql, array_merge($values, $values)) !== false){
+			return empty($DATA->{$this->PK}) ? $this->get_trans()->LastID() : $DATA->{$this->PK};
+			// $retPK = ibase_fetch($q);
+			// if(is_array($this->PK)){
+			// 	return $retPK;
+			// } else {
+			// 	return $retPK->{$this->PK};
+			// }
 		} else {
 			return false;
 		}
