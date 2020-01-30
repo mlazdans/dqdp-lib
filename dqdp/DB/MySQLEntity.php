@@ -54,7 +54,33 @@ abstract class MySQLEntity implements Entity {
 		return $IDS;
 	}
 
+	function set_default_filters($sql, $DATA, $fields, $prefix = ''){
+		$DATA = eoe($DATA);
+		foreach($fields as $field=>$default){
+			if($DATA->isset($field)){
+				if(!is_null($DATA->{$field}))$sql->Where(["`$field` = ?", $DATA->{$field}]);
+			} else {
+				$sql->Where(["$prefix$field = ?", $default]);
+			}
+		}
+	}
+
+	function set_null_filters($sql, $DATA, $fields, $prefix = ''){
+		$DATA = eoe($DATA);
+		$fields = array_wrap($fields);
+		foreach($fields as $k){
+			if($DATA->isset($k)){
+				if(is_null($DATA->{$k})){
+					$sql->Where(["$prefix$k IS NULL"]);
+				} else {
+					$sql->Where(["$prefix$k = ?", $DATA->{$k}]);
+				}
+			}
+		}
+	}
+
 	function set_filters($sql, $DATA = null){
+		$DATA = eoe($DATA);
 		//print "mysqlentity->set_filters()\n";
 		if(is_array($this->PK)){
 		} else {
@@ -145,20 +171,11 @@ abstract class MySQLEntity implements Entity {
 		}
 		$updateSQL = join(", ",$updateSQL);
 
-		# TODO: ja vajadzēs nodalīt GRANT tiesības pa INSERT/UPDATE, tad jāatdala UPDATE OR INSERT atsevišķos pieprasījumos
-		//$sql = "REPLACE INTO ".$this->Table." ($Gen_field_str$fieldSQL) VALUES ($Gen_value_str$valuesSQL)";
 		$sql = "INSERT INTO `$this->Table` ($Gen_field_str$fieldSQL) VALUES ($Gen_value_str$valuesSQL) ON DUPLICATE KEY UPDATE $updateSQL";
-		//printr($sql, $values);
 
-		//if($q = ibase_query_array($this->get_trans(), $sql, $values))
-		if($this->get_trans()->PrepareAndExecute($sql, array_merge($values, $values)) !== false){
+		$res = $this->get_trans()->PrepareAndExecute($sql, array_merge($values, $values));
+		if($res !== false){
 			return empty($DATA->{$this->PK}) ? $this->get_trans()->LastID() : $DATA->{$this->PK};
-			// $retPK = ibase_fetch($q);
-			// if(is_array($this->PK)){
-			// 	return $retPK;
-			// } else {
-			// 	return $retPK->{$this->PK};
-			// }
 		} else {
 			return false;
 		}

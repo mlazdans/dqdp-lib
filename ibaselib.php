@@ -121,64 +121,6 @@ function ibase_query_array(){
 	return $ret;
 }
 
-function parse_search_q($q, $minWordLen = 0){
-	$q = preg_replace('/[%,\'\.]/', ' ', $q);
-	$words = explode(' ', $q);
-
-	foreach($words as $k=>$word){
-		if(($word = trim($word)) && (mb_strlen($word) >= $minWordLen)){
-			$words[$k] = mb_strtoupper($word);
-		} else {
-			unset($words[$k]);
-		}
-	}
-	return array_unique($words);
-}
-
-function search_to_sql_cond($q, $fields, $minWordLen = 0){
-	$words = parse_search_q($q, $minWordLen);
-	if(!is_array($fields)){
-		$fields = array($fields);
-	}
-
-	$MainCond = new Condition();
-	foreach($words as $word){
-		$Cond = new Condition();
-		foreach($fields as $field){
-			$Cond->add_condition(["UPPER($field) LIKE ?", "%".$word."%"], Condition::OR);
-		}
-		$MainCond->add_condition($Cond, Condition::AND);
-	}
-
-	return $MainCond;
-}
-
-function search_to_sql($q, $fields, $minWordLen = 0){
-	$words = parse_search_q($q, $minWordLen);
-	if(!is_array($fields)){
-		$fields = array($fields);
-	}
-
-	$match = '';
-	$values = [];
-	foreach($words as $word){
-		$tmp = '';
-		foreach($fields as $field){
-			//$tmp .= "UPPER($field) LIKE ? COLLATE UNICODE_CI_AI ESCAPE '\\' OR ";
-			$tmp .= "UPPER($field) LIKE ? OR ";
-			$values[] = "%".$word."%";
-		}
-		$tmp = substr($tmp, 0, -4);
-		if($tmp)
-			$match .= "($tmp) AND ";
-	}
-	$match = substr($match, 0, -5);
-	if($match){
-		return ["($match)", $values];
-	}
-	return ["", []];
-}
-
 function ibase_db_create($db_name, $db_user, $db_password, $body = ''){
 	$sql = sprintf(
 		"CREATE DATABASE '%s' USER '%s' PASSWORD '%s' PAGE_SIZE 8192 DEFAULT CHARACTER SET UTF8;\n",
