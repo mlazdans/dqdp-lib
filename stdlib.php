@@ -1402,7 +1402,8 @@ function merge($o1, $o2){
 
 function merge_only($fields, $o1, $o2 = null){
 	if(is_null($o2)){
-		$o2 = is_array($o1) ? [] : (is_object($o1) ? new stdClass : $o2);
+		$o2 = $o1;
+		$o1 = is_array($o2) ? [] : (is_object($o2) ? new stdClass : $o1);
 	}
 	return __merge($o1, $o2, $fields);
 }
@@ -1473,7 +1474,7 @@ function build_sql($fields, $DATA = null, $skip_nulls = false){
 		}
 	}
 
-	return [join(",", $fields), join(",", array_fill(0, count($fields), "?")), $values??[]];
+	return [join(",", $fields), join(",", array_fill(0, count($fields), "?")), $values??[],$fields];
 }
 
 function eo($data = null){

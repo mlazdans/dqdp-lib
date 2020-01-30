@@ -8,6 +8,8 @@ interface Entity {
 	function get($ID);
 	function get_all();
 	function search();
+	// function insert();
+	// function update();
 	function save();
 	function delete($IDS);
 
