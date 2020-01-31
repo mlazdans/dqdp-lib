@@ -609,6 +609,32 @@ function entdecode($data){
 	});
 }
 
+# https://www.gyrocode.com/articles/php-urlencode-vs-rawurlencode/
+# scheme:[//[user[:password]@]host[:port]][/path][?query][#fragment]
+# If you are encoding *path* segment, use rawurlencode().
+# If you are encoding *query* component, use urlencode().
+function urlenc($data){
+	return __object_map($data, function($item){
+		return urlencode($item);
+	});
+}
+function urldec($data){
+	return __object_map($data, function($item){
+		return urldecode($item);
+	});
+}
+function rawurlenc($data){
+	return __object_map($data, function($item){
+		return rawurlencode($item);
+	});
+}
+function rawurldec($data){
+	return __object_map($data, function($item){
+		return rawurldecode($item);
+	});
+}
+##
+
 function specialchars($data){
 	return __object_map($data, function($item){
 		return htmlspecialchars($item, ENT_COMPAT | ENT_HTML401, '', false);
@@ -982,8 +1008,10 @@ function locale_money_format($t, $places = 2){
 	return number_format($t, $places, $point, $sep);
 }
 
-function strip_path($service) {
-	return preg_replace('/[\/\.\\\]/', '', $service);
+function strip_path($data) {
+	return __object_map($data, function($item){
+		return preg_replace('/[\/\.\\\]/', '', $item);
+	});
 }
 
 function urlize($name){
