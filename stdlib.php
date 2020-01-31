@@ -1461,22 +1461,60 @@ function within($v, $s, $e){
 	return ($v > $s) && ($v < $e);
 }
 
-function build_sql($fields, $DATA = null, $skip_nulls = false){
+function __build_sql($fields, $DATA = null, $skip_nulls = false, $join = false){
+	$new_fields = [];
 	foreach($fields as $i=>$k){
-		if($skip_nulls){
-			//if(isset($DATA->{$k})){
-			if(property_exists($DATA, $k)){
-				$values[] = $DATA->{$k};
+		if($skip_nulls && !property_exists($DATA, $k)){
+			continue;
+		}
+
+		if(property_exists($DATA, $k)){
+			if(is_callable($DATA->{$k})){
+				list($h, $v) = $DATA->$k->__invoke();
 			} else {
-				unset($fields[$i]);
+				$h = "?";
+				$v = $DATA->{$k};
 			}
 		} else {
-			$values[] = $DATA->{$k} ?? null;
+			$h = "?";
+			$v = null;
 		}
+
+		$new_fields[] = $k;
+		$holders[] = $h;
+		$values[] = $v;
 	}
 
-	return [join(",", $fields), join(",", array_fill(0, count($fields), "?")), $values??[],$fields];
+	if($join){
+		return [join(",", $new_fields), join(",", $holders), $values??[]];
+	} else {
+		return [$new_fields, $holders, $values];
+	}
 }
+function build_sql($fields, $DATA = null, $skip_nulls = false){
+	return __build_sql($fields, $DATA, $skip_nulls, true);
+}
+function build_sql_raw($fields, $DATA = null, $skip_nulls = false){
+	return __build_sql($fields, $DATA, $skip_nulls, false);
+}
+
+# NOTE (2020-01-31): Pagaidām nedzēst ārā
+// function build_sql($fields, $DATA = null, $skip_nulls = false){
+// 	foreach($fields as $i=>$k){
+// 		if($skip_nulls){
+// 			//if(isset($DATA->{$k})){
+// 			if(property_exists($DATA, $k)){
+// 				$values[] = $DATA->{$k};
+// 			} else {
+// 				unset($fields[$i]);
+// 			}
+// 		} else {
+// 			$values[] = $DATA->{$k} ?? null;
+// 		}
+// 	}
+
+// 	return [join(",", $fields), join(",", array_fill(0, count($fields), "?")), $values??[],$fields];
+// }
 
 function eo($data = null){
 	return new EmptyObject($data);

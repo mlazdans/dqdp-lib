@@ -163,15 +163,19 @@ abstract class MySQLEntity implements Entity {
 			}
 		}
 
-		list($fieldSQL, $valuesSQL, $values, $fields) = build_sql($fields, $DATA, true);
+		//list($fieldSQL, $valuesSQL, $values, $fields) = build_sql($fields, $DATA, true);
+		list($fields, $holders, $values) = build_sql_raw($fields, $DATA, true);
+		$fieldSQL = join(",", $fields);
+		$insertSQL = join(",", $holders);
 
 		$updateSQL = [];
-		foreach($fields as $field){
-			$updateSQL[] = "$field = ?";
+		foreach($fields as $i=>$field){
+			$updateSQL[] = "$field = ".$holders[$i];
 		}
 		$updateSQL = join(", ",$updateSQL);
 
-		$sql = "INSERT INTO `$this->Table` ($Gen_field_str$fieldSQL) VALUES ($Gen_value_str$valuesSQL) ON DUPLICATE KEY UPDATE $updateSQL";
+
+		$sql = "INSERT INTO `$this->Table` ($Gen_field_str$fieldSQL) VALUES ($Gen_value_str$insertSQL) ON DUPLICATE KEY UPDATE $updateSQL";
 
 		$res = $this->get_trans()->PrepareAndExecute($sql, array_merge($values, $values));
 		if($res !== false){
