@@ -6,90 +6,78 @@ define('TMPL_APPEND', true);
 
 class TemplateBlock
 {
-	public static $blocks_cache = array();
+	//public static $blocks_cache = array();
 
 	var $ID;
 	var $vars = array();
 	var $blocks = array();
 
-	var $parent_block = null;
+	var $parent = null;
 	var $block_vars = null;
 
 	var $content = '';
 	var $parsed_content = '';
 	var $parsed_count = 0;
 
-	var $slash;
 	var $undefined = 'remove';
 	var $attributes = array(
 		'disabled' => false
 	);
 
-	function __construct(TemplateBlock $parent, $ID, $content)
-	{
-		if($block = $this->get_block($ID)){
+	function __construct(TemplateBlock $parent, $ID, $content){
+	//function __construct($ID, $content){
+		if($this->get_block($ID)){
 			$this->error('__construct: block ['.$ID.'] already exists', E_USER_ERROR);
+			return false;
 		}
 
 		$this->ID = $ID;
-		$this->slash = chr(92).chr(92);
-		$this->parent_block = $parent;
+		$this->parent = $parent;
 		$this->content = $content;
 		$this->__find_blocks();
-		if(!isset(self::$blocks_cache[$ID]))
-			self::$blocks_cache[$ID] = $this;
+		// if(!isset(self::$blocks_cache[$ID])){
+		// 	self::$blocks_cache[$ID] = $this;
+		// }
 
 		return true;
-	} // __construct
+	}
 
-	function get_root()
-	{
-		if($this->parent_block == null){
-			return $this;
-		} else {
-			return $this->parent_block->get_root();
-		}
-	} // get_root
-
-	private function __find_blocks()
-	{
+	private function __find_blocks(){
 		$patt = '/<!--\s+BEGIN\s+(.*)\s+(.*)-->(.*)<!--\s+END\s+\1\s+-->/smU';
 		preg_match_all($patt, $this->content, $m);
 
-		if(isset($m[1]))
-		{
-			$int_count = count($m[1]);
-			for($c = 0; $c < $int_count; $c++)
-			{
-				$id = $m[1][$c];
-				$this->blocks[$id] = new TemplateBlock($this, $id, $m[3][$c]);
-
-				$arr_attributes = explode(' ', strtolower($m[2][$c]));
-				$this->blocks[$id]->attributes['disabled'] = in_array('disabled', $arr_attributes);
-			}
-
-			return $this->blocks;
-		} else
+		if(!isset($m[1])){
 			return false;
-	} // __find_blocks
+		}
 
-	private function __parse_vars()
-	{
+		for($c = 0; $c < count($m[1]); $c++){
+			$id = $m[1][$c];
+			$this->blocks[$id] = new TemplateBlock($this, $id, $m[3][$c]);
+			//$this->blocks[$id] = new TemplateBlock($id, $m[3][$c]);
+			//$this->blocks[$id]->vars = $this->vars;
+
+			$arr_attributes = explode(' ', strtolower($m[2][$c]));
+			$this->blocks[$id]->attributes['disabled'] = in_array('disabled', $arr_attributes);
+		}
+
+		return $this->blocks;
+	}
+
+	private function __parse_vars(){
 		$content = $this->content;
 		$patt = array();
 		$repl = array();
 		$vars_cache = array();
 
-		if($this->block_vars === null)
-		{
+		if($this->block_vars === null){
 			preg_match_all("/{(.*)}/U", $content, $m);
 			$this->block_vars = $m[1];
 		}
 
-		foreach($this->block_vars as $k)
-		{
+		foreach($this->block_vars as $k){
 			$patt[] = '/{'.$k.'}/';
-			$p = array("/([$this->slash])+/", "/([\$])+/");
+			//chr(92).chr(92)
+			$p = array("/([\\\])+/", "/([\$])+/");
 			$r = array("\\\\$1", "\\\\$1");
 			if(!isset($vars_cache[$k]))
 				$vars_cache[$k] = $this->find_var($k);
@@ -121,14 +109,12 @@ class TemplateBlock
 		*/
 
 		return $content;
-	} // __parse_vars
+	}
 
-	protected function error($msg, $e = E_USER_WARNING)
-	{
+	protected function error($msg, $e = E_USER_WARNING){
 		$tmsg = '';
 		$t = debug_backtrace();
-		for($i=1;$i<count($t);$i++)
-		{
+		for($i=1;$i<count($t);$i++){
 			$bn = basename($t[$i]['file']);
 			if($bn == 'TemplateBlock.php' || $bn == 'Template.php'){
 				continue;
@@ -137,41 +123,41 @@ class TemplateBlock
 			break;
 		}
 
-		if($tmsg)
+		if($tmsg){
 			$msg .= " $tmsg";
+		}
 
 		trigger_error($msg, $e);
-	} // error
+	}
 
-	function get_block($ID, $parent = null)
-	{
-		# fetch from cache
-		if(isset(self::$blocks_cache[$ID]))
-			return self::$blocks_cache[$ID];
+	function get_block($ID){
+		if($this->ID == $ID){
+			return $this;
+		} else {
+			return $this->get_block_under($ID);
+		}
+		//return self::$blocks_cache[$ID]??false;
+	}
 
-		return false;
-	} // get_block
-
-	function get_block_under($ID)
-	{
+	function get_block_under($ID){
 		if(isset($this->blocks[$ID])){
 			return $this->blocks[$ID];
 		}
 
-		foreach($this->blocks as $block_id => $object){
-			if($block = $this->blocks[$block_id]->get_block_under($ID)){
+		foreach($this->blocks as $object){
+			if($block = $object->get_block_under($ID)){
 				return $block;
 			}
 		}
 
 		return false;
-	} // get_block
+	}
 
-	function parse($append = false)
-	{
+	function parse($append = false){
 		# ja bloks sleegts
-		if($this->attributes['disabled'])
+		if($this->attributes['disabled']){
 			return;
+		}
 
 		# ja jau noparseets
 		if($this->parsed_count && !$append) {
@@ -182,8 +168,7 @@ class TemplateBlock
 		$parsed_content = $this->__parse_vars();
 
 		# ja blokaa veel ir bloki
-		foreach($this->blocks as $block_id => $object)
-		{
+		foreach($this->blocks as $block_id => $object){
 			$block_content = $object->parse();
 			$patt = '/\s*<!--\s+BEGIN\s+' . $block_id . '\s+[^<]*-->.*<!--\s+END\s+' . $block_id . '\s+-->\s*/smi';
 			preg_match_all($patt, $parsed_content, $m);
@@ -204,16 +189,15 @@ class TemplateBlock
 
 		# reset childs
 		if($append) {
-			foreach($this->blocks as $block_id=>$object) {
+			foreach($this->blocks as $object) {
 				$object->reset();
 			}
 		}
 
 		return $cont;
-	} // parse
+	}
 
-	function get_parsed_content($ID = '')
-	{
+	function get_parsed_content($ID = ''){
 		$block = $this;
 		if($ID && !($block = $this->get_block($ID))){
 			$this->error('get_parsed_content: block ['.$ID.'] not found!');
@@ -221,21 +205,19 @@ class TemplateBlock
 		}
 
 		return $block->parsed_content;
-	} // get_parsed_content
+	}
 
-	function find_var($k, $d = 0)
-	{
+	function find_var($k){
 		if(isset($this->vars[$k])) {
 			return $this->vars[$k];
-		} else if($this->parent_block) {
-			return $this->parent_block->find_var($k, $d + 1);
+		} elseif($this->parent) {
+			return $this->parent->find_var($k);
 		}
 
 		return '';
-	} // find_var
+	}
 
-	function set_var($var_id, $value, $ID = '')
-	{
+	function set_var($var_id, $value, $ID = ''){
 		$block = $this;
 		if($ID && !($block = $this->get_block($ID))){
 			$this->error('set_var: block ['.$ID.'] not found!');
@@ -245,10 +227,9 @@ class TemplateBlock
 		$block->vars[$var_id] = $value;
 
 		return false;
-	} // set_var
+	}
 
-	function set_array(Array $array, $ID = '')
-	{
+	function set_array(Array $array, $ID = ''){
 		$block = $this;
 		if($ID && !($block = $this->get_block($ID))){
 			$this->error('set_array: block ['.$ID.'] not found!');
@@ -258,10 +239,9 @@ class TemplateBlock
 		foreach($array as $key => $value) {
 			$block->set_var($key, $value);
 		}
-	} // set_array
+	}
 
-	function reset($ID = '')
-	{
+	function reset($ID = ''){
 		$block = $this;
 		if($ID && !($block = $this->get_block($ID))){
 			$this->error('reset: block ['.$ID.'] not found!');
@@ -279,34 +259,31 @@ class TemplateBlock
 		}
 
 		return true;
-	} // reset
+	}
 
-	function enable($ID = '')
-	{
+	function enable($ID = ''){
 		return $this->set_attribute('disabled', false, $ID);
-	} // enable
+	}
 
-	function disable($ID = '')
-	{
+	function disable($ID = ''){
 		return $this->set_attribute('disabled', true, $ID);
-	} // disable
+	}
 
-	function set_attribute($attribute, $value, $ID = '')
-	{
+	function set_attribute($attribute, $value, $ID = ''){
 		$block = $this;
 		if($ID && !($block = $this->get_block($ID))){
 			$this->error('set_attribute: block ['.$ID.'] not found!');
 			return false;
 		}
 
-		if(isset($block->attributes[$attribute]))
+		if(isset($block->attributes[$attribute])){
 			return $block->attributes[$attribute] = $value;
+		}
 
 		return false;
-	} // set_attribute
+	}
 
-	function copy_block($ID_to, $ID_from)
-	{
+	function copy_block($ID_to, $ID_from){
 		if(!($block_to = $this->get_block($ID_to))){
 			$this->error('copy_block: block ['.$ID_to.'] not found!');
 			return false;
@@ -318,62 +295,54 @@ class TemplateBlock
 		}
 
 		# tagat noskaidrosim, vai block_to nav zem block_from
-		if(($block_under_test = $block_from->get_block_under($ID_to))){
+		if($block_from->get_block_under($ID_to)){
 			$this->error('copy_block: ['.$ID_from.'] is a child of ['.$ID_to.']');
 			return false;
 		}
 
 		# paarkopeejam paareejos parametrus
-		$block_to->vars = &$block_from->vars;
+		$block_to->vars = $block_from->vars;
 		$block_to->blocks = $block_from->blocks;
 		$block_to->parsed_content = $block_from->parsed_content;
 		$block_to->content = $block_from->content;
 
-		unset($block_from->parent_block->blocks[$ID_from]);
+		//unset($block_from->parent->blocks[$ID_from]);
 
-		# Uzstādam parentu
-		$block_from->parent_block = $block_to;
+		// # Uzstādam parentu
+		$block_from->parent = $block_to;
 
 		return true;
-	} // copy_block
+	}
 
-	function parse_block($ID, $append = false)
-	{
-		if($block = $this->get_block($ID)){
-			return $block->parse($append);
-		} else {
+	function parse_block($ID = '', $append = false){
+		$block = $this;
+		if($ID && !($block = $this->get_block($ID))){
 			$this->error('parse_block: block ['.$ID.'] not found!');
 			return false;
 		}
-	} // parse_block
 
-	function set_block_string($ID, $content)
-	{
-		if($block = $this->get_block($ID)){
+		return $block->parse($append);
+	}
+
+	function set_block_string($ID, $content){
+		$block = $this;
+		if($ID && !($block = $this->get_block($ID))){
 			$this->error('set_block_string: block ['.$ID.'] not found!');
 			return false;
 		}
 
 		return $block->content = $content;
-	} // set_block_string
+	}
 
-	function block_exists($ID)
-	{
-		if($block = $this->get_block($ID))
-			return true;
+	function block_exists($ID){
+		return $this->get_block($ID) ? true : false;
+	}
 
-		return false;
-	} // block_exists
-
-	function dump_blocks($pre = '')
-	{
-		foreach($this->blocks as $block_id=>$object)
-		{
+	function dump_blocks($pre = ''){
+		foreach($this->blocks as $block_id=>$object){
 			$a = ($object->blocks ? '+' : '-');
-			print "$pre$a$block_id($object->parsed_count)\n";
+			print "$pre$a$block_id($object->parsed_count)<br>\n";
 			$object->dump_blocks("| $pre");
 		}
-	} // dump_blocks
-
-} // class::TemplateBlock
-
+	}
+}
