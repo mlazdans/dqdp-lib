@@ -371,6 +371,10 @@ function redirect($url = ''){
 	header("Location: $url");
 }
 
+function redirectp($url){
+	header("Location: $url",true, 301);
+}
+
 function redirect_not_found($url = '/', $msg = ''){
 	header404($msg);
 	redirect($url);
@@ -1084,7 +1088,7 @@ function emailex($params){
 		$mail->isSMTP();
 	}
 
-	if(is_array($params->headers)){
+	if(isset($params->headers) && is_array($params->headers)){
 		foreach($params->headers as $k=>$v){
 			$mail->addCustomHeader($k, $v);
 		}
@@ -1491,13 +1495,15 @@ function within($v, $s, $e){
 
 function __build_sql($fields, $DATA = null, $skip_nulls = false, $join = false){
 	$new_fields = [];
-	foreach($fields as $i=>$k){
+	foreach($fields as $k){
 		if($skip_nulls && !property_exists($DATA, $k)){
 			continue;
 		}
 
 		if(property_exists($DATA, $k)){
-			if(is_callable($DATA->{$k})){
+			// $reflection = new ReflectionFunction($suspected_closure);
+			// return (bool) $reflection->isClosure();
+			if(is_callable([$DATA, $k]) || $DATA->{$k} instanceof Closure){
 				list($h, $v) = $DATA->$k->__invoke();
 			} else {
 				$h = "?";
@@ -1666,6 +1672,7 @@ function proc_exec($cmd, $args = [], $input = '', $descriptorspec = []){
 }
 
 function debug2file($msg){
+	$msg = str_replace(array("\r", "\n"), ' ', $msg);
 	file_put_contents(getenv('TMPDIR').'./debug.log', sprintf("[%s] %s\n", date('c'), $msg), FILE_APPEND);
 }
 
@@ -1785,4 +1792,28 @@ function search_to_sql($q, $fields, $minWordLen = 0){
 		return ["($match)", $values];
 	}
 	return ["", []];
+}
+
+function is_valid_host($host){
+	$testip = gethostbyname($host);
+	$test1 = ip2long($testip);
+	$test2 = long2ip($test1);
+
+	return ($testip == $test2);
+}
+
+function is_valid_email($email){
+	if(!$email){
+		return false;
+	}
+
+	$parts = explode('@', $email);
+
+	if(count($parts) != 2){
+		return false;
+	}
+
+	list($username, $domain) = $parts;
+
+	return ($username && $domain && (is_valid_host($domain) || checkdnsrr($domain, 'MX')));
 }
