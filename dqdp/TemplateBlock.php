@@ -6,8 +6,6 @@ define('TMPL_APPEND', true);
 
 class TemplateBlock
 {
-	//public static $blocks_cache = array();
-
 	var $ID;
 	var $vars = array();
 	var $blocks = array();
@@ -25,21 +23,15 @@ class TemplateBlock
 	);
 
 	function __construct(TemplateBlock $parent, $ID, $content){
-	//function __construct($ID, $content){
-		if($this->get_block($ID)){
+		if($this->block_exists($ID)){
 			$this->error('__construct: block ['.$ID.'] already exists', E_USER_ERROR);
-			return false;
+			return;
 		}
 
 		$this->ID = $ID;
 		$this->parent = $parent;
 		$this->content = $content;
 		$this->__find_blocks();
-		// if(!isset(self::$blocks_cache[$ID])){
-		// 	self::$blocks_cache[$ID] = $this;
-		// }
-
-		return true;
 	}
 
 	private function __find_blocks(){
@@ -80,12 +72,12 @@ class TemplateBlock
 			$p = array("/([\\\])+/", "/([\$])+/");
 			$r = array("\\\\$1", "\\\\$1");
 			if(!isset($vars_cache[$k]))
-				$vars_cache[$k] = $this->find_var($k);
+				$vars_cache[$k] = $this->get_var($k);
 
 			$repl[] = preg_replace($p, $r, $vars_cache[$k]);
 		}
 
-		$content = preg_replace($patt, $repl, $content);
+		return preg_replace($patt, $repl, $content);
 
 		/*
 		switch ($this->undefined)
@@ -107,8 +99,6 @@ class TemplateBlock
 				break;
 		}
 		*/
-
-		return $content;
 	}
 
 	protected function error($msg, $e = E_USER_WARNING){
@@ -130,13 +120,26 @@ class TemplateBlock
 		trigger_error($msg, $e);
 	}
 
-	function get_block($ID){
-		if($this->ID == $ID){
-			return $this;
+	private function __get_block($ID = ''){
+		if(!$ID || ($this->ID == $ID)){
+			$block = $this;
 		} else {
-			return $this->get_block_under($ID);
+			$block = $this->get_block_under($ID);
 		}
-		//return self::$blocks_cache[$ID]??false;
+		return $block;
+	}
+
+	function block_exists($ID = ''){
+		return $this->__get_block($ID) ? true : false;
+	}
+
+	function get_block($ID = ''){
+		$block = $this->__get_block($ID);
+		if($block === NULL){
+			$this->error('get_block: block ['.$ID.'] not found!');
+		}
+
+		return $block;
 	}
 
 	function get_block_under($ID){
@@ -144,19 +147,27 @@ class TemplateBlock
 			return $this->blocks[$ID];
 		}
 
-		foreach($this->blocks as $object){
-			if($block = $object->get_block_under($ID)){
+		foreach($this->blocks as $o){
+			if($block = $o->get_block_under($ID)){
 				return $block;
 			}
 		}
 
-		return false;
+		return NULL;
+	}
+
+	function parse_block($ID = '', $append = false){
+		if($block = $this->get_block($ID)){
+			return $block->parse($append);
+		}
+
+		return '';
 	}
 
 	function parse($append = false){
 		# ja bloks sleegts
 		if($this->attributes['disabled']){
-			return;
+			return '';
 		}
 
 		# ja jau noparseets
@@ -198,89 +209,69 @@ class TemplateBlock
 	}
 
 	function get_parsed_content($ID = ''){
-		$block = $this;
-		if($ID && !($block = $this->get_block($ID))){
-			$this->error('get_parsed_content: block ['.$ID.'] not found!');
-			return false;
-		}
-
-		return $block->parsed_content;
+		return ($block = $this->get_block($ID)) ? $block->parsed_content : '';
 	}
 
-	function find_var($k){
-		if(isset($this->vars[$k])) {
-			return $this->vars[$k];
-		} elseif($this->parent) {
-			return $this->parent->find_var($k);
-		}
-
-		return '';
-	}
-
-	function set_var($var_id, $value, $ID = ''){
-		$block = $this;
-		if($ID && !($block = $this->get_block($ID))){
-			$this->error('set_var: block ['.$ID.'] not found!');
-			return false;
-		}
-
-		$block->vars[$var_id] = $value;
-
-		return false;
-	}
-
-	function set_array(Array $array, $ID = ''){
-		$block = $this;
-		if($ID && !($block = $this->get_block($ID))){
-			$this->error('set_array: block ['.$ID.'] not found!');
-			return false;
-		}
-
-		foreach($array as $key => $value) {
-			$block->set_var($key, $value);
-		}
-	}
-
-	function reset($ID = ''){
-		$block = $this;
-		if($ID && !($block = $this->get_block($ID))){
-			$this->error('reset: block ['.$ID.'] not found!');
-			return false;
-		}
-
-		$block->parsed_content = '';
-		$block->parsed_count = 0;
-		if(!empty($block->blocks)){
-			$block->parsed_content = '';
-			$block->parsed_count = 0;
-			foreach($block->blocks as $block_id=>$object){
-				$object->reset();
+	function get_var($k, $ID = ''){
+		if($block = $this->get_block($ID)){
+			if(isset($block->vars[$k])) {
+				return $block->vars[$k];
+			} elseif($block->parent) {
+				return $block->parent->get_var($k);
 			}
 		}
 
-		return true;
+		return NULL;
+	}
+
+	function set_var($var_id, $value, $ID = ''){
+		if($block = $this->get_block($ID)){
+			$block->vars[$var_id] = $value;
+		}
+
+		return $this;
+	}
+
+	function set_array(Array $array, $ID = ''){
+		if($block = $this->get_block($ID)){
+			foreach($array as $k=>$v){
+				$block->set_var($k, $v);
+			}
+		}
+
+		return $this;
+	}
+
+	function reset($ID = ''){
+		if($block = $this->get_block($ID)){
+			$block->parsed_content = '';
+			$block->parsed_count = 0;
+			if(!empty($block->blocks)){
+				$block->parsed_content = '';
+				$block->parsed_count = 0;
+				foreach($block->blocks as $o){
+					$o->reset();
+				}
+			}
+		}
+
+		return $this;
 	}
 
 	function enable($ID = ''){
-		return $this->set_attribute('disabled', false, $ID);
+		return ($block = $this->get_block($ID)) ? $block->set_attribute('disabled', false) : $this;
 	}
 
 	function disable($ID = ''){
-		return $this->set_attribute('disabled', true, $ID);
+		return ($block = $this->get_block($ID)) ? $block->set_attribute('disabled', true) : $this;
 	}
 
 	function set_attribute($attribute, $value, $ID = ''){
-		$block = $this;
-		if($ID && !($block = $this->get_block($ID))){
-			$this->error('set_attribute: block ['.$ID.'] not found!');
-			return false;
-		}
-
-		if(isset($block->attributes[$attribute])){
+		if(($block = $this->get_block($ID)) && isset($block->attributes[$attribute])){
 			return $block->attributes[$attribute] = $value;
 		}
 
-		return false;
+		return $this;
 	}
 
 	function copy_block($ID_to, $ID_from){
@@ -314,28 +305,12 @@ class TemplateBlock
 		return true;
 	}
 
-	function parse_block($ID = '', $append = false){
-		$block = $this;
-		if($ID && !($block = $this->get_block($ID))){
-			$this->error('parse_block: block ['.$ID.'] not found!');
-			return false;
+	function set_block_string($content, $ID = ''){
+		if($block = $this->get_block($ID)){
+			$block->content = $content;
 		}
 
-		return $block->parse($append);
-	}
-
-	function set_block_string($ID, $content){
-		$block = $this;
-		if($ID && !($block = $this->get_block($ID))){
-			$this->error('set_block_string: block ['.$ID.'] not found!');
-			return false;
-		}
-
-		return $block->content = $content;
-	}
-
-	function block_exists($ID){
-		return $this->get_block($ID) ? true : false;
+		return $this;
 	}
 
 	function dump_blocks($pre = ''){
