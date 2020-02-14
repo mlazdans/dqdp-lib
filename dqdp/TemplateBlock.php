@@ -7,8 +7,8 @@ define('TMPL_APPEND', true);
 class TemplateBlock
 {
 	var $ID;
-	var $vars = array();
-	var $blocks = array();
+	var $vars = [];
+	var $blocks = [];
 
 	var $parent = null;
 	var $block_vars = null;
@@ -22,9 +22,9 @@ class TemplateBlock
 		'disabled' => false
 	);
 
-	function __construct(TemplateBlock $parent, $ID, $content){
+	function __construct(TemplateBlock $parent = NULL, $ID, $content){
 		if($this->block_exists($ID)){
-			$this->error('__construct: block ['.$ID.'] already exists', E_USER_ERROR);
+			$this->error("block already exists ($ID)", E_USER_ERROR);
 			return;
 		}
 
@@ -120,23 +120,28 @@ class TemplateBlock
 		trigger_error($msg, $e);
 	}
 
-	private function __get_block($ID = ''){
+	private function __get_block($ID){
+		if($ID instanceof TemplateBlock){
+			return $ID;
+		}
+
 		if(!$ID || ($this->ID == $ID)){
 			$block = $this;
 		} else {
 			$block = $this->get_block_under($ID);
 		}
+
 		return $block;
 	}
 
-	function block_exists($ID = ''){
+	function block_exists($ID){
 		return $this->__get_block($ID) ? true : false;
 	}
 
-	function get_block($ID = ''){
+	function get_block($ID){
 		$block = $this->__get_block($ID);
 		if($block === NULL){
-			$this->error('get_block: block ['.$ID.'] not found!');
+			$this->error("block not found ($ID)");
 		}
 
 		return $block;
@@ -242,6 +247,17 @@ class TemplateBlock
 		return $this;
 	}
 
+	function set_except(Array $exclude, Array $data, $ID = ''){
+		if($block = $this->get_block($ID)){
+			$diff = array_diff(array_keys($data), $exclude);
+			foreach($diff as $k){
+				$block->set_var($k, $data[$k]);
+			}
+		}
+
+		return $this;
+	}
+
 	function reset($ID = ''){
 		if($block = $this->get_block($ID)){
 			$block->parsed_content = '';
@@ -258,54 +274,53 @@ class TemplateBlock
 		return $this;
 	}
 
-	function enable($ID = ''){
-		return ($block = $this->get_block($ID)) ? $block->set_attribute('disabled', false) : $this;
+	function enable($ID = NULL){
+		return $this->set_attribute('disabled', false, $ID);
 	}
 
-	function disable($ID = ''){
-		return ($block = $this->get_block($ID)) ? $block->set_attribute('disabled', true) : $this;
+	function disable($ID = NULL){
+		return $this->set_attribute('disabled', true, $ID);
 	}
 
-	function set_attribute($attribute, $value, $ID = ''){
+	function set_attribute($attribute, $value, $ID = NULL){
 		if(($block = $this->get_block($ID)) && isset($block->attributes[$attribute])){
-			return $block->attributes[$attribute] = $value;
+			$block->attributes[$attribute] = $value;
 		}
 
 		return $this;
 	}
 
+	# TODO: test vai remove?
 	function copy_block($ID_to, $ID_from){
 		if(!($block_to = $this->get_block($ID_to))){
-			$this->error('copy_block: block ['.$ID_to.'] not found!');
 			return false;
 		}
 
 		if(!($block_from = $this->get_block($ID_from))){
-			$this->error('copy_block: block ['.$ID_from.'] not found!');
 			return false;
 		}
 
 		# tagat noskaidrosim, vai block_to nav zem block_from
 		if($block_from->get_block_under($ID_to)){
-			$this->error('copy_block: ['.$ID_from.'] is a child of ['.$ID_to.']');
+			$this->error("block is a child of parent ($ID_from:$ID_to)");
 			return false;
 		}
 
 		# paarkopeejam paareejos parametrus
-		$block_to->vars = $block_from->vars;
-		$block_to->blocks = $block_from->blocks;
-		$block_to->parsed_content = $block_from->parsed_content;
-		$block_to->content = $block_from->content;
+		$block_to->vars = &$block_from->vars;
+		$block_to->blocks = &$block_from->blocks;
+		$block_to->block_vars = &$block_from->block_vars;
+		$block_to->content = &$block_from->content;
+		$block_to->parsed_content = &$block_from->parsed_content;
+		$block_to->attributes = &$block_from->attributes;
+		$block_from->parent = $block_to;
 
 		//unset($block_from->parent->blocks[$ID_from]);
-
-		// # Uzstādam parentu
-		$block_from->parent = $block_to;
 
 		return true;
 	}
 
-	function set_block_string($content, $ID = ''){
+	function set_block_string($ID, $content){
 		if($block = $this->get_block($ID)){
 			$block->content = $content;
 		}
