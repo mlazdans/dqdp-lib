@@ -1023,7 +1023,7 @@ function urlize($name){
 	$name = html_entity_decode($name, ENT_QUOTES);
 	$name = mb_strtolower($name);
 	$name = strip_tags($name);
-	$name = preg_replace("/[\:\/\?\#\[\]\@\"'\(\)\.,&;\+=\\\]/", " ", $name);
+	$name = preg_replace("/[`\:\/\?\#\[\]\@\"'\(\)\.,&;\+=\\\]/", " ", $name);
 	$name = trim($name);
 	$name = preg_replace("/\s+/", "-", $name);
 	$name = preg_replace("/-+/", "-", $name);
@@ -1816,4 +1816,8 @@ function is_valid_email($email){
 	list($username, $domain) = $parts;
 
 	return ($username && $domain && (is_valid_host($domain) || checkdnsrr($domain, 'MX')));
+}
+
+function accept_gzip(){
+	return substr_count($_SERVER['HTTP_ACCEPT_ENCODING']??'', 'gzip');
 }
