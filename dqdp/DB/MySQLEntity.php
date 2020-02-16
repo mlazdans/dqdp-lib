@@ -43,6 +43,15 @@ abstract class MySQLEntity implements Entity {
 		return false;
 	}
 
+	function get_all_single($params = null){
+		$params['limit'] = 1;
+		if($data = $this->get_all($params)){
+			return $data[0];
+		} else {
+			return false;
+		}
+	}
+
 	static function get_multi_filter($DATA, $k){
 		if(is_array($DATA->{$k})){
 			$IDS = $DATA->{$k};
