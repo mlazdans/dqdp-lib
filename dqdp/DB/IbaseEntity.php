@@ -42,6 +42,15 @@ class IbaseEntity implements Entity {
 		return false;
 	}
 
+	function get_all_single($params = null){
+		$params['FIRST'] = 1;
+		if($data = $this->get_all($params)){
+			return $data[0];
+		} else {
+			return false;
+		}
+	}
+
 	function set_filters($sql, $DATA = null){
 		if(is_array($this->PK)){
 		} else {

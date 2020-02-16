@@ -13,14 +13,17 @@ class TemplateBlock
 	var $parent = null;
 	var $block_vars = null;
 
-	var $content = '';
-	var $parsed_content = '';
+	var $content;
+	var $parsed_content;
 	var $parsed_count = 0;
 
-	var $undefined = 'remove';
-	var $attributes = array(
-		'disabled' => false
-	);
+	var $attributes = [
+		'disabled'=>false
+	];
+
+	function __get($ID){
+		return $this->get_block($ID);
+	}
 
 	function __construct(TemplateBlock $parent = NULL, $ID, $content){
 		if($this->block_exists($ID)){
@@ -51,18 +54,13 @@ class TemplateBlock
 			$arr_attributes = explode(' ', strtolower($m[2][$c]));
 			$this->blocks[$id]->attributes['disabled'] = in_array('disabled', $arr_attributes);
 		}
-
-		return $this->blocks;
 	}
 
 	private function __parse_vars(){
-		$content = $this->content;
-		$patt = array();
-		$repl = array();
-		$vars_cache = array();
+		$patt = $repl = $vars_cache = [];
 
 		if($this->block_vars === null){
-			preg_match_all("/{(.*)}/U", $content, $m);
+			preg_match_all("/{(.*)}/U", $this->content, $m);
 			$this->block_vars = $m[1];
 		}
 
@@ -71,13 +69,12 @@ class TemplateBlock
 			//chr(92).chr(92)
 			$p = array("/([\\\])+/", "/([\$])+/");
 			$r = array("\\\\$1", "\\\\$1");
-			if(!isset($vars_cache[$k]))
-				$vars_cache[$k] = $this->get_var($k);
+			$vars_cache[$k] = $vars_cache[$k]??$this->get_var($k);
 
 			$repl[] = preg_replace($p, $r, $vars_cache[$k]);
 		}
 
-		return preg_replace($patt, $repl, $content);
+		return preg_replace($patt, $repl, $this->content);
 
 		/*
 		switch ($this->undefined)
@@ -161,7 +158,7 @@ class TemplateBlock
 		return NULL;
 	}
 
-	function parse_block($ID = '', $append = false){
+	function parse_block($ID = NULL, $append = false){
 		if($block = $this->get_block($ID)){
 			return $block->parse($append);
 		}
@@ -188,6 +185,7 @@ class TemplateBlock
 			$block_content = $object->parse();
 			$patt = '/\s*<!--\s+BEGIN\s+' . $block_id . '\s+[^<]*-->.*<!--\s+END\s+' . $block_id . '\s+-->\s*/smi';
 			preg_match_all($patt, $parsed_content, $m);
+			//printr($block_id,$m);
 			foreach($m[0] as $mm) {
 				$parsed_content = str_replace($mm, $block_content, $parsed_content);
 			}
@@ -201,23 +199,21 @@ class TemplateBlock
 
 		$this->parsed_count++;
 
-		$cont = $this->get_parsed_content();
-
 		# reset childs
-		if($append) {
+		//if($append) {
 			foreach($this->blocks as $object) {
 				$object->reset();
 			}
-		}
+		//}
 
-		return $cont;
+		return $this->parsed_content;
 	}
 
-	function get_parsed_content($ID = ''){
-		return ($block = $this->get_block($ID)) ? $block->parsed_content : '';
+	function get_parsed_content($ID = NULL){
+		return ($block = $this->get_block($ID)) ? $block->parsed_content : NULL;
 	}
 
-	function get_var($k, $ID = ''){
+	function get_var($k, $ID = NULL){
 		if($block = $this->get_block($ID)){
 			if(isset($block->vars[$k])) {
 				return $block->vars[$k];
@@ -229,7 +225,7 @@ class TemplateBlock
 		return NULL;
 	}
 
-	function set_var($var_id, $value, $ID = ''){
+	function set_var($var_id, $value, $ID = NULL){
 		if($block = $this->get_block($ID)){
 			$block->vars[$var_id] = $value;
 		}
@@ -237,41 +233,41 @@ class TemplateBlock
 		return $this;
 	}
 
-	function set_array(Array $array, $ID = ''){
+	function set_array(Array $array, $ID = NULL){
 		if($block = $this->get_block($ID)){
 			foreach($array as $k=>$v){
-				$block->set_var($k, $v);
+				$block->vars[$k] = $v;
 			}
 		}
 
 		return $this;
 	}
 
-	function set_except(Array $exclude, Array $data, $ID = ''){
+	function set_except(Array $exclude, Array $data, $ID = NULL){
 		if($block = $this->get_block($ID)){
 			$diff = array_diff(array_keys($data), $exclude);
 			foreach($diff as $k){
-				$block->set_var($k, $data[$k]);
+				$block->vars[$k] = $data[$k];
 			}
 		}
 
 		return $this;
 	}
 
-	function reset($ID = ''){
+	function reset($ID = NULL){
 		if($block = $this->get_block($ID)){
 			$block->parsed_content = '';
 			$block->parsed_count = 0;
-			if(!empty($block->blocks)){
-				$block->parsed_content = '';
-				$block->parsed_count = 0;
-				foreach($block->blocks as $o){
-					$o->reset();
-				}
+			foreach($block->blocks as $o){
+				$o->reset();
 			}
 		}
 
 		return $this;
+	}
+
+	function enable_if($cond, $ID = NULL){
+		return $this->set_attribute('disabled', !((bool)$cond), $ID);
 	}
 
 	function enable($ID = NULL){

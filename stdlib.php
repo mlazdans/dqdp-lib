@@ -422,7 +422,7 @@ function to_range($val, $range, $default = ''){
 
 function upload_save($id, $save_path){
 	$f = upload($id);
-	return $f && !!move_uploaded_file($f['tmp_name'], $save_path);
+	return $f && $f['tmp_name'] && move_uploaded_file($f['tmp_name'], $save_path);
 }
 
 function upload_errormsg($id){
