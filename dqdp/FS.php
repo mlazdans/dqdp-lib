@@ -1,10 +1,31 @@
 <?php
 
-// mount, umount the file system
-// open, close file descriptor
+/*
+CREATE TABLE `fs` (
+	`fs_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+	`fs_fsid` bigint(20) unsigned DEFAULT NULL,
+	`fs_uid` int(10) unsigned DEFAULT '0',
+	`fs_depth` int(10) unsigned NOT NULL,
+	`fs_type` tinyint(3) unsigned NOT NULL DEFAULT '0',
+	`fs_name` varchar(32) NOT NULL,
+	`fs_ext` varchar(32) DEFAULT NULL,
+	`fs_fullname` varchar(64) NOT NULL,
+	`fs_fullpath` varchar(2048) NOT NULL,
+	`fs_fullpath_hash` varchar(40) NOT NULL,
+	`fs_contents` longblob,
+	`fs_size` bigint(20) unsigned,
+	`fs_mime` varchar(64) DEFAULT NULL,
+	`fs_entered` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+	`fs_updated` timestamp(6) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(6),
+	PRIMARY KEY (`fs_id`),
+	UNIQUE KEY `u_fs_fullpath_hash` (`fs_fullpath_hash`) USING BTREE,
+	CONSTRAINT `fk_fs_uid` FOREIGN KEY (`fs_uid`) REFERENCES `logins` (`l_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+	CONSTRAINT `fk_fs_fsid` FOREIGN KEY (`fs_fsid`) REFERENCES `fs` (`fs_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+);
+*/
+
 // write, read to/from file descriptor
 // mkdir, rmdir, creat, unlink, link, symlink
-// fcntl (byte range locks, etc.)
 // stat, utimes, chmod, chown, chgrp
 // Path names are case sensitive, components are separated with forward slash (/).
 // INSERT INTO fs (fs_id, fs_fsid, fs_uid, fs_depth, fs_type, fs_name, fs_fullpath, fs_fullpath_hash) VALUES (1, NULL, NULL, 0, 1, '/', '/', SHA1('/'))
@@ -19,20 +40,26 @@ class FS extends MySQLEntity {
 	//var $cwd = "/";
 	var $db;
 
-	function __construct($uid){
+	function __construct($uid = NULL){
 		$this->Table = 'fs';
 		$this->PK = 'fs_id';
 		$this->uid = $uid;
 	}
 
 	function sql_select(){
-		return (new Select("fs_id, fs_fsid, fs_uid, fs_depth, fs_type, fs_name, fs_fullpath, fs_fullpath_hash, fs_entered, fs_updated"))->From($this->Table);
+		return (
+			new Select(
+				"fs_id, fs_fsid, fs_uid, fs_depth, fs_type, fs_name, fs_ext, fs_fullname, fs_fullpath, fs_fullpath_hash, fs_size, fs_mime, fs_entered, fs_updated"
+			))->From($this->Table);
 	}
 
 	function set_filters($sql, $DATA = null){
 		$DATA = eoe($DATA);
 
-		$filters = ['fs_fsid', 'fs_uid', 'fs_depth', 'fs_type', 'fs_name', 'fs_fullpath', 'fs_contents', 'fs_entered', 'fs_updated'];
+		$filters = [
+			'fs_fsid', 'fs_uid', 'fs_depth', 'fs_type', 'fs_name', 'fs_ext', 'fs_fullname', 'fs_fullpath',
+			'fs_contents', 'fs_mime', 'fs_entered', 'fs_updated'
+		];
 		$this->set_null_filters($sql, $DATA, $filters, "$this->Table.");
 
 		# TODO: old pass get rid off
@@ -42,9 +69,8 @@ class FS extends MySQLEntity {
 
 		if($DATA->get_dir_max){
 			$sql
-			->Where("fs_type = 1")
 			->Where(["fs_fullpath LIKE ?", $DATA->get_dir_max."%"])
-			->OrderBy("fs_depth DESC")
+			->ResetOrderBy()->OrderBy("fs_depth DESC")
 			;
 		}
 
@@ -60,7 +86,10 @@ class FS extends MySQLEntity {
 
 		$DATA = eo($DATA);
 
-		$fields = ['fs_fsid', 'fs_uid', 'fs_depth', 'fs_type', 'fs_name', 'fs_fullpath', 'fs_fullpath_hash', 'fs_contents', 'fs_entered', 'fs_updated'];
+		$fields = [
+			'fs_fsid', 'fs_uid', 'fs_depth', 'fs_type', 'fs_name', 'fs_ext', 'fs_fullname', 'fs_fullpath', 'fs_fullpath_hash',
+			'fs_contents', 'fs_size', 'fs_mime', 'fs_entered', 'fs_updated'
+		];
 
 		if(!$DATA->isset('fs_fullpath_hash')){
 			$fs_fullpath = $DATA->fs_fullpath;
@@ -99,11 +128,14 @@ class FS extends MySQLEntity {
 				'fs_id'=>$data['fs_id'],
 				'fs_fullpath'=>$data['fs_fullpath'],
 				'fs_contents'=>$contents,
+				'fs_size'=>strlen($contents),
 			];
-			return $this->save($params);
 		} else {
 			$parts = explode("/", $this->path($path));
 			$file_name = array_pop($parts);
+			$fn_parts = explode(".", $file_name);
+			$fs_ext = array_pop($fn_parts);
+			$fs_name = join(".", $fn_parts);
 			$dir = join("/", $parts);
 			if($fs_fsid = $this->mkdir($dir)){
 				$params = [
@@ -111,15 +143,25 @@ class FS extends MySQLEntity {
 					'fs_uid'=>$this->uid,
 					'fs_depth'=>count($parts),
 					'fs_type'=>0,
-					'fs_name'=>$file_name,
+					'fs_name'=>$fs_name,
+					'fs_ext'=>$fs_ext,
+					'fs_fullname'=>$file_name,
 					'fs_fullpath'=>"$dir/$file_name",
 					'fs_contents'=>$contents,
+					'fs_size'=>strlen($contents),
 				];
-				return $this->save($params);
 			}
 		}
 
-		return false;
+		if(!isset($params)){
+			return false;
+		}
+
+		if($fs_mime = get_mime($contents)){
+			$params['fs_mime'] = $fs_mime;
+		}
+
+		return $this->save($params);
 	}
 
 	function is_dir($path){
@@ -134,24 +176,24 @@ class FS extends MySQLEntity {
 		return $this->get_by_fullpath($path, $params) ? true : false;
 	}
 
-	function rmdir($path){
+	function rm($path){
 		$sql = "DELETE FROM $this->Table WHERE fs_fullpath_hash = SHA1(?)";
 
 		return $this->get_trans()->PrepareAndExecute($sql, [$path]) ? true : false;
 	}
 
-	function dir_max($path){
-		$params = ["get_dir_max"=>$this->path($path)];
+	function dirmax($path){
+		$params = ["get_dir_max"=>$this->path($path).'/'];
 
 		return $this->get_all($params);
 	}
 
-	function rmdir_tree($path){
+	function rmtree($path){
 		$ret = true;
-		$max = $this->dir_max($path);
+		$max = $this->dirmax($path);
 
 		foreach($max as $entry){
-			if(!($ret = $this->rmdir($entry['fs_fullpath']))){
+			if(!($ret = $this->rm($entry['fs_fullpath']))){
 				return false;
 			}
 		}
@@ -162,13 +204,9 @@ class FS extends MySQLEntity {
 	function mkdir($path){
 		$fs_fsid = NULL;
 		$fs_fullpath = '';
-		// $parts = array_filter(explode("/", $this->path($path)), function($v){
-		// 	return !empty(trim($v));
-		// });
 		$parts = explode("/", $this->path($path));
 		foreach($parts as $i=>$p){
 			$fs_fullpath .= "$p/";
-			print "$fs_fullpath!\n";
 			if($exists = $this->get_by_fullpath($fs_fullpath)){
 				$fs_fsid = $exists['fs_id'];
 				if($exists['fs_type'] == 0){ // fail, file
@@ -181,6 +219,7 @@ class FS extends MySQLEntity {
 					'fs_depth'=>$i,
 					'fs_type'=>1,
 					'fs_name'=>$p,
+					'fs_fullname'=>$p,
 					'fs_fullpath'=>$this->path($fs_fullpath),
 				];
 				if(!($fs_fsid = $this->save($params))){
@@ -192,18 +231,24 @@ class FS extends MySQLEntity {
 		return $fs_fsid;
 	}
 
-	// private function full_path($path){
-	// 	return "/".join("/", $this->path($path));
-	// }
+	function scandir($path, $params = []){
+		return ($data = $this->scandirraw($path, $params)) ? array_getk($data, 'fs_name') : false;
+	}
+
+	function scandirraw($path, $params = []){
+		$d = $this->get_by_fullpath($this->path($path));
+		// if($sort == SCANDIR_SORT_ASCENDING){
+		// 	$orderby = "$this->Table.fs_fullpath ASC";
+		// } elseif($sort == SCANDIR_SORT_DESCENDING){
+		// 	$orderby = "$this->Table.fs_fullpath DESC";
+		// }
+
+		$params['fs_fsid'] = $d['fs_id'];
+
+		return $this->get_all($params);
+	}
 
 	private function path($path){
-		// $parts = array_filter(explode("/", trim($path, "/")), function($v){
-		// 	return !empty(trim($v));
-		// });
-
-		// return $parts;
-		//return "/".join("/", $parts);
 		return "/".trim($path, "/");
-		//return "/".trim($this->cwd, "/").trim($path, "/");
 	}
 }

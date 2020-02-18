@@ -380,6 +380,15 @@ function redirect_not_found($url = '/', $msg = ''){
 	redirect($url);
 }
 
+function redirect_referer($default = "/"){
+	if(empty($_SERVER['HTTP_REFERER'])){
+		redirect($default);
+	} else {
+		redirect($_SERVER["HTTP_REFERER"]);
+	}
+}
+
+
 function floatpoint($val){
 	$val = preg_replace('/[^0-9,\.\-]/', '', $val);
 	return str_replace(',', '.', $val);
@@ -483,20 +492,23 @@ function browse_flat($path, callable $function){
 
 function compacto($data){
 	return __object_filter($data, function($item){
-		return !empty($item);
+		return (strlen($item) > 0);
 	});
 }
 
 # TODO: pielikt visiem __object_*() key parametru tāpat kā __object_walk_ref()
-function __object_walk($data, $func){
+function __object_walk($data, $func, $i = null){
 	if(is_array($data)){
-		foreach($data as $v){
-			__object_walk($v, $func);
+		foreach($data as $k=>$v){
+			__object_walk($v, $func, $k);
 		}
 	} elseif(is_object($data)) {
-		__object_walk(get_object_vars($data), $func);
+		foreach(get_object_vars($data) as $k=>$v){
+			__object_walk($v, $func, $k);
+		}
+		//__object_walk(get_object_vars($data), $func);
 	} else {
-		$func($data);
+		$func($data, $i);
 	}
 }
 
@@ -529,7 +541,7 @@ function __object_filter($data, $func){
 	if(is_array($data)){
 		$ndata = [];
 		foreach($data as $k=>$v){
-			if(__object_filter($v, $func)){
+			if(__object_filter($v, $func) !== null){
 				$ndata[$k] = $v;
 			}
 		}
@@ -540,6 +552,7 @@ function __object_filter($data, $func){
 			$ndata = $data;
 		}
 	}
+
 	return $ndata;
 }
 
@@ -1562,6 +1575,34 @@ function eoe($data = null){
 	}
 }
 
+function eo_debug(dqdp\EmptyObject $o, $keys = null){
+	if(is_null($keys)){
+		$keys = array_keys(get_object_vars($o));
+	}
+
+	$ret = [];
+	foreach($keys as $k){
+		if(!$o->isset($k)){
+			continue;
+		}
+		$msg = "$k=";
+		if($o->{$k} instanceof dqdp\EmptyObject){
+			$msg .= 'eo{'.eo_debug($o->{$k}).'}';
+		} elseif(is_object($o->{$k})){
+			$msg .= "{".join(",", get_object_vars($o->{$k}))."}";
+		} elseif(is_array($o->{$k})){
+			$msg .= "[".join(",", array_flatten($o->{$k}))."]";
+		} elseif(is_bool($o->{$k})){
+			$msg .= (int)$o->{$k};
+		} else {
+			$msg .= $o->{$k};
+		}
+		$ret[] = $msg;
+	}
+
+	return join(",", $ret);
+}
+
 function escape_shell(Array $args){
 	foreach($args as $k=>$part){
 		if(is_string($k)){
@@ -1821,3 +1862,45 @@ function is_valid_email($email){
 function accept_gzip(){
 	return substr_count($_SERVER['HTTP_ACCEPT_ENCODING']??'', 'gzip');
 }
+
+function array_getk($data, $k){
+	return array_map(function($item) use ($k){
+		return $item[$k] ?? null;
+	}, $data);
+}
+
+function get_mime($buf){
+	if(!extension_loaded('fileinfo')){
+		return false;
+	}
+
+	$fi = finfo_open(FILEINFO_MIME_TYPE);
+	$mime = finfo_buffer($fi, $buf);
+	finfo_close($fi);
+
+	return $mime;
+}
+
+// function mkdir_full($dir){
+// 	printr(pathinfo($dir));
+// 	return;
+// 	$da = explode('/', $dir);
+// 	$path = '';
+// 	foreach($da as $item){
+// 		$path .= "/$item";
+// 		if(!file_exists($path)){
+// 			mkdir($path);
+// 		}
+// 	}
+// }
+
+// function is_function($params){
+// 	if(is_scalar($params)){
+// 		return is_callable($params);
+// 	} elseif(is_object($params)){
+// 	}
+
+// 	if(is_callable([$DATA, $k]) || $DATA->{$k} instanceof Closure){
+
+// 	}
+// }
