@@ -1,5 +1,4 @@
 <?php
-
 /*
 CREATE TABLE `fs` (
 	`fs_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -13,14 +12,14 @@ CREATE TABLE `fs` (
 	`fs_fullpath` varchar(2048) NOT NULL,
 	`fs_fullpath_hash` varchar(40) NOT NULL,
 	`fs_contents` longblob,
-	`fs_size` bigint(20) unsigned,
+	`fs_size` bigint(20) unsigned DEFAULT NULL,
 	`fs_mime` varchar(64) DEFAULT NULL,
 	`fs_entered` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
 	`fs_updated` timestamp(6) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(6),
 	PRIMARY KEY (`fs_id`),
 	UNIQUE KEY `u_fs_fullpath_hash` (`fs_fullpath_hash`) USING BTREE,
-	CONSTRAINT `fk_fs_uid` FOREIGN KEY (`fs_uid`) REFERENCES `logins` (`l_id`) ON DELETE SET NULL ON UPDATE CASCADE,
-	CONSTRAINT `fk_fs_fsid` FOREIGN KEY (`fs_fsid`) REFERENCES `fs` (`fs_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+	FOREIGN KEY (`fs_fsid`) REFERENCES `fs` (`fs_id`),
+	FOREIGN KEY (`fs_uid`) REFERENCES `logins` (`l_id`) ON DELETE SET NULL ON UPDATE CASCADE
 );
 */
 
