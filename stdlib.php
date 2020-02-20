@@ -570,16 +570,16 @@ function __object_map($data, $func){
 	return $ndata;
 }
 
-function __object_reduce($data, $func, $initial = null){
+function __object_reduce($data, $func, $initial = null, $key = null){
 	$carry = $initial;
 	if(is_array($data)){
-		foreach($data as $v){
-			$carry = __object_reduce($v, $func, $carry);
+		foreach($data as $k=>$v){
+			$carry = __object_reduce($v, $func, $carry, $k);
 		}
 	} elseif(is_object($data)) {
-		$carry = __object_reduce(get_object_vars($data), $func, $carry);
+		$carry = __object_reduce(get_object_vars($data), $func, $carry, $key);
 	} else {
-		$carry = $func($carry, $data);
+		$carry = $func($carry, $data, $key);
 	}
 	return $carry;
 }
@@ -604,8 +604,10 @@ function translit($data){
 
 function is_empty($data = null){
 	return __object_reduce($data, function($carry, $item){
-		if(is_array($item) || is_object($item))
+		# TODO: šķiet, ka šis checks nav vajadzīgs?
+		if(is_array($item) || is_object($item)){
 			return $carry && is_empty($item);
+		}
 		return $carry && empty($item);
 	}, true);
 }
@@ -1880,6 +1882,16 @@ function get_mime($buf){
 
 	return $mime;
 }
+
+// function to_string($data = null){
+// 	return __object_reduce($data, function($carry, $item, $key){
+// 		//return "$c$key=$item";
+// 		// if(is_array($item) || is_object($item)){
+// 		// 	return "aaa\t".to_string($item);
+// 		// }
+// 		return $carry.($carry?"\n":"")."$key=$item";
+// 	}, '');
+// }
 
 // function mkdir_full($dir){
 // 	printr(pathinfo($dir));

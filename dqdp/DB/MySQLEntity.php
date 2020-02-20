@@ -44,7 +44,8 @@ abstract class MySQLEntity implements Entity {
 	}
 
 	function get_all_single($params = null){
-		$params['limit'] = 1;
+		$params = eo($params);
+		$params->limit = 1;
 		if($data = $this->get_all($params)){
 			return $data[0];
 		} else {
