@@ -30,6 +30,15 @@ class Condition extends Statement
 		}
 	}
 
+	// function __clone(){
+	// 	$cc = [];
+	// 	foreach($this->Conditions as $c){
+	// 		$cc[] = clone $c;
+	// 	}
+	// 	$this->Conditions = $cc;
+	// 	//$this->parts = clone $this->parts;
+	// }
+
 	# __construct($type = Condition::AND)
 	# __construct($str = '', $type = Condition::AND)
 	function __construct(){

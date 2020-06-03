@@ -834,7 +834,11 @@ function query($format = '', $allowed = []){
 
 function __query($query_string = '', $format = '', $delim = '&amp;', $allowed = []){
 	parse_str($query_string, $QS);
-	parse_str($format, $FORMAT);
+	if(is_array($format)){
+		$FORMAT = $format;
+	} else {
+		parse_str($format, $FORMAT);
+	}
 
 	foreach($allowed as $k=>$v){
 		unset($QS[$k]);
@@ -851,12 +855,16 @@ function __query($query_string = '', $format = '', $delim = '&amp;', $allowed = 
 		}
 	}
 
-	$ret = [];
-	foreach($QS as $k=>$v){
-		$ret[] = "$k=$v";
-	}
+	// $ret = [];
+	// foreach($QS as $k=>$v){
+	// 	$ret[] = "$k=$v";
+	// }
+	// $q1 = join($delim, $ret);
+	$q2 = http_build_query($QS, null, $delim);
+	// print "\n$q1\n$q2\n";
+	// die;
 
-	return join($delim, $ret);
+	return $q2;
 }
 
 function format_debug($v){
@@ -1681,11 +1689,13 @@ function proc_exec($cmd, $args = [], $input = '', $descriptorspec = []){
 
 	// Wrapperis
 	// https://github.com/cubiclesoft/createprocess-windows
-	// $cmd = 'C:\bin\createprocess.exe';
-	// $cp_args = ['/w=5000', '/term', '"'.$cmd.'"'];
-	// $process_cmd = proc_prepare_args($cmd, array_merge($cp_args, $args));
-
-	$process_cmd = proc_prepare_args($cmd, $args);
+	$use_wrapper = false;
+	if($use_wrapper){
+		$cp_args = ['/w=5000', '/term', '"'.$cmd.'"'];
+		$process_cmd = proc_prepare_args('C:\bin\createprocess.exe', array_merge($cp_args, $args));
+	} else {
+		$process_cmd = proc_prepare_args($cmd, $args);
+	}
 
 	$process = proc_open($process_cmd, $descriptorspec, $pipes);
 	if(!is_resource($process)){
@@ -1759,6 +1769,13 @@ function html_select_prepare($data, $k_field, $l_field = null){
 function __options_select_kv($data, $selected){
 	foreach($data as $k=>$v){
 		$ret[] = "<option".selected($k, $selected).">$v</option>";
+	}
+	return join("", $ret??[]);
+}
+
+function options_select($data, $vk, $lk, $selected = null){
+	foreach($data as $i){
+		$ret[] = "<option".selected($i[$vk], $selected).">$i[$lk]</option>";
 	}
 	return join("", $ret??[]);
 }
@@ -1858,6 +1875,10 @@ function is_valid_email($email){
 
 	list($username, $domain) = $parts;
 
+	if(strlen($username) > 64){
+		return false;
+	}
+
 	return ($username && $domain && (is_valid_host($domain) || checkdnsrr($domain, 'MX')));
 }
 
@@ -1916,3 +1937,83 @@ function get_mime($buf){
 
 // 	}
 // }
+
+function hl(&$data, $kw)
+{
+	//strip_script($data, $keys, $scripts);
+	$colors = array('white', 'white', 'black', 'white');
+	$bg = array('red', 'blue', 'yellow', 'magenta');
+	$cc = count($colors);
+	$bc = count($bg);
+
+	$kw = trim(preg_replace("/[\*\(\)\-\+\/\:]/", " ", $kw));
+
+	$words = explode(' ', $kw);
+	// duplikaati nafig
+	$words = array_unique($words);
+
+	//$tokens = array();
+	foreach($words as $index=>$word)
+	{
+		$word = preg_replace('/[<>\/]/', '', $word);
+		//$word = substitute(preg_quote($word));
+		$word = substitute(preg_quote($word));
+
+		if(empty($word))
+			continue;
+
+		$color = $colors[$index % $cc];
+		$bgcolor = $bg[$index % $bc];
+		$data = ">$data<";
+		//$patt = "/(>[^<]*)(".substitute(preg_quote($word)).")([^>]*)<?/imsUu";
+		//$patt = "/(>[^<]*)(".substitute($word).")([^>]*)<?/imsUu";
+		$patt = "/(>[^<]*)(".$word.")([^>]*)<?/imsUu";
+
+		//$data = preg_replace($patt, "$1<span style=\"background-color: $bgcolor; color: $color; font-weight: bold;\">$2</span>$3", $data);
+		$data = preg_replace($patt, "$1<mark style=\"background-color: $bgcolor; color: $color; font-weight: bold;\">$2</mark>$3", $data);
+		$data = mb_substr($data, 1, mb_strlen($data)-2);
+	}
+
+	//unstrip_script($data, $keys, $scripts);
+} // hl
+
+function substitute_change($str){
+	$patt = array(
+		"'Ā'", "'Č'", "'Ē'", "'Ģ'", "'Ī'", "'Ķ'", "'Ļ'", "'Ņ'", "'Ō'", "'Ŗ'", "'Š'", "'Ū'", "'Ž'",
+		"'ā'", "'č'", "'ē'", "'ģ'", "'ī'", "'ķ'", "'ļ'", "'ņ'", "'ō'", "'ŗ'", "'š'", "'ū'", "'ž'",
+	);
+	$repl = array(
+		"A", "C", "E", "G", "I", "K", "L", "N", "O", "R", "S", "U", "Z",
+		"a", "c", "e", "g", "i", "k", "l", "n", "o", "r", "s", "u", "z",
+	);
+
+	return preg_replace($patt, $repl, $str);
+}
+
+function substitute($str){
+	/*
+	$patt = array(
+		"/([ĀČĒĢĪĶĻŅŌŖŠŪŽ])/iue"
+	);
+	$repl = array(
+		"'[$1|'.substitute_change('$1').']'"
+	);
+	return preg_replace($patt, $repl, $str);
+	*/
+	$patt = array(
+		"/([ĀČĒĢĪĶĻŅŌŖŠŪŽ])/iu"
+	);
+	return preg_replace_callback(
+		$patt,
+		function($m){
+			//if(false && $i_am_admin)
+				return "[".$m[1]."|".substitute_change($m[1])."]";
+			//else
+			//	return "'[".$m[1]."|'".substitute_change($m[1])."']'";
+		},
+		$str);
+}
+
+function join_paths($a){
+	return join(DIRECTORY_SEPARATOR, $a);
+}

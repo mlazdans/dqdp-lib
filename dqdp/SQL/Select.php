@@ -25,6 +25,14 @@ class Select extends Statement
 		}
 	}
 
+	function __clone(){
+		$pp = [];
+		foreach((array)$this->parts as $k=>$v){
+			$pp[$k] = is_object($v) ? clone $v : $v;
+		}
+		$this->parts = (object)$pp;
+	}
+
 	function __call(string $name, array $arguments){
 		# Reset parts, e.g. select, joins, etc
 		if(strpos($name, 'Reset') === 0){
@@ -64,7 +72,7 @@ class Select extends Statement
 
 	function Limit($limit){
 		$this->limit = $limit;
-		return $limit;
+		return $this;
 	}
 
 	function Select(string $fields){
