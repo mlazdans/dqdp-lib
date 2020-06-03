@@ -36,8 +36,9 @@ use dqdp\SQL\Select;
 
 class FS extends MySQLEntity {
 	var $uid;
-	//var $cwd = "/";
 	var $db;
+
+	// private $chroot;
 
 	function __construct($uid = NULL){
 		$this->Table = 'fs';
@@ -54,6 +55,10 @@ class FS extends MySQLEntity {
 
 	function set_filters($sql, $DATA = null){
 		$DATA = eoe($DATA);
+
+		if($this->uid){
+			$DATA->fs_uid = $this->uid;
+		}
 
 		$filters = [
 			'fs_fsid', 'fs_uid', 'fs_depth', 'fs_type', 'fs_name', 'fs_ext', 'fs_fullname', 'fs_fullpath',
@@ -97,11 +102,15 @@ class FS extends MySQLEntity {
 			};
 		}
 
+		if($this->uid){
+			$DATA->fs_uid = $this->uid;
+		}
+
 		return parent::save($fields, $DATA);
 	}
 
-	// function cd($path){
-	// 	$this->cwd = $path;
+	// function chroot($path){
+	// 	$this->chroot = $path;
 	// }
 
 	function get_by_fullpath($path, $params = []){

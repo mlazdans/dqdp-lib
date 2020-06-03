@@ -4,6 +4,7 @@ namespace dqdp;
 
 class Engine
 {
+	static public $CONFIG = [];
 	static public $START_TIME;
 	static public $REQ;
 	static public $GET;
@@ -27,8 +28,24 @@ class Engine
 	static public $TEMPLATE_FILE;
 	static public $TEMPLATE;
 
-	# TODO: dažādi eventi: before init, after init, etc
-	static function addEvent(){
+	static function get_config($k = null){
+		return self::$CONFIG[$k]??null;
+	}
+
+	static function add_config(){
+		//func_get_arg();
+		$args = func_get_args();
+		if(count($args) == 1){
+			if(is_array($args[0])){
+				self::$CONFIG = array_merge(self::$CONFIG, $args[0]);
+				return true;
+			}
+		} elseif(count($args) == 2){
+			self::$CONFIG[$args[0]] = $args[1];
+			return true;
+		}
+		return false;
+		//self::$CONFIG = array_merge(self::$CONFIG, $nc);
 	}
 
 	static function init(){

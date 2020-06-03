@@ -60,7 +60,7 @@ class TemplateBlock
 		$patt = $repl = $vars_cache = [];
 
 		if($this->block_vars === null){
-			preg_match_all("/{(.*)}/U", $this->content, $m);
+			preg_match_all("/{([a-zA-Z0-9_]+)}/U", $this->content, $m);
 			$this->block_vars = $m[1];
 		}
 
@@ -74,7 +74,13 @@ class TemplateBlock
 			$repl[] = preg_replace($p, $r, $vars_cache[$k]);
 		}
 
-		return preg_replace($patt, $repl, $this->content);
+		$r = preg_replace($patt, $repl, $this->content);
+
+		if($r === NULL){
+			printr($this->ID, $patt, $repl, $this->content);
+		}
+
+		return $r;
 
 		/*
 		switch ($this->undefined)
@@ -177,7 +183,8 @@ class TemplateBlock
 			return $this->get_parsed_content();
 		}
 
-		# ja jauna parseeshana
+		$this->parsed_count++;
+
 		$parsed_content = $this->__parse_vars();
 
 		# ja blokaa veel ir bloki
@@ -196,8 +203,6 @@ class TemplateBlock
 		} else {
 			$this->parsed_content = $parsed_content;
 		}
-
-		$this->parsed_count++;
 
 		# reset childs
 		//if($append) {
