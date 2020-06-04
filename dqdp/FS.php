@@ -82,7 +82,7 @@ class FS extends MySQLEntity {
 			$sql->Select("fs_contents");
 		}
 
-		parent::set_filters($sql, $DATA);
+		return parent::set_filters($sql, $DATA);
 	}
 
 	function save(){
@@ -187,7 +187,7 @@ class FS extends MySQLEntity {
 	function rm($path){
 		$sql = "DELETE FROM $this->Table WHERE fs_fullpath_hash = SHA1(?)";
 
-		return $this->get_trans()->PrepareAndExecute($sql, [$path]) ? true : false;
+		return $this->get_trans()->Execute($sql, [$path]) ? true : false;
 	}
 
 	function dirmax($path){

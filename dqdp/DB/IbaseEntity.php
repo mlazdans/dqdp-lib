@@ -56,7 +56,7 @@ class IbaseEntity implements Entity {
 		} else {
 			if($DATA->isset($this->PK) && is_empty($DATA->{$this->PK})){
 				trigger_error("Illegal PRIMARY KEY value for $this->PK", E_USER_ERROR);
-				return false;
+				return $sql;
 			}
 		}
 
@@ -89,7 +89,7 @@ class IbaseEntity implements Entity {
 			$sql->first($DATA->FIRST);
 		}
 
-		return true;
+		return $sql;
 	}
 
 	function search($DATA = null){

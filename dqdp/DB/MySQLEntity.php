@@ -14,12 +14,12 @@ abstract class MySQLEntity implements Entity {
 		return (new Select("*"))->From($this->Table);
 	}
 
-	function fetch(){
-		return call_user_func_array([$this->get_trans(), 'FetchAssoc'], func_get_args());
+	function fetch(...$args){
+		return $this->get_trans()->FetchAssoc(...$args);
 	}
 
-	function fetch_all(){
-		while($r = call_user_func_array([$this, 'fetch'], func_get_args())){
+	function fetch_all(...$args){
+		while($r = $this->fetch(...$args)){
 			$ret[] = $r;
 		}
 		return $ret??[];
@@ -89,14 +89,13 @@ abstract class MySQLEntity implements Entity {
 		}
 	}
 
-	function set_filters($sql, $DATA = null){
+	function set_filters(Select $sql, $DATA = null){
 		$DATA = eoe($DATA);
-		//print "mysqlentity->set_filters()\n";
 		if(is_array($this->PK)){
 		} else {
 			if($DATA->isset($this->PK) && is_empty($DATA->{$this->PK})){
 				trigger_error("Illegal PRIMARY KEY value for ".$this->PK, E_USER_ERROR);
-				return false;
+				return $sql;
 			}
 		}
 
@@ -136,20 +135,13 @@ abstract class MySQLEntity implements Entity {
 		if($DATA->limit){
 			$sql->limit($DATA->limit);
 		}
+
+		return $sql;
 	}
 
 	function search($DATA = null){
 		$DATA = eoe($DATA);
-		$sql = $this->sql_select();
-		$this->set_filters($sql, $DATA);
-		// printr($DATA);
-		// sqlr($sql);
-		// printr($this);
-		// die;
-		//sqlr($sql);
-		//return $this->get_trans()->PrepareAndExecute($sql, $sql->vars());
-		$q = $this->get_trans()->Prepare($sql);
-		return ($q ? $this->get_trans()->Execute($q, $sql->vars()) : false);
+		return $this->get_trans()->Query($this->set_filters($this->sql_select(), $DATA));
 	}
 
 	function save(){
@@ -187,7 +179,7 @@ abstract class MySQLEntity implements Entity {
 
 		$sql = "INSERT INTO `$this->Table` ($Gen_field_str$fieldSQL) VALUES ($Gen_value_str$insertSQL) ON DUPLICATE KEY UPDATE $updateSQL";
 
-		$res = $this->get_trans()->PrepareAndExecute($sql, array_merge($values, $values));
+		$res = $this->get_trans()->Execute($sql, array_merge($values, $values));
 		if($res !== false){
 			return empty($DATA->{$this->PK}) ? $this->get_trans()->LastID() : $DATA->{$this->PK};
 		} else {
@@ -196,7 +188,8 @@ abstract class MySQLEntity implements Entity {
 	}
 
 	function delete($IDS){
-		return $this->ids_process("DELETE FROM $this->Table WHERE $this->PK = ?", $IDS);
+		trigger_error("Not implemented", E_USER_ERROR);
+		//return $this->ids_process("DELETE FROM $this->Table WHERE $this->PK = ?", $IDS);
 	}
 
 	function set_trans($tr){
@@ -213,41 +206,46 @@ abstract class MySQLEntity implements Entity {
 	}
 
 	function commit(){
-		return ibase_commit($this->get_trans());
+		trigger_error("Not implemented", E_USER_ERROR);
+		//return ibase_commit($this->get_trans());
 	}
 
 	function commit_ret(){
-		return ibase_commit_ret($this->get_trans());
+		trigger_error("Not implemented", E_USER_ERROR);
+		//return ibase_commit_ret($this->get_trans());
 	}
 
 	function rollback(){
-		return ibase_rollback($this->get_trans());
+		trigger_error("Not implemented", E_USER_ERROR);
+		//return ibase_rollback($this->get_trans());
 	}
 
 	function rollback_ret(){
-		return ibase_rollback_ret($this->get_trans());
+		trigger_error("Not implemented", E_USER_ERROR);
+		//return ibase_rollback_ret($this->get_trans());
 	}
 
 	function new_trans(){
-		return $this->set_trans(ibase_trans());
+		trigger_error("Not implemented", E_USER_ERROR);
+		//return $this->set_trans(ibase_trans());
 	}
 
-	protected function ids_process(...$args){
-		$sql = array_shift($args);
-		$IDS = array_shift($args);
-		if(!is_array($IDS)){
-			$IDS = [$IDS];
-		}
+	// protected function ids_process(...$args){
+	// 	$sql = array_shift($args);
+	// 	$IDS = array_shift($args);
+	// 	if(!is_array($IDS)){
+	// 		$IDS = [$IDS];
+	// 	}
 
-		if(!($smt = ibase_prepare($this->get_trans(), $sql))){
-			return false;
-		}
+	// 	if(!($smt = ibase_prepare($this->get_trans(), $sql))){
+	// 		return false;
+	// 	}
 
-		$ret = true;
-		foreach($IDS as $ID){
-			$params = array_merge([$smt], $args, [$ID]);
-			$ret = $ret && call_user_func_array('ibase_execute', $params);
-		}
-		return $ret;
-	}
+	// 	$ret = true;
+	// 	foreach($IDS as $ID){
+	// 		$params = array_merge([$smt], $args, [$ID]);
+	// 		$ret = $ret && call_user_func_array('ibase_execute', $params);
+	// 	}
+	// 	return $ret;
+	// }
 }

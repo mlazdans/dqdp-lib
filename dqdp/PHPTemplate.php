@@ -39,4 +39,10 @@ class PHPTemplate
 		include($template);
 		return $this;
 	}
+
+	function get_include($template){
+		ob_start();
+		$this->include($template);
+		return ob_get_clean();
+	}
 }

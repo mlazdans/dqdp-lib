@@ -22,11 +22,13 @@ class Engine
 	static public $SYS_ROOT;
 	static public $TMP_ROOT;
 	static public $PUBLIC_ROOT;
-	static public $MODULES;
-	static public $MODULE_PATH = ["modules"];
+	static public $MODULES_ROOT;
+	//static public $MODULES;
+	//static public $MODULE_PATH = "modules";
 	static public $ROUTES;
 	static public $TEMPLATE_FILE;
 	static public $TEMPLATE;
+	static public $MOD_REWRITE;
 
 	static function get_config($k = null){
 		return self::$CONFIG[$k]??null;
@@ -49,6 +51,9 @@ class Engine
 	}
 
 	static function init(){
+		if(empty(self::$SYS_ROOT) || !file_exists(self::$SYS_ROOT)){
+			trigger_error('self::$SYS_ROOT not set', E_USER_ERROR);
+		}
 		self::$START_TIME = microtime(true);
 		ini_set('display_errors', 0); // 1, ja iebūvētais
 		set_error_handler('dqdp\Engine::error_handler');
@@ -57,7 +62,13 @@ class Engine
 		self::$REQ = eo();
 		self::$GET = eo();
 		self::$POST = eo();
+
+		self::$TMP_ROOT = self::$SYS_ROOT.DIRECTORY_SEPARATOR.'tmp';
+		self::$MODULES_ROOT = self::$SYS_ROOT.DIRECTORY_SEPARATOR.'modules';
+		self::$PUBLIC_ROOT = self::$SYS_ROOT.DIRECTORY_SEPARATOR."public";
+
 		if(is_climode()){
+			self::$MOD_REWRITE = false;
 			self::$IP = 'localhost';
 			# Parse parameters passed as --param=value
 			$argv = $GLOBALS['argv'] ?? [];
@@ -71,12 +82,27 @@ class Engine
 				}
 			}
 		} else {
+			self::$MOD_REWRITE = function_exists('apache_get_modules') && in_array('mod_rewrite', apache_get_modules());
 			self::$IP = getenv('REMOTE_ADDR');
 			self::$GET->merge(entdecode($_GET));
 			self::$POST->merge(entdecode($_POST));
 			self::$REQ->merge(entdecode($_GET));
 			self::$REQ->merge(entdecode($_POST));
 		}
+
+		# Module loader
+		spl_autoload_register(function ($class) {
+			if(strpos($class, "PVA\\modules\\") === 0){
+				$parts = array_slice(explode("\\", $class), 2);
+				$Class = $parts[0];
+				$module = strtolower($Class);
+
+				$path = join_paths([self::$MODULES_ROOT, $module, "$Class.php"]);
+				if(file_exists($path)){
+					require_once($path);
+				}
+			}
+		});
 	}
 
 	static function get_module($MID){
@@ -88,6 +114,32 @@ class Engine
 		return preg_replace($module_chars, "", $MID);
 	}
 
+	static function module_exists($ROUTES){
+		if(is_scalar($ROUTES)){
+			$ROUTES = explode("/", $ROUTES);
+		}
+
+		if(!is_array($ROUTES)){
+			return false;
+		}
+
+		do {
+			$path = self::$MODULES_ROOT.DIRECTORY_SEPARATOR.join_paths($ROUTES);
+			$path1 = $path.DIRECTORY_SEPARATOR."index.php";
+			if(file_exists($path1)){
+				return $path1;
+			}
+			$path2 = $path.".php";
+			if(file_exists($path2)){
+				return $path2;
+			}
+			array_pop($ROUTES);
+		} while($ROUTES);
+
+		return false;
+	}
+
+	/*
 	static function module_path($ROUTES, $max_d){
 		$path = self::$MODULE_PATH;
 
@@ -126,6 +178,7 @@ class Engine
 
 		return $ret;
 	}
+	*/
 
 	static function __msg($key, $msg = null){
 		if(is_climode() && $msg){

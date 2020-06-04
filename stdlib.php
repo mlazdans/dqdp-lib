@@ -867,14 +867,16 @@ function __query($query_string = '', $format = '', $delim = '&amp;', $allowed = 
 	return $q2;
 }
 
-function format_debug($v){
-	$vars = __object_map($v, function($item){
+function format_debug($v, $depth = 0){
+	$vars = __object_map($v, function($item) use ($depth){
 		if(is_scalar($item) && mb_detect_encoding($item)){
 			return mb_substr($item, 0, 1024).(mb_strlen($item) > 1024 ? '...' : '');
 		} elseif(is_null($item)) {
 			return "NULL";
 		} elseif(is_resource($item)) {
 			return "$item";
+		} elseif(is_array($item)) {
+			return "[ARRAY]";
 		} else {
 			return "[BLOB]";
 		}
@@ -984,6 +986,15 @@ function ipInNet($pIp, $pNetwork){
 
 function array_sort_len($a){
 	array_multisort(array_map('strlen', $a), SORT_NUMERIC, SORT_DESC, $a);
+	return $a;
+}
+
+# TODO: SORT_DESC, SORT_NUMERIC parametros
+function array_sort_byk($a, $k){
+	$ka = array_map(function($i) use ($k){
+		return $i[$k];
+	}, $a);
+	array_multisort($ka, SORT_DESC, SORT_NUMERIC, $a);
 	return $a;
 }
 
@@ -2016,4 +2027,12 @@ function substitute($str){
 
 function join_paths($a){
 	return join(DIRECTORY_SEPARATOR, $a);
+}
+
+function str_limiter($str, $limit, $append){
+	if(strlen($str)>$limit){
+		return substr($str, 0, $limit).$append;
+	}
+
+	return $str;
 }
