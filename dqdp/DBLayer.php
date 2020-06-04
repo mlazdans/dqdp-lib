@@ -223,28 +223,6 @@ class DBLayer
 		}
 	}
 
-	function PrepareAndExecute($sql, $data){
-		if($this->db_type == DB_PDO_MYSQL){
-			if($q = $this->Prepare($sql)){
-				if($q->Execute($data)){
-					if($q->columnCount()){
-						return $q->FetchAll(PDO::FETCH_ASSOC);
-					} else {
-						return $q;
-					}
-					// printr($q->rowCount());
-					// printr($q->columnCount());
-					// dumpr($q);
-					// die;
-					// return $q->FetchAll(PDO::FETCH_ASSOC);
-				}
-			}
-			return false;
-		} else {
-			trigger_error("Not implemented", E_USER_ERROR);
-		}
-	}
-
 	protected function __connect_mysql($str_db_host = '', $str_db_user = '', $str_db_password = '', $str_db_name = '')
 	{
 		if(!extension_loaded('mysql'))

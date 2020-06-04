@@ -19,9 +19,9 @@ interface Layer
 	function BeginTransaction();
 	function Commit();
 	function Rollback();
-	function Quote();
+	//function Quote();
 	//function Now();
-	//function LastID();
+	function LastID();
 	//function AutoCommit();
 	function AffectedRows();
 	function Close();

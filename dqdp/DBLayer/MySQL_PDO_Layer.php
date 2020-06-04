@@ -3,6 +3,7 @@
 namespace dqdp\DBLayer;
 
 use PDO;
+use PDOStatement;
 
 class MySQL_PDO_Layer implements Layer
 {
@@ -12,7 +13,7 @@ class MySQL_PDO_Layer implements Layer
 	var $charset;
 	var $suff;
 
-	function Connect($str_db_host = '', $str_db_user = '', $str_db_password = '', $str_db_name = '', $int_port = 0){
+	function Connect($str_db_host = '', $str_db_user = '', $str_db_password = '', $str_db_name = '', $int_port = 3306){
 		$dsn = "mysql:dbname=$str_db_name;host=$str_db_host;port=$int_port";
 		if($this->charset){
 			$dsn .= ";charset=$this->charset";
@@ -32,9 +33,9 @@ class MySQL_PDO_Layer implements Layer
 
 	function Execute(...$args){
 		$q = $this->Query(...$args);
-		if($this->argIsDqdpSelect($args)){
-			$q->execute($args[0]->vars());
-		}
+		// if($this->argIsDqdpSelect($args)){
+		// 	$q->execute($args[0]->vars());
+		// }
 
 		if($q && $q->columnCount()){
 			$data = [];
@@ -60,14 +61,24 @@ class MySQL_PDO_Layer implements Layer
 		return [];
 	}
 
-	function Now(){
-		return 'NOW()';
-	}
-
 	function Query(...$args){
 		if($this->argIsDqdpSelect($args)){
-			return $this->Prepare($args[0]);
+			if(($q = $this->Prepare($args[0])) && $q->execute($args[0]->vars())){
+				return $q;
+			}
+			return false;
+		} elseif($args[0] instanceof PDOStatement) {
+			if($args[0]->execute($args[1])){
+				return $args[0];
+			}
+			return false;
+		} elseif(count($args) == 2) {
+			if(($q = $this->Prepare($args[0])) && $q->execute($args[1])){
+				return $q;
+			}
+			return false;
 		}
+
 		return $this->conn->Query(...$args);
 	}
 
@@ -97,13 +108,13 @@ class MySQL_PDO_Layer implements Layer
 		return $this->conn->Rollback();
 	}
 
-	function Quote(...$args){
-		list($p) = $args;
-		return $p;
-		// return __object_map($data, function($item){
-		// 	return $this->conn->Quote($item);
-		// });
-	}
+	// function Quote(...$args){
+	// 	list($p) = $args;
+	// 	return $p;
+	// 	// return __object_map($data, function($item){
+	// 	// 	return $this->conn->Quote($item);
+	// 	// });
+	// }
 
 	function AutoCommit(...$args){
 		list($b) = $args;
@@ -120,26 +131,8 @@ class MySQL_PDO_Layer implements Layer
 
 	function Prepare(...$args){
 		if($this->argIsDqdpSelect($args)){
-			return $this->conn->prepare($args[0]);
+			return $this->conn->prepare((string)$args[0]);
 		}
-
 		return $this->conn->prepare(...$args);
 	}
-
-	// function PrepareAndExecute(...$args){
-	// 	trigger_error("Not implemented", E_USER_ERROR);
-	// 	// list($sql, $data) = $args;
-	// 	// if($q = $this->Prepare($sql)){
-	// 	// 	if($q->Execute($data)){
-	// 	// 		if($q->columnCount()){
-	// 	// 			# TODO: kāpēc tieši assoc??
-	// 	// 			return $q->FetchAll(PDO::FETCH_ASSOC);
-	// 	// 		} else {
-	// 	// 			return $q;
-	// 	// 		}
-	// 	// 	}
-	// 	// }
-
-	// 	// return false;
-	// }
 }
