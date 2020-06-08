@@ -29,6 +29,7 @@ class Engine
 	static public $TEMPLATE_FILE;
 	static public $TEMPLATE;
 	static public $MOD_REWRITE;
+	static public $MODULES;
 
 	static function get_config($k = null){
 		return self::$CONFIG[$k]??null;
@@ -92,7 +93,7 @@ class Engine
 
 		# Module loader
 		spl_autoload_register(function ($class) {
-			if(strpos($class, "PVA\\modules\\") === 0){
+			if(strpos($class, "App\\modules\\") === 0){
 				$parts = array_slice(explode("\\", $class), 2);
 				$Class = $parts[0];
 				$module = strtolower($Class);
@@ -105,8 +106,26 @@ class Engine
 		});
 	}
 
-	static function get_module($MID){
-		return self::$MODULES[$MID]??false;
+	static function url($params = []){
+		if(self::get_config('use_mod_rewrite') && self::$MOD_REWRITE){
+			$MID = $params['MID']??"/";
+			unset($params['MID']);
+			$Q = __query('', $params);
+			return "/$MID".($Q ? "?$Q" : "");
+		} else {
+			return "/index.php?".__query('', $params);
+		}
+	}
+
+	static function a($name, Array $url, Array $url_params = []){
+		if(empty($url_params['href'])){
+			$url_params['href'] = self::url($url);
+		}
+		foreach($url_params as $k=>$v){
+			$u_params[] = sprintf('%s="%s"', $k, $v);
+		}
+
+		return sprintf('<a %s>%s</a>', join(" ", $u_params??""), ent($name));
 	}
 
 	static function module_filter_chars($MID){
@@ -137,6 +156,34 @@ class Engine
 		} while($ROUTES);
 
 		return false;
+	}
+
+	static function module_path($ROUTES, $max_d = INF){
+		$path = [self::$MODULES_ROOT];
+
+		if(is_scalar($ROUTES)){
+			$ROUTES = explode("/", $ROUTES);
+		}
+
+		if($max_d === INF) {
+			$ep = $ROUTES;
+		} else {
+			$ep = array_slice($ROUTES, 0, $max_d);
+		}
+		$path = array_merge($path, $ep);
+
+		return join_paths($path).".php";
+		// $path = self::$MODULE_PATH;
+
+		// if(is_scalar($ROUTES)){
+		// 	$ROUTES = explode("/", $ROUTES);
+		// }
+
+		// if($ep = array_slice($ROUTES, 0, $max_d)){
+		// 	$path = array_merge($path, $ep);
+		// }
+
+		// return join('/', $path).".php";
 	}
 
 	/*

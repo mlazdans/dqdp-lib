@@ -1,6 +1,5 @@
 <?php
 
-use dqdp\SQL\Condition;
 use dqdp\SQL\Select;
 
 require_once("stdlib.php");
@@ -567,8 +566,8 @@ function ibase_connect_config($args){
 	$username = $params['username'] ?? '';
 	$password = $params['password'] ?? '';
 	$charset = $params['charset'] ?? 'utf8';
-	$buffers = $params['buffers'] ?? 0;
-	$dialect = $params['buffers'] ?? 0;
+	$buffers = $params['buffers'] ?? null;
+	$dialect = $params['dialect'] ?? null;
 	$role = $params['role'] ?? '';
 
 	return ibase_connect($database, $username, $password, $charset, $buffers, $dialect, $role);

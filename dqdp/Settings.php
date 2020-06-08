@@ -16,7 +16,7 @@ class Settings extends IbaseEntity
 		$this->CLASS = $class;
 	}
 
-	function get($k){
+	function get($k, $params = []){
 		if(isset($this->SDATA[$k])){
 			return $this->SDATA[$k];
 		} else {
@@ -85,7 +85,7 @@ class Settings extends IbaseEntity
 		return $ret;
 	}
 
-	function fetch_all(){
+	function fetch_all(...$args){
 		$ret = [];
 		foreach($this->DB_STRUCT as $k=>$v){
 			$ret[$k] = null;

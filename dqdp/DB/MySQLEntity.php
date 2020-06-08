@@ -4,45 +4,12 @@ namespace dqdp\DB;
 
 use dqdp\SQL\Select;
 
-abstract class MySQLEntity implements Entity {
-	var $Table;
-	var $PK;
-
-	protected $TR;
-
-	function sql_select(){
-		return (new Select("*"))->From($this->Table);
-	}
-
+class MySQLEntity extends Entity {
 	function fetch(...$args){
-		return $this->get_trans()->FetchAssoc(...$args);
+		return $this->get_trans()->fetch_assoc(...$args);
 	}
 
-	function fetch_all(...$args){
-		while($r = $this->fetch(...$args)){
-			$ret[] = $r;
-		}
-		return $ret??[];
-	}
-
-	function get($ID, $params = []){
-		$params = eoe($params);
-		$params->{$this->PK} = $ID;
-		if($q = $this->search($params)){
-			return $this->fetch($q);
-		}
-
-		return false;
-	}
-
-	function get_all($params = null){
-		if($q = $this->search($params)){
-			return $this->fetch_all($q);
-		}
-
-		return false;
-	}
-
+	# TODO: limit - skip,first
 	function get_all_single($params = null){
 		$params = eo($params);
 		$params->limit = 1;
@@ -53,78 +20,8 @@ abstract class MySQLEntity implements Entity {
 		}
 	}
 
-	static function get_multi_filter($DATA, $k){
-		if(is_array($DATA->{$k})){
-			$IDS = $DATA->{$k};
-		} elseif(is_string($DATA->{$k})){
-			$IDS = explode(',',$DATA->{$k});
-		} else {
-			$IDS = [$IDS];
-		}
-		return $IDS;
-	}
-
-	function set_default_filters($sql, $DATA, $fields, $prefix = ''){
-		$DATA = eoe($DATA);
-		foreach($fields as $field=>$default){
-			if($DATA->isset($field)){
-				if(!is_null($DATA->{$field}))$sql->Where(["`$field` = ?", $DATA->{$field}]);
-			} else {
-				$sql->Where(["$prefix$field = ?", $default]);
-			}
-		}
-	}
-
-	function set_null_filters($sql, $DATA, $fields, $prefix = ''){
-		$DATA = eoe($DATA);
-		$fields = array_wrap($fields);
-		foreach($fields as $k){
-			if($DATA->isset($k)){
-				if(is_null($DATA->{$k})){
-					$sql->Where(["$prefix$k IS NULL"]);
-				} else {
-					$sql->Where(["$prefix$k = ?", $DATA->{$k}]);
-				}
-			}
-		}
-	}
-
 	function set_filters(Select $sql, $DATA = null){
-		$DATA = eoe($DATA);
-		if(is_array($this->PK)){
-		} else {
-			if($DATA->isset($this->PK) && is_empty($DATA->{$this->PK})){
-				trigger_error("Illegal PRIMARY KEY value for ".$this->PK, E_USER_ERROR);
-				return $sql;
-			}
-		}
-
-		$pks = array_wrap($this->PK);
-		foreach($pks as $k){
-			if($DATA->{$k}){
-				$sql->Where([$this->Table.".".$this->PK." = ?", $DATA->{$k}]);
-			}
-		}
-
-		if(!is_array($this->PK)){
-			$k = $this->PK."s";
-			if($DATA->isset($k)){
-				$IDS = $this->get_multi_filter($DATA, $k);
-				call_user_func([$sql, 'Where'], sql_create_int_filter($this->Table.".".$this->PK, $IDS));
-			}
-		}
-
-		if($DATA->order_by){
-			$sql->ResetOrderBy()->OrderBy($DATA->order_by);
-		}
-
-		if($DATA->fields){
-			if(is_array($DATA->fields)){
-				$sql->ResetSelect()->Select(join(", ", $DATA->fields));
-			} else {
-				$sql->ResetSelect()->Select($DATA->fields);
-			}
-		}
+		parent::set_filters($sql, $DATA);
 
 		if(!isset($DATA->limit)){
 			if($DATA->page && $DATA->items_per_page){
@@ -181,7 +78,7 @@ abstract class MySQLEntity implements Entity {
 
 		$res = $this->get_trans()->Execute($sql, array_merge($values, $values));
 		if($res !== false){
-			return empty($DATA->{$this->PK}) ? $this->get_trans()->LastID() : $DATA->{$this->PK};
+			return empty($DATA->{$this->PK}) ? $this->get_trans()->last_id() : $DATA->{$this->PK};
 		} else {
 			return false;
 		}
@@ -190,19 +87,6 @@ abstract class MySQLEntity implements Entity {
 	function delete($IDS){
 		trigger_error("Not implemented", E_USER_ERROR);
 		//return $this->ids_process("DELETE FROM $this->Table WHERE $this->PK = ?", $IDS);
-	}
-
-	function set_trans($tr){
-		if($tr instanceof \dqdp\DB\Entity){
-			$this->TR = $tr->get_trans();
-		} elseif($tr) {
-			$this->TR = $tr;
-		}
-		return $this;
-	}
-
-	function get_trans(){
-		return $this->TR;
 	}
 
 	function commit(){
