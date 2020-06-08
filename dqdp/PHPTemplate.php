@@ -19,22 +19,22 @@ class PHPTemplate
 		return $this->Vars[$k];
 	}
 
-	function getVars(){
+	function get_vars(){
 		return $this->Vars;
 	}
 
-	function setVars($vars){
+	function set_vars($vars){
 		$this->Vars = $vars;
 		return $this;
 	}
 
-	function appendVars($vars){
+	function append_vars($vars){
 		$this->Vars = array_merge($this->Vars, $vars);
 		return $this;
 	}
 
 	function include($template){
-		extract($this->getVars());
+		extract($this->get_vars());
 		$TPL = $this;
 		include($template);
 		return $this;

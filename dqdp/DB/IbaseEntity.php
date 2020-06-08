@@ -2,44 +2,11 @@
 
 namespace dqdp\DB;
 
-use dqdp\SQL\Select;
-
-class IbaseEntity implements Entity {
-	var $Table;
-	var $PK;
+class IbaseEntity extends Entity {
 	var $Gen;
-
-	protected $TR;
-
-	function sql_select(){
-		return (new Select())->From($this->Table);
-	}
 
 	function fetch(){
 		return call_user_func_array('ibase_fetch', func_get_args());
-	}
-
-	function fetch_all(){
-		while($r = call_user_func_array([$this, 'fetch'], func_get_args())){
-			$ret[] = $r;
-		}
-		return $ret??[];
-	}
-
-	function get($ID){
-		if($q = $this->search([$this->PK=>$ID])){
-			return $this->fetch($q);
-		}
-
-		return false;
-	}
-
-	function get_all($params = null){
-		if($q = $this->search($params)){
-			return $this->fetch_all($q);
-		}
-
-		return false;
 	}
 
 	function get_all_single($params = null){
@@ -52,34 +19,7 @@ class IbaseEntity implements Entity {
 	}
 
 	function set_filters($sql, $DATA = null){
-		if(is_array($this->PK)){
-		} else {
-			if($DATA->isset($this->PK) && is_empty($DATA->{$this->PK})){
-				trigger_error("Illegal PRIMARY KEY value for $this->PK", E_USER_ERROR);
-				return $sql;
-			}
-		}
-
-		$pks = array_wrap($this->PK);
-		foreach($pks as $k){
-			if($DATA->{$k}){
-				$sql->Where(["$this->Table.$k = ?", $DATA->{$k}]);
-			}
-		}
-
-		if(!is_array($this->PK)){
-			$k = $this->PK."S";
-			if($DATA->isset($k)){
-				if(is_array($DATA->{$k})){
-					$IDS = $DATA->{$k};
-				} elseif(is_string($DATA->{$k})){
-					$IDS = explode(',',$DATA->{$k});
-				} else {
-					$IDS = [$IDS];
-				}
-				call_user_func([$sql, 'Where'], sql_create_int_filter("$this->Table.{$this->PK}", $IDS));
-			}
-		}
+		parent::set_filters($sql, $DATA);
 
 		if($DATA->ORDER_BY){
 			$sql->ResetOrderBy()->OrderBy($DATA->ORDER_BY);
@@ -96,11 +36,7 @@ class IbaseEntity implements Entity {
 		$DATA = eoe($DATA);
 		$sql = $this->sql_select();
 		if($this->set_filters($sql, $DATA)){
-			//if($this->get_trans()){
 			return ibase_query_array($this->get_trans(), $sql, $sql->vars());
-			// } else {
-			// 	return false;
-			// }
 		}
 	}
 
@@ -144,19 +80,6 @@ class IbaseEntity implements Entity {
 
 	function delete($IDS){
 		return $this->ids_process("DELETE FROM $this->Table WHERE $this->PK = ?", $IDS);
-	}
-
-	function set_trans($tr){
-		if($tr instanceof \dqdp\DB\Entity){
-			$this->TR = $tr->get_trans();
-		} elseif($tr) {
-			$this->TR = $tr;
-		}
-		return $this;
-	}
-
-	function get_trans(){
-		return $this->TR;
 	}
 
 	function commit(){
