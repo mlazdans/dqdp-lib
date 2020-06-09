@@ -2,8 +2,8 @@
 
 namespace dqdp;
 
-use PHPMailer\PHPMailer;
-use PHPMailer\Exception;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 class QueueMailer extends PHPMailer
 {

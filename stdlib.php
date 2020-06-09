@@ -4,7 +4,7 @@ use dqdp\LV;
 use dqdp\QueueMailer;
 use dqdp\EmptyObject;
 use dqdp\SQL\Condition;
-use PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\PHPMailer;
 
 final class dqdp {
 	static public $DATE_FORMAT = 'd.m.Y';
@@ -1102,6 +1102,7 @@ function ip_blacklisted($ip){
 }
 
 # TODO: savest kārtībā params
+# TODO: iespēja izmantot multiple providers
 function emailex($params){
 	$to                = $params->to;
 	$from              = $params->from;

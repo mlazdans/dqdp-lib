@@ -2,6 +2,7 @@
 
 namespace dqdp\DBLayer;
 
+use Exception;
 use PDO;
 use PDOStatement;
 
@@ -9,6 +10,17 @@ class MySQL_PDO_Layer extends Layer
 {
 	var $conn;
 	var $charset;
+	protected $transactionCounter = 0;
+	protected $row_count;
+
+	protected function handle_err($e){
+		if($this->use_exception){
+			throw new DBException($e);
+		} else {
+			trigger_error($e->getMessage());
+			return false;
+		}
+	}
 
 	function connect($str_db_host = '', $str_db_user = '', $str_db_password = '', $str_db_name = '', $int_port = 3306){
 		$dsn = "mysql:dbname=$str_db_name;host=$str_db_host;port=$int_port";
@@ -18,25 +30,21 @@ class MySQL_PDO_Layer extends Layer
 
 		try {
 			$this->conn = new PDO($dsn, $str_db_user, $str_db_password);
-			$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
+			//$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
+			$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 			$this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
 			//$this->conn->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
 			return $this->conn;
-		} catch (PDOException $e) {
-			user_error('Connection failed: ' . $e->getMessage());
-			return false;
+		} catch (Exception $e) {
+			return $this->handle_err($e);
 		}
 	}
 
 	function execute(...$args){
-		$q = $this->Query(...$args);
-		// if($this->is_dqdp_select($args)){
-		// 	$q->execute($args[0]->vars());
-		// }
-
+		$q = $this->query(...$args);
 		if($q && $q->columnCount()){
 			$data = [];
-			while($row = $this->fetch_assoc($q)){
+			while($row = $this->{$this->execute_fetch_function}($q)){
 				$data[] = $row;
 			}
 		}
@@ -45,25 +53,32 @@ class MySQL_PDO_Layer extends Layer
 		return isset($data) ? $data : $q;
 	}
 
-	function query(...$args){
-		if($this->is_dqdp_select($args)){
-			if(($q = $this->prepare($args[0])) && $q->execute($args[0]->vars())){
-				return $q;
-			}
-			return false;
-		} elseif($args[0] instanceof PDOStatement) {
-			if($args[0]->execute($args[1])){
-				return $args[0];
-			}
-			return false;
-		} elseif(count($args) == 2) {
-			if(($q = $this->prepare($args[0])) && $q->execute($args[1])){
-				return $q;
-			}
-			return false;
-		}
+	protected function is_dqdp_select($args){
+		return (count($args) == 1) && $args[0] instanceof \dqdp\SQL\Select;
+	}
 
-		return $this->conn->query(...$args);
+	function query(...$args){
+		try {
+			if($this->is_dqdp_select($args)){
+				if(($q = $this->prepare($args[0])) && $q->execute($args[0]->vars())){
+					return $q;
+				}
+			} elseif($args[0] instanceof PDOStatement) {
+				$q = $args[0];
+				if($q->execute($args[1])){
+					return $q;
+				}
+			} elseif(count($args) == 2) {
+				if(($q = $this->prepare($args[0])) && $q->execute($args[1])){
+					return $q;
+				}
+			}
+			return $q = $this->conn->query(...$args);
+		} catch (Exception $e) {
+			return $this->handle_err($e);
+		} finally {
+			$this->row_count = $q->rowCount();
+		}
 	}
 
 	function fetch_assoc(...$args){
@@ -84,13 +99,36 @@ class MySQL_PDO_Layer extends Layer
 		return $this->conn->beginTransaction();
 	}
 
-	function commit(){
-		return $this->conn->Commit();
+	function commit() {
+		return $this->conn->commit();
 	}
 
 	function rollback(){
-		return $this->conn->Rollback();
+		return $this->conn->rollBack();
 	}
+
+	// function trans(){
+	// 	if (!$this->transactionCounter++) {
+	// 		return $this->conn->beginTransaction();
+	// 	}
+	// 	$this->execute('SAVEPOINT trans'.$this->transactionCounter);
+	// 	return $this->transactionCounter >= 0;
+	// }
+
+	// function commit(){
+	// 	if (!--$this->transactionCounter) {
+	// 		return $this->conn->commit();
+	// 	}
+	// 	return $this->transactionCounter >= 0;
+	// }
+
+	// function rollback(){
+	// 	if (--$this->transactionCounter) {
+	// 		$this->execute('ROLLBACK TO trans'.($this->transactionCounter + 1));
+	// 		return true;
+	// 	}
+	// 	return $this->conn->rollBack();
+	// }
 
 	function auto_commit(...$args){
 		list($b) = $args;
@@ -102,7 +140,7 @@ class MySQL_PDO_Layer extends Layer
 	}
 
 	function close(){
-		trigger_error("Not implemented", E_USER_ERROR);
+		$this->conn = null;
 	}
 
 	function prepare(...$args){
