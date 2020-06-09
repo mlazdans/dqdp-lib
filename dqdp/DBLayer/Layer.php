@@ -2,13 +2,13 @@
 
 namespace dqdp\DBLayer;
 
+class DBException extends \RuntimeException {
+}
+
 abstract class Layer
 {
-	const MYSQL = 1;
-	const PGSQL = 2;
-	const MYSQLI = 3;
-	const PDO_MYSQL = 4;
-	const IBASE = 5;
+	var $use_exception = false;
+	protected $execute_fetch_function = 'fetch_assoc';
 
 	abstract function connect();
 	abstract function query();
@@ -21,10 +21,6 @@ abstract class Layer
 	abstract function rollback();
 	abstract function affected_rows();
 	abstract function close();
-
-	function is_dqdp_select($args){
-		return (count($args) == 1) && $args[0] instanceof \dqdp\SQL\Select;
-	}
 
 	function execute_single(...$args){
 		$data = $this->Execute(...$args);

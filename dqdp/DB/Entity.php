@@ -49,7 +49,7 @@ abstract class Entity {
 		return [];
 	}
 
-	function set_default_filters($sql, $DATA, $fields, $prefix = ''){
+	function set_default_filters(Select $sql, $DATA, $fields, $prefix = ''){
 		$DATA = eoe($DATA);
 		foreach($fields as $field=>$default){
 			if($DATA->isset($field)){
@@ -62,7 +62,7 @@ abstract class Entity {
 		return $sql;
 	}
 
-	function set_null_filters($sql, $DATA, $fields, $prefix = ''){
+	function set_null_filters(Select $sql, $DATA, $fields, $prefix = ''){
 		$DATA = eoe($DATA);
 		$fields = array_wrap($fields);
 		foreach($fields as $k){
@@ -94,6 +94,7 @@ abstract class Entity {
 			}
 		}
 
+		# TODO: multi field PK
 		if(!is_array($this->PK)){
 			$k = $this->PK."S";
 			if($DATA->isset($k)){
@@ -102,9 +103,9 @@ abstract class Entity {
 				} elseif(is_string($DATA->{$k})){
 					$IDS = explode(',',$DATA->{$k});
 				} else {
-					$IDS = [$IDS];
+					trigger_error("Illegal multiple PRIMARY KEY value for $this->PKS", E_USER_ERROR);
 				}
-				call_user_func([$sql, 'Where'], sql_create_int_filter("$this->Table.{$this->PK}", $IDS));
+				$sql->Where(sql_create_int_filter("$this->Table.{$this->PK}", $IDS));
 			}
 		}
 
@@ -138,15 +139,15 @@ abstract class Entity {
 		return $this->TR;
 	}
 
-	static function get_multi_filter($DATA, $k){
-		if(is_array($DATA->{$k})){
-			$IDS = $DATA->{$k};
-		} elseif(is_string($DATA->{$k})){
-			$IDS = explode(',',$DATA->{$k});
-		} else {
-			$IDS = [$IDS];
-		}
+	// static function get_multi_filter($DATA, $k){
+	// 	if(is_array($DATA->{$k})){
+	// 		$IDS = $DATA->{$k};
+	// 	} elseif(is_string($DATA->{$k})){
+	// 		$IDS = explode(',',$DATA->{$k});
+	// 	} else {
+	// 		$IDS = [$IDS];
+	// 	}
 
-		return $IDS;
-	}
+	// 	return $IDS;
+	// }
 }
