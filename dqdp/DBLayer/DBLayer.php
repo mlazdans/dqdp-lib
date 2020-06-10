@@ -8,6 +8,7 @@ class DBException extends \RuntimeException {
 abstract class DBLayer
 {
 	var $use_exceptions = true;
+	var $dev = true;
 
 	protected $execute_fetch_function = 'fetch_assoc';
 
@@ -22,14 +23,23 @@ abstract class DBLayer
 	abstract function rollback();
 	abstract function affected_rows();
 	abstract function close();
-	abstract function save($Ent, $fields, $DATA);
+	# TODO: rename insert_update
+	abstract function insert_update($Ent, $fields, $DATA);
 
 	function set_default_fetch_function($func){
 		$this->execute_fetch_function = $func;
+		return $this;
 	}
 
 	function fetch(){
 		return $this->{$this->execute_fetch_function}(...func_get_args());
+	}
+
+	function fetch_all(){
+		while($r = $this->{$this->execute_fetch_function}(...func_get_args())){
+			$ret[] = $r;
+		}
+		return $ret??[];
 	}
 
 	function execute_single(){
@@ -43,5 +53,10 @@ abstract class DBLayer
 
 	protected function is_dqdp_select($args){
 		return (count($args) == 1) && $args[0] instanceof \dqdp\SQL\Select;
+	}
+
+	function set_dev(Bool $dev){
+		$this->dev = $dev;
+		return $this;
 	}
 }

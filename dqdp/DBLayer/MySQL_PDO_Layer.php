@@ -148,7 +148,7 @@ class MySQL_PDO_Layer extends DBLayer
 		return $this->conn->prepare(...$args);
 	}
 
-	function save($Ent, $fields, $DATA){
+	function insert_update($Ent, $fields, $DATA){
 		//list($Ent, $fields, $DATA) = func_get_args();
 
 		$Gen_value_str = $Gen_field_str = '';
