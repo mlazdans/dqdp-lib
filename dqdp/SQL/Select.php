@@ -60,6 +60,7 @@ class Select extends Statement
 		return $this;
 	}
 
+	# TODO: compilator?
 	function Skip(int $rows){
 		$this->skip = $rows;
 		return $this;

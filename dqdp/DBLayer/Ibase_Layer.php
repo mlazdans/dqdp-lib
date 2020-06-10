@@ -23,31 +23,14 @@ class Ibase_Layer extends DBLayer
 	}
 
 	function connect(...$args){
-		// $argc = count($args);
-		// if($argc == 1) {
-		// 	if(is_object($args[0])){
-		// 		$params = get_object_vars($args[0]);
-		// 	} elseif(is_array($args[0])) {
-		// 		$params = $args[0];
-		// 	} else {
-		// 		$params = $args;
-		// 	}
-		// } else {
-		// 	$params = $args;
-		// }
 		$this->conn = ibase_connect(...$args);
 		return $this;
-		//return ibase_connect($database, $username, $password, $charset, $buffers, $dialect, $role);
 	}
 
 	function execute(...$args){
 		$q = $this->query(...$args);
 		if($q && is_resource($q)){
 			$data = $this->fetch_all($q);
-			// $data = [];
-			// while($row = $this->fetch($q)){
-			// 	$data[] = $row;
-			// }
 		}
 
 		return isset($data) ? $data : $q;

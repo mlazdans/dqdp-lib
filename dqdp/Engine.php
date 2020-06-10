@@ -23,13 +23,11 @@ class Engine
 	static public $TMP_ROOT;
 	static public $PUBLIC_ROOT;
 	static public $MODULES_ROOT;
-	//static public $MODULES;
-	//static public $MODULE_PATH = "modules";
-	static public $ROUTES;
-	static public $TEMPLATE_FILE;
-	static public $TEMPLATE;
-	static public $MOD_REWRITE;
 	static public $MODULES;
+	static public $ROUTES;
+	static public $TEMPLATE;
+	static public $TEMPLATE_FILE;
+	static public $MOD_REWRITE;
 
 	static function get_config($k = null){
 		return self::$CONFIG[$k]??null;
@@ -72,11 +70,11 @@ class Engine
 			self::$MOD_REWRITE = false;
 			self::$IP = 'localhost';
 			# Parse parameters passed as --param=value
-			$argv = $GLOBALS['argv'] ?? [];
-			if(count($argv) > 1){
-				for($i = 1; $i<count($argv); $i++){
-					if(strpos($argv[$i], '--') === 0){
-						$parts = explode("=", $argv[$i]);
+			$arg = $_SERVER['argv']??[];
+			if(count($arg) > 1){
+				for($i = 1; $i<count($arg); $i++){
+					if(strpos($arg[$i], '--') === 0){
+						$parts = explode("=", $arg[$i]);
 						$param = substr(array_shift($parts), 2); // remove "--"
 						self::$REQ->{$param} = join("=", $parts); // restore 'value' in case value contains "="
 					}
@@ -106,15 +104,23 @@ class Engine
 		});
 	}
 
-	static function url($params = []){
+	static function __url($params, $delim){
 		if(self::get_config('use_mod_rewrite') && self::$MOD_REWRITE){
 			$MID = $params['MID']??"/";
 			unset($params['MID']);
-			$Q = __query('', $params);
+			$Q = __query('', $params, $delim);
 			return "/$MID".($Q ? "?$Q" : "");
 		} else {
-			return "/index.php?".__query('', $params);
+			return "/index.php?".__query('', $params, $delim);
 		}
+	}
+
+	static function url($params = []){
+		return self::__url($params, '&amp;');
+	}
+
+	static function urll($params = []){
+		return self::__url($params, '&');
 	}
 
 	static function a($name, Array $url, Array $url_params = []){
@@ -265,7 +271,9 @@ class Engine
 
 		if($trace) {
 			foreach($trace as $t){
-				$outp[] = self::error_handler_traceformat($t);
+				if($line = self::error_handler_traceformat($t)){
+					$outp[] = $line;
+				}
 			}
 		}
 
@@ -325,9 +333,20 @@ class Engine
 		if(empty($trace['line'])){
 			$trace['line'] = 'unknown';
 		}
-		if(empty($trace['class']) && !empty($trace['args']) && in_array($trace['function'], ['include', 'require', 'include_once', 'require_once'])){
+		if(!empty($trace['class'])){
+			if($trace['class'] == 'dqdp\PHPTemplate'){
+				//return false;
+			}
+			$args = trim_includes_path($trace['file']);
+		} elseif(!empty($trace['args']) && in_array($trace['function'], ['include', 'require', 'include_once', 'require_once'])){
+			$from = trim_includes_path($trace['file']);
+			if($from == 'dqdp\PHPTemplate.php'){
+				return false;
+			}
 			$args = trim_includes_path($trace['args'][0]);
 		} else {
+			//printr($trace);
+			// $args = trim_includes_path($trace['file']);
 			$args = '...';
 		}
 

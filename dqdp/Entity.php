@@ -29,28 +29,17 @@ class Entity {
 		return (new Select("*"))->From($this->Table);
 	}
 
-	function fetch(...$args){
-		return $this->get_trans()->fetch(...$args);
-	}
-
-	# TODO: limit - skip,first
-	function get_all_single($params = null){
-		$params = eo($params);
-		$params->limit = 1;
-		if($data = $this->get_all($params)){
-			return $data[0];
-		} else {
-			return false;
-		}
-	}
-
-	function search($DATA = null){
-		$DATA = eoe($DATA);
-		$sq = $this->set_filters($this->select(), $DATA);
+	function search($params = null){
+		$params = eoe($params);
+		$sq = $this->set_filters($this->select(), $params);
 		$q = $this->get_trans()->Query($sq);
 		//sqlr($sq, $q);
 		// die;
 		return $q;
+	}
+
+	function fetch(...$args){
+		return $this->get_trans()->fetch(...$args);
 	}
 
 	function fetch_all(...$args){
@@ -60,14 +49,10 @@ class Entity {
 		return $ret??[];
 	}
 
-	function get($ID, $params = []){
+	function get($ID, $params = null){
 		$params = eoe($params);
 		$params->{$this->PK} = $ID;
-		if($q = $this->search($params)){
-			return $this->fetch($q);
-		}
-
-		return [];
+		return $this->get_single($params);
 	}
 
 	function get_all($params = null){
@@ -76,6 +61,13 @@ class Entity {
 		}
 
 		return [];
+	}
+
+	function get_single($params = null){
+		$params = eo($params);
+		if($q = $this->search($params)){
+			return $this->fetch($q);
+		}
 	}
 
 	function set_default_filters(Select $sql, $DATA, $fields, $prefix = ''){
@@ -153,6 +145,7 @@ class Entity {
 			}
 		}
 
+		/*
 		if(!isset($DATA->limit)){
 			if($DATA->page && $DATA->items_per_page){
 				$DATA->limit = sprintf("%d,%d", ($DATA->page - 1) * $DATA->items_per_page, $DATA->items_per_page);
@@ -162,6 +155,7 @@ class Entity {
 		if($DATA->limit){
 			$sql->limit($DATA->limit);
 		}
+		*/
 
 		return $sql;
 	}
