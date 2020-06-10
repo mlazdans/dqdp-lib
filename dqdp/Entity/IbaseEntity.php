@@ -1,8 +1,8 @@
 <?php
 
-namespace dqdp\DB;
+namespace dqdp\Entity;
 
-class IbaseEntity extends Entity {
+class IbaseEntity_disable extends Entity {
 	var $Gen;
 
 	function fetch(){
@@ -34,7 +34,7 @@ class IbaseEntity extends Entity {
 
 	function search($DATA = null){
 		$DATA = eoe($DATA);
-		$sql = $this->sql_select();
+		$sql = $this->select();
 		if($this->set_filters($sql, $DATA)){
 			return ibase_query_array($this->get_trans(), $sql, $sql->vars());
 		}
