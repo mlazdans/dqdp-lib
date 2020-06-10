@@ -1808,6 +1808,7 @@ function array_search_k($arr, $k, $v){
 	return null;
 }
 
+# TODO: refactor
 function parse_search_q($q, $minWordLen = 0){
 	$q = preg_replace('/[%,\'\.]/', ' ', $q);
 	$words = explode(' ', $q);
@@ -1833,6 +1834,42 @@ function search_to_sql_cond($q, $fields, $minWordLen = 0){
 		$Cond = new Condition();
 		foreach($fields as $field){
 			$Cond->add_condition(["UPPER($field) LIKE ?", "%".$word."%"], Condition::OR);
+		}
+		$MainCond->add_condition($Cond, Condition::AND);
+	}
+
+	return $MainCond;
+}
+
+function split_words($q){
+	$words = preg_split('/\s+/', trim($q));
+	return $words;
+}
+
+function search_fn_ci($word, $field, $Cond){
+	$Cond->add_condition(["UPPER($field) LIKE ?", "%".mb_strtoupper($word)."%"], Condition::OR);
+}
+
+function search_fn_nci($word, $field, $Cond){
+	$Cond->add_condition(["$field LIKE ?", "%".$word."%"], Condition::OR);
+}
+
+function search_sql(string $q, array $fields, callable $fn = null){
+	return __search_sql($q, $fields, $fn??'search_fn_ci');
+}
+
+function search_fn_nci_binary($word, $field, $Cond){
+	$Cond->add_condition(["UPPER(CONVERT($field USING utf8)) LIKE ?", "%".mb_strtoupper($word)."%"], Condition::OR);
+}
+
+function __search_sql(string $q, array $fields, callable $fn){
+	$words = array_unique(split_words($q));
+
+	$MainCond = new Condition();
+	foreach($words as $word){
+		$Cond = new Condition();
+		foreach($fields as $field){
+			($fn)($word, $field, $Cond);
 		}
 		$MainCond->add_condition($Cond, Condition::AND);
 	}

@@ -13,6 +13,7 @@ abstract class DBLayer
 	protected $execute_fetch_function = 'fetch_assoc';
 
 	abstract function connect();
+	abstract function connect_params($params);
 	abstract function query();
 	abstract function prepare();
 	abstract function fetch_assoc();

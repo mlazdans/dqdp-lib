@@ -9,7 +9,6 @@ use PDOStatement;
 class MySQL_PDO_Layer extends DBLayer
 {
 	var $conn;
-	var $charset;
 	protected $transactionCounter = 0;
 	protected $row_count;
 
@@ -22,19 +21,31 @@ class MySQL_PDO_Layer extends DBLayer
 		}
 	}
 
-	function connect($str_db_host = '', $str_db_user = '', $str_db_password = '', $str_db_name = '', $int_port = 3306){
-		$dsn = "mysql:dbname=$str_db_name;host=$str_db_host;port=$int_port";
-		if($this->charset){
-			$dsn .= ";charset=$this->charset";
-		}
+	function connect_params($params){
+		$host = $params['host'] ?? 'localhost';
+		$username = $params['username'] ?? '';
+		$password = $params['password'] ?? '';
+		$database = $params['database'] ?? '';
+		$charset = $params['charset'] ?? 'utf8';
+		$port = $params['port'] ?? 3306;
+		return $this->connect($host, $username, $password, $database, $charset, $port);
+	}
+
+	function connect($host = null, $username = null, $password = null, $database = null, $charset = null, $port = null){
+		//$dsn = "mysql:dbname=$database;host=$host;port=$port";
+		$dsn = [];
+		if($host)$dsn[]= "host=$host";
+		if($database)$dsn[]= "dbname=$database";
+		if($charset)$dsn[]= "charset=$charset";
+		if($port)$dsn[]= "port=$port";
 
 		try {
-			$this->conn = new PDO($dsn, $str_db_user, $str_db_password);
+			$this->conn = new PDO("mysql:".join(";", $dsn), $username, $password);
 			//$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
 			$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 			$this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
 			//$this->conn->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
-			return $this->conn;
+			return $this;
 		} catch (Exception $e) {
 			return $this->handle_err($e);
 		}
@@ -43,10 +54,7 @@ class MySQL_PDO_Layer extends DBLayer
 	function execute(...$args){
 		$q = $this->query(...$args);
 		if($q && $q->columnCount()){
-			$data = [];
-			while($row = $this->fetch($q)){
-				$data[] = $row;
-			}
+			$data = $this->fetch_all($q);
 		}
 
 		# ja selekteejam datus, tad atgriezam tos, savaadaak querija rezultaatu

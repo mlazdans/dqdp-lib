@@ -112,7 +112,7 @@ class FS extends Entity {
 	function get_by_fullpath($path, $params = []){
 		$params["fs_fullpath_hash"] = $this->path($path);
 
-		return $this->get_all_single($params);
+		return $this->get_single($params);
 	}
 
 	function read($path){
