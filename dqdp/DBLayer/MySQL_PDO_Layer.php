@@ -6,7 +6,7 @@ use Exception;
 use PDO;
 use PDOStatement;
 
-class MySQL_PDO_Layer extends Layer
+class MySQL_PDO_Layer extends DBLayer
 {
 	var $conn;
 	var $charset;
@@ -14,7 +14,7 @@ class MySQL_PDO_Layer extends Layer
 	protected $row_count;
 
 	protected function handle_err($e){
-		if($this->use_exception){
+		if($this->use_exceptions){
 			throw new DBException($e);
 		} else {
 			trigger_error($e->getMessage());
@@ -44,17 +44,13 @@ class MySQL_PDO_Layer extends Layer
 		$q = $this->query(...$args);
 		if($q && $q->columnCount()){
 			$data = [];
-			while($row = $this->{$this->execute_fetch_function}($q)){
+			while($row = $this->fetch($q)){
 				$data[] = $row;
 			}
 		}
 
 		# ja selekteejam datus, tad atgriezam tos, savaadaak querija rezultaatu
 		return isset($data) ? $data : $q;
-	}
-
-	protected function is_dqdp_select($args){
-		return (count($args) == 1) && $args[0] instanceof \dqdp\SQL\Select;
 	}
 
 	function query(...$args){
@@ -77,7 +73,9 @@ class MySQL_PDO_Layer extends Layer
 		} catch (Exception $e) {
 			return $this->handle_err($e);
 		} finally {
-			$this->row_count = $q->rowCount();
+			if(isset($q)){
+				$this->row_count = $q->rowCount();
+			}
 		}
 	}
 
@@ -93,18 +91,6 @@ class MySQL_PDO_Layer extends Layer
 
 	function last_id(){
 		return $this->conn->lastInsertId();
-	}
-
-	function trans(){
-		return $this->conn->beginTransaction();
-	}
-
-	function commit() {
-		return $this->conn->commit();
-	}
-
-	function rollback(){
-		return $this->conn->rollBack();
 	}
 
 	// function trans(){
@@ -130,6 +116,18 @@ class MySQL_PDO_Layer extends Layer
 	// 	return $this->conn->rollBack();
 	// }
 
+	function trans(){
+		return $this->conn->beginTransaction();
+	}
+
+	function commit() {
+		return $this->conn->commit();
+	}
+
+	function rollback(){
+		return $this->conn->rollBack();
+	}
+
 	function auto_commit(...$args){
 		list($b) = $args;
 		return $this->conn->setAttribute(PDO::ATTR_AUTOCOMMIT, $b);
@@ -148,5 +146,56 @@ class MySQL_PDO_Layer extends Layer
 			return $this->conn->prepare((string)$args[0]);
 		}
 		return $this->conn->prepare(...$args);
+	}
+
+	function save($Ent, $fields, $DATA){
+		//list($Ent, $fields, $DATA) = func_get_args();
+
+		$Gen_value_str = $Gen_field_str = '';
+
+		if(is_array($Ent->PK)){
+			//$PK_fields_str = join(",", $Ent->PK);
+		} else {
+			//$PK_fields_str = $Ent->PK;
+			if(empty($DATA->{$Ent->PK})){
+				// if(isset($this->Gen)){
+				// 	$Gen_field_str = $Ent->PK.",";
+				// 	$Gen_value_str = "NULL,";
+				// }
+			} else {
+				if(!in_array($Ent->PK, $fields)){
+					$fields[] = $Ent->PK;
+				}
+			}
+		}
+
+		//list($fieldSQL, $valuesSQL, $values, $fields) = build_sql($fields, $DATA, true);
+		list($fields, $holders, $values) = build_sql_raw($fields, $DATA, true);
+		//printr($fields, $holders, $values);
+		$fieldSQL = join(",", $fields);
+		$insertSQL = join(",", $holders);
+
+		$updateSQL = [];
+		foreach($fields as $i=>$field){
+			$updateSQL[] = "$field = ".$holders[$i];
+		}
+		$updateSQL = join(", ",$updateSQL);
+
+		$sql = "INSERT INTO `$Ent->Table` ($Gen_field_str$fieldSQL) VALUES ($Gen_value_str$insertSQL) ON DUPLICATE KEY UPDATE $updateSQL";
+
+		$res = $this->query($sql, array_merge($values, $values));
+		if($res !== false){
+			if(is_array($Ent->PK)){
+				foreach($Ent->PK as $k){
+					$ret[] = $DATA->{$k};
+				}
+				return $ret??[];
+			} else {
+				return $this->last_id();
+			}
+			//return empty($DATA->{$Ent->PK}) ? $this->last_id() : $DATA->{$Ent->PK};
+		} else {
+			return false;
+		}
 	}
 }

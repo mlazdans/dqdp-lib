@@ -31,14 +31,10 @@ CREATE TABLE `fs` (
 
 namespace dqdp;
 
-use dqdp\DB\MySQLEntity;
 use dqdp\SQL\Select;
 
-class FS extends MySQLEntity {
+class FS extends Entity {
 	var $uid;
-	var $db;
-
-	// private $chroot;
 
 	function __construct($uid = NULL){
 		$this->Table = 'fs';
@@ -46,7 +42,7 @@ class FS extends MySQLEntity {
 		$this->uid = $uid;
 	}
 
-	function sql_select(){
+	function select(){
 		return (
 			new Select(
 				"fs_id, fs_fsid, fs_uid, fs_depth, fs_type, fs_name, fs_ext, fs_fullname, fs_fullpath, fs_fullpath_hash, fs_size, fs_mime, fs_entered, fs_updated"

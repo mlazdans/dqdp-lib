@@ -2,16 +2,51 @@
 
 namespace dqdp;
 
-use dqdp\DB\IbaseEntity;
+/* Ibase
+CREATE TABLE SETTINGS
+(
+  SET_CLASS VARCHAR(64) NOT NULL,
+  SET_KEY VARCHAR(64) NOT NULL,
+  SET_INT INTEGER,
+  SET_BOOLEAN SMALLINT,
+  SET_FLOAT DOUBLE PRECISION,
+  SET_STRING TEXT,
+  SET_DATE TIMESTAMP,
+  SET_BINARY BLOB SUB_TYPE 0,
+  SET_SERIALIZE TEXT,
+  ENTERED TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UPDATED TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT PK_SETTINGS PRIMARY KEY (SET_CLASS,SET_KEY)
+);
+*/
 
-class Settings extends IbaseEntity
+/* MySQL
+CREATE TABLE settings
+(
+  SET_CLASS VARCHAR(64) NOT NULL,
+  SET_KEY VARCHAR(64) NOT NULL,
+  SET_INT INTEGER,
+  SET_BOOLEAN SMALLINT,
+  SET_FLOAT DOUBLE,
+  SET_STRING TEXT,
+  SET_DATE TIMESTAMP,
+  SET_BINARY BLOB,
+  SET_SERIALIZE TEXT,
+  ENTERED TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UPDATED TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT PK_SETTINGS PRIMARY KEY (SET_CLASS,SET_KEY)
+);
+*/
+
+
+class Settings extends Entity
 {
 	var $CLASS;
 	var $DB_STRUCT;
 	protected $SDATA = [];
 
 	function __construct($class){
-		$this->Table = 'SETTINGS';
+		$this->Table = 'settings';
 		$this->PK = ['SET_CLASS','SET_KEY'];
 		$this->CLASS = $class;
 	}
@@ -97,8 +132,8 @@ class Settings extends IbaseEntity
 		return $ret;
 	}
 
-	function fetch(){
-		list($q) = func_get_args();
+	function fetch(...$args){
+		list($q) = $args;
 		if(!($r = parent::fetch($q))){
 			return false;
 		}
