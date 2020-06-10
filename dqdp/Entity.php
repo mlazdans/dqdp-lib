@@ -167,11 +167,32 @@ class Entity {
 	}
 
 	function save(){
-		return $this->get_trans()->save($this, ...func_get_args());
+		return $this->get_trans()->insert_update($this, ...func_get_args());
 	}
 
 	function delete(){
-		return $this->get_trans()->delete($this, ...func_get_args());
+		# TODO: multi field PK
+		return $this->ids_process("DELETE FROM $this->Table WHERE $this->PK = ?", ...func_get_args());
+	}
+
+	protected function ids_process(...$args){
+		$sql = array_shift($args);
+		$IDS = array_shift($args);
+		if(!is_array($IDS)){
+			$IDS = [$IDS];
+		}
+
+		if(!($smt = $this->get_trans()->prepare($sql))){
+			return false;
+		}
+
+		$ret = true;
+		foreach($IDS as $ID){
+			$ret = $ret && $this->get_trans()->execute($smt, $ID);
+			// $params = array_merge([$smt], $args, [$ID]);
+			// $ret = $ret && call_user_func_array('ibase_execute', $params);
+		}
+		return $ret;
 	}
 
 	// function set_trans($tr){
