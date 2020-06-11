@@ -888,11 +888,12 @@ function format_debug($v, $depth = 0){
 function sqlr(){
 	__output_wrapper(func_get_args(), function($v){
 		if(!is_climode())print '<code class="sql">';
-		if(is_object($v) && (get_class($v) == 'dqdp\SQL\Select')){
-			$vars = format_debug($v->vars());
+		if(is_object($v) && $v instanceof dqdp\SQL\Statement){
 			print_r((string)$v);
-			print ("\n\n[Bind vars]\n");
-			print_r($vars);
+			if(property_exists($v, 'vars')){
+				print ("\n\n[Bind vars]\n");
+				print_r(format_debug($v->{'vars'}()));
+			}
 		} else {
 			print_r(format_debug($v));
 		}
@@ -1528,6 +1529,7 @@ function within($v, $s, $e){
 	return ($v > $s) && ($v < $e);
 }
 
+# TODO: DATA arī array
 function __build_sql($fields, $DATA = null, $skip_nulls = false, $join = false){
 	$new_fields = [];
 	foreach($fields as $k){
@@ -1536,10 +1538,16 @@ function __build_sql($fields, $DATA = null, $skip_nulls = false, $join = false){
 		}
 
 		if(property_exists($DATA, $k)){
-			// $reflection = new ReflectionFunction($suspected_closure);
-			// return (bool) $reflection->isClosure();
 			if(is_callable([$DATA, $k]) || $DATA->{$k} instanceof Closure){
-				list($h, $v) = $DATA->$k->__invoke();
+				$fret = $DATA->$k->__invoke();
+				# Ja nav uzstādīts otrs parametrs, neliekam to pie fields vai holders
+				if(array_key_exists(0, $fret) && array_key_exists(1, $fret)){
+					list($h, $v) = $fret;
+				} elseif(array_key_exists(0, $fret)) {
+					$new_fields[] = $k;
+					$holders[] = $fret[0];
+					continue;
+				}
 			} else {
 				$h = "?";
 				$v = $DATA->{$k};
@@ -1560,6 +1568,8 @@ function __build_sql($fields, $DATA = null, $skip_nulls = false, $join = false){
 		return [$new_fields, $holders, $values];
 	}
 }
+
+# TODO: atstāt tikai f-iju ar array output
 function build_sql($fields, $DATA = null, $skip_nulls = false){
 	return __build_sql($fields, $DATA, $skip_nulls, true);
 }
@@ -1768,6 +1778,14 @@ function get_ex_rate($CURR_ID, $date = false){
 
 function array_wrap($v){
 	return is_array($v) ? $v : [$v];
+}
+
+function array_wrap_items($a, $s1, $s2 = null){
+	return __object_map($a, function($v) use ($s1, $s2){
+		return $s1.$v.($s2??$s1);
+	});
+
+	return $a;
 }
 
 # Select from key value pairs array
@@ -2073,4 +2091,20 @@ function str_limiter($str, $limit, $append){
 	}
 
 	return $str;
+}
+
+function get_prop($o, $k){
+	if(is_object($o)){
+		if(property_exists($o, $k)){
+			return $o->{$k};
+		}
+	} elseif(is_array($o)){
+		if(key_exists($o, $k)){
+			return $o[$k];
+		}
+	}
+}
+
+function str_ends($haystack, $needle) {
+	return 0 === substr_compare($haystack, $needle, -strlen($needle));
 }
