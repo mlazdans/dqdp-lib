@@ -37,32 +37,13 @@ class Ibase_Layer extends DBLayer
 	}
 
 	function query(...$args){
-		if($this->is_dqdp_select($args)){
+		if($this->is_dqdp_statement($args)){
 			return ibase_query($this->tr??$this->conn, $args[0], ...$args[0]->vars());
 		} elseif(is_resource($args[0])) {
 			return ibase_execute(...$args);
 		} elseif(count($args) == 2) {
 			return ibase_query($this->tr??$this->conn, $args[0], ...$args[1]);
-			// if(($q = $this->prepare($args[0])) && $q->execute($args[1])){
-			// 	return $q;
-			// }
 		}
-		// if($this->is_dqdp_select($args)){
-		// 	if(($q = $this->prepare($args[0])) && $q->execute($args[0]->vars())){
-		// 		return $q;
-		// 	}
-		// 	return false;
-		// } elseif($args[0] instanceof PDOStatement) {
-		// 	if($args[0]->execute($args[1])){
-		// 		return $args[0];
-		// 	}
-		// 	return false;
-		// } elseif(count($args) == 2) {
-		// 	if(($q = $this->prepare($args[0])) && $q->execute($args[1])){
-		// 		return $q;
-		// 	}
-		// 	return false;
-		// }
 
 		return ibase_query($this->tr??$this->conn, ...$args);
 	}
@@ -108,13 +89,16 @@ class Ibase_Layer extends DBLayer
 	}
 
 	function prepare(...$args){
-		if($this->is_dqdp_select($args)){
+		if($this->is_dqdp_statement($args)){
 			return ibase_prepare($this->tr??$this->conn, (string)$args[0]);
-			//return $this->conn->prepare((string)$args[0]);
 		}
 		return ibase_prepare($this->tr??$this->conn, ...$args);
 	}
 
+	# TODO: bez Ent
+	# TODO: pārvietot uz Entity
+	# TODO: Query builderī
+	/*
 	function insert_update($Ent, $fields, $DATA){
 		//list($fields, $DATA) = func_get_args();
 
@@ -151,6 +135,7 @@ class Ibase_Layer extends DBLayer
 			return false;
 		}
 	}
+	*/
 
 	function get_users(...$args){
 		list($PARAMS) = $args;

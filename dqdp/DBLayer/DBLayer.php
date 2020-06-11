@@ -25,7 +25,12 @@ abstract class DBLayer
 	abstract function affected_rows();
 	abstract function close();
 	# TODO: rename insert_update
-	abstract function insert_update($Ent, $fields, $DATA);
+	# abstract function insert_update($Ent, $fields, $DATA);
+
+	function set_dev(Bool $dev){
+		$this->dev = $dev;
+		return $this;
+	}
 
 	function set_default_fetch_function($func){
 		$this->execute_fetch_function = $func;
@@ -52,12 +57,9 @@ abstract class DBLayer
 		return [];
 	}
 
-	protected function is_dqdp_select($args){
-		return (count($args) == 1) && $args[0] instanceof \dqdp\SQL\Select;
+	# TODO: ne tikai select, bet nākotnē arī insert utt
+	protected function is_dqdp_statement($args){
+		return (count($args) == 1) && $args[0] instanceof \dqdp\SQL\Statement;
 	}
 
-	function set_dev(Bool $dev){
-		$this->dev = $dev;
-		return $this;
-	}
 }

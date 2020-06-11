@@ -4,13 +4,12 @@ namespace dqdp\SQL;
 
 class Select extends Statement
 {
-	var $parts = null;
-	var $first = null;
-	var $skip = null;
-	var $limit = null;
-	var $distinct = false;
+	protected $parts = null;
+	protected $distinct;
+	protected $offset;
+	protected $rows;
 
-	function __construct(string $fields = ""){
+	function __construct(string $fields = null){
 		$this->parts = (object)[];
 		$this->parts->select = [];
 		$this->parts->from = [];
@@ -36,13 +35,14 @@ class Select extends Statement
 	function __call(string $name, array $arguments){
 		# Reset parts, e.g. select, joins, etc
 		if(strpos($name, 'Reset') === 0){
-			$part = strtolower(substr($name, strlen('Reset')));
+			$part = strtolower(substr($name, 5));
 			if(isset($this->parts->{$part})){
 				$this->parts->{$part} = [];
 				return $this;
 			}
 		}
-		trigger_error('Call to undefined method '.__CLASS__.'::'.$name.'()', E_USER_ERROR);
+
+		return parent::__call($name, $arguments);
 	}
 
 	function ResetDistinct(){
@@ -60,24 +60,18 @@ class Select extends Statement
 		return $this;
 	}
 
-	# TODO: compilator?
-	function Skip(int $rows){
-		$this->skip = $rows;
-		return $this;
-	}
-
-	function First(int $rows){
-		$this->first = $rows;
-		return $this;
-	}
-
-	function Limit($limit){
-		$this->limit = $limit;
-		return $this;
-	}
-
 	function Select(string $fields){
 		$this->parts->select[] = $fields;
+		return $this;
+	}
+
+	function Offset($offset = null){
+		$this->offset = $offset;
+		return $this;
+	}
+
+	function Rows($rows = null){
+		$this->rows = $rows;
 		return $this;
 	}
 
@@ -133,53 +127,13 @@ class Select extends Statement
 	}
 
 	function parse(){
-		$lines = ['SELECT'];
-
-		if($this->distinct){
-			$lines[] = 'DISTINCT';
-		}
-
-		if($this->first){
-			$lines[] = "FIRST $this->first";
-		}
-
-		if($this->skip){
-			$lines[] = "SKIP $this->skip";
-		}
-
-		$lines[] = $this->parts->select ? join(",\n", $this->parts->select) : '*';
-
-
-		if(empty($this->parts->from)){
-			trigger_error("FROM part not set", E_USER_WARNING);
+		if($this->lex() == 'mysql'){
+			$lines = $this->parse_mysql();
+		} elseif($this->lex() == 'fbird'){
+			$lines = $this->parse_fbird();
 		} else {
-			$lines[] = 'FROM';
-			$lines[] = join(', ', $this->parts->from);
+			trigger_error("Unknown SQL::\$lex: ".$this->lex(), E_USER_ERROR);
 		}
-
-		if($this->parts->join){
-			$lines[] = join("\n", $this->parts->join);
-		}
-
-		if($where = (string)$this->parts->where){
-			$lines[] = 'WHERE';
-			$lines[] = $where;
-		}
-
-		if($this->parts->groupby){
-			$lines[] = 'GROUP BY';
-			$lines[] = join(', ', $this->parts->groupby);
-		}
-
-		if($this->parts->orderby){
-			$lines[] = 'ORDER BY';
-			$lines[] = join(', ', $this->parts->orderby);
-		}
-
-		if($this->limit){
-			$lines[] = "LIMIT $this->limit";
-		}
-
 		return join("\n", $lines);
 	}
 
@@ -192,4 +146,100 @@ class Select extends Statement
 		return $vars;
 	}
 
+	protected function parse_mysql(){
+		$lines = ['SELECT'];
+
+		if($this->distinct){
+			$lines[] = 'DISTINCT';
+		}
+
+		$lines[] = $this->parts->select ? join(",\n", $this->parts->select) : '*';
+
+		$this->merge_lines($lines, $this->from_parser());
+		$this->merge_lines($lines, $this->join_parser());
+		$this->merge_lines($lines, $this->where_parser());
+		$this->merge_lines($lines, $this->groupby_parser());
+		$this->merge_lines($lines, $this->orderby_parser());
+
+		if(isset($this->rows) && isset($this->offset)){
+			$lines[] = "LIMIT $this->offset,$this->rows";
+		} elseif(isset($this->rows)){
+			$lines[] = "LIMIT $this->rows";
+		} elseif(isset($this->offset)){
+			trigger_error("offset without rows", E_USER_ERROR);
+		}
+
+		return $lines;
+	}
+
+	protected function parse_fbird(){
+		$lines = ['SELECT'];
+
+		if($this->distinct){
+			$lines[] = 'DISTINCT';
+		}
+
+		if(!isset($this->rows) && isset($this->offset)){
+			$lines[] = "SKIP $this->offset";
+		}
+
+		$this->merge_lines($lines, $this->select_parser());
+		$this->merge_lines($lines, $this->from_parser());
+		$this->merge_lines($lines, $this->join_parser());
+		$this->merge_lines($lines, $this->where_parser());
+		$this->merge_lines($lines, $this->groupby_parser());
+		$this->merge_lines($lines, $this->orderby_parser());
+
+		if(isset($this->rows) && isset($this->offset)){
+			$lines[] = "ROWS $this->offset TO ".($this->rows + $this->offset);
+		} elseif(isset($this->rows)){
+			$lines[] = "ROWS $this->rows";
+		}
+
+		return $lines;
+	}
+
+	protected function _select(){
+		return [$this->parts->select ? join(",\n", $this->parts->select) : '*'];
+	}
+
+	# TODO: absrahēt ar parametriem. Varbūt kādā citā klasē pat
+	protected function _from(){
+		if($this->parts->from){
+			$lines[] = 'FROM';
+			$lines[] = join(', ', $this->parts->from);
+		}
+		return $lines??[];
+	}
+
+	protected function _join(){
+		if($this->parts->join){
+			$lines[] = join("\n", $this->parts->join);
+		}
+		return $lines??[];
+	}
+
+	protected function _where(){
+		if($where = (string)$this->parts->where){
+			$lines[] = 'WHERE';
+			$lines[] = $where;
+		}
+		return $lines??[];
+	}
+
+	protected function _groupby(){
+		if($this->parts->groupby){
+			$lines[] = 'GROUP BY';
+			$lines[] = join(', ', $this->parts->groupby);
+		}
+		return $lines??[];
+	}
+
+	protected function _orderby(){
+		if($this->parts->orderby){
+			$lines[] = 'ORDER BY';
+			$lines[] = join(', ', $this->parts->orderby);
+		}
+		return $lines??[];
+	}
 }

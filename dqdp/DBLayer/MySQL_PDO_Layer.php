@@ -2,6 +2,7 @@
 
 namespace dqdp\DBLayer;
 
+use dqdp\SQL\Insert;
 use Exception;
 use PDO;
 use PDOStatement;
@@ -63,7 +64,15 @@ class MySQL_PDO_Layer extends DBLayer
 
 	function query(...$args){
 		try {
-			if($this->is_dqdp_select($args)){
+			if($this->is_dqdp_statement($args)){
+				// if($args[0] instanceof Insert){
+				// 	sqlr($args);
+				// 	$q = $this->prepare($args[0]);
+				// 	$q2 = $q->execute($args[0]->vars());
+				// 	dumpr($q, $q2);
+				// 	die;
+				// }
+				//debug2file(printrr($args));
 				if(($q = $this->prepare($args[0])) && $q->execute($args[0]->vars())){
 					return $q;
 				}
@@ -150,12 +159,15 @@ class MySQL_PDO_Layer extends DBLayer
 	}
 
 	function prepare(...$args){
-		if($this->is_dqdp_select($args)){
+		if($this->is_dqdp_statement($args)){
 			return $this->conn->prepare((string)$args[0]);
 		}
 		return $this->conn->prepare(...$args);
 	}
 
+	# TODO: bez Ent
+	# TODO: pārvietot uz Entity
+	/*
 	function insert_update($Ent, $fields, $DATA){
 		//list($Ent, $fields, $DATA) = func_get_args();
 
@@ -206,4 +218,5 @@ class MySQL_PDO_Layer extends DBLayer
 			return false;
 		}
 	}
+	*/
 }

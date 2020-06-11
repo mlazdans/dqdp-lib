@@ -30,40 +30,31 @@ class Condition extends Statement
 		}
 	}
 
-	// function __clone(){
-	// 	$cc = [];
-	// 	foreach($this->Conditions as $c){
-	// 		$cc[] = clone $c;
-	// 	}
-	// 	$this->Conditions = $cc;
-	// 	//$this->parts = clone $this->parts;
-	// }
-
 	# __construct($type = Condition::AND)
 	# __construct($str = '', $type = Condition::AND)
 	function __construct(){
-		$argc = func_num_args();
-		$argv = func_get_args();
+		$acount = func_num_args();
+		$aval = func_get_args();
 
-		if($argc == 0) {
-		} elseif(gettype($argv[0]) == 'array'){
-			$this->Condition = $argv[0][0];
-			for($i=1; $i<count($argv[0]);$i++){
-				$this->add_vars($argv[0][$i]);
-				//$this->Vars[] = $argv[0][$i];
+		if($acount == 0) {
+		} elseif(gettype($aval[0]) == 'array'){
+			$this->Condition = $aval[0][0];
+			for($i=1; $i<count($aval[0]);$i++){
+				$this->add_vars($aval[0][$i]);
+				//$this->Vars[] = $aval[0][$i];
 			}
-			if(isset($argv[1])){
-				$this->Type = $argv[1];
+			if(isset($aval[1])){
+				$this->Type = $aval[1];
 			}
-		} elseif(($argc == 1) && (($argv[0] === Condition::AND) || ($argv[0] === Condition::OR))){
+		} elseif(($acount == 1) && (($aval[0] === Condition::AND) || ($aval[0] === Condition::OR))){
 			# __construct($type = Condition::AND)
-			$this->Type = $argv[0];
-		} elseif(($argc == 1)){
+			$this->Type = $aval[0];
+		} elseif(($acount == 1)){
 			# __construct($str = '')
-			$this->Condition = $argv[0];
-		} elseif($argc == 2) {
-			$this->Condition = $argv[0];
-			$this->Type = $argv[1];
+			$this->Condition = $aval[0];
+		} elseif($acount == 2) {
+			$this->Condition = $aval[0];
+			$this->Type = $aval[1];
 		} else {
 			trigger_error("Wrong parameter count", E_USER_WARNING);
 		}
