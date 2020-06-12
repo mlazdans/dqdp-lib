@@ -62,7 +62,6 @@ class FS extends Entity {
 		];
 		$this->set_null_filters($sql, $DATA, $filters, "$this->Table.");
 
-		# TODO: old pass get rid off
 		if($DATA->isset('fs_fullpath_hash')){
 			$sql->Where(["fs_fullpath_hash = SHA1(?)", $DATA->fs_fullpath_hash]);
 		}

@@ -22,25 +22,33 @@ abstract class Statement
 		return $this->lex = $lex;
 	}
 
-	function after($clause, $k, $v = null){
-		$this->after[$clause][$k] = $v;
+	private function __add_trigger($trigger, $clause, $k, $v = null){
+		$this->{$trigger}[$clause][$k] = $v;
 		return $this;
+	}
+
+	function after($clause, $k, $v = null){
+		return $this->__add_trigger('after', $clause, $k, $v);
+	}
+
+	function before($clause, $k, $v = null){
+		return $this->__add_trigger('before', $clause, $k, $v);
 	}
 
 	protected function merge_lines(&$lines, $parts){
 		$lines = array_merge($lines, $parts);
 	}
 
-	protected function _lines($k, $clause){
-		return array_values($this->{$k}[$clause]??[]);
+	private function __get_lines($trigger, $clause){
+		return array_values($this->{$trigger}[$clause]??[]);
 	}
 
 	protected function before_lines($clause){
-		return $this->_lines('before', $clause);
+		return $this->__get_lines('before', $clause);
 	}
 
 	protected function after_lines($clause){
-		return $this->_lines('after', $clause);
+		return $this->__get_lines('after', $clause);
 	}
 
 	function __call(string $name, array $arguments){
@@ -51,7 +59,7 @@ abstract class Statement
 		$section = strtolower(substr($name, 0, -7));
 
 		if(!method_exists($this, "_$section")){
-			trigger_error('Call to undefined method '.__CLASS__.'::'.$name.'()', E_USER_ERROR);
+			trigger_error('Call to undefined method '.__CLASS__.'::'.$name.'() - parser _'.$section.'() not found', E_USER_ERROR);
 			return;
 		}
 
