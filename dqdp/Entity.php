@@ -122,9 +122,9 @@ class Entity {
 
 		if($params->fields){
 			if(is_array($params->fields)){
-				$sql->ResetSelect()->Select(join(", ", $params->fields));
+				$sql->ResetFields()->Select(join(", ", $params->fields));
 			} else {
-				$sql->ResetSelect()->Select($params->fields);
+				$sql->ResetFields()->Select($params->fields);
 			}
 		}
 
@@ -183,7 +183,11 @@ class Entity {
 					}
 					return $ret??[];
 				} else {
-					return $this->get_trans()->last_id();
+					if(empty($sql_fields[$this->PK])){
+						return $this->get_trans()->last_id();
+					} else {
+						return $sql_fields[$this->PK];
+					}
 				}
 			}
 		} else {

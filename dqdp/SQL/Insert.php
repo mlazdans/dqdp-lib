@@ -2,8 +2,6 @@
 
 namespace dqdp\SQL;
 
-use InvalidArgumentException;
-
 class Insert extends Statement
 {
 	protected $on_duplicate_update = false;
@@ -22,7 +20,7 @@ class Insert extends Statement
 		} elseif(is_array($data)){
 			$this->vars = $data;
 		} else {
-			throw new InvalidArgumentException("expecting array or object");
+			trigger_error("Expected array or object", E_USER_ERROR);
 		}
 		return $this;
 	}

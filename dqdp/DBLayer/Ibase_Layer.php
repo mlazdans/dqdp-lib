@@ -4,6 +4,8 @@ namespace dqdp\DBLayer;
 
 use dqdp\SQL\Select;
 
+require_once('ibaselib.php');
+
 class Ibase_Layer extends DBLayer
 {
 	var $conn;
@@ -75,8 +77,6 @@ class Ibase_Layer extends DBLayer
 	}
 
 	function rollback(){
-		printr($this);
-		die;
 		return ibase_rollback($this->tr);
 	}
 
@@ -94,48 +94,6 @@ class Ibase_Layer extends DBLayer
 		}
 		return ibase_prepare($this->tr??$this->conn, ...$args);
 	}
-
-	# TODO: bez Ent
-	# TODO: pārvietot uz Entity
-	# TODO: Query builderī
-	/*
-	function insert_update($Ent, $fields, $DATA){
-		//list($fields, $DATA) = func_get_args();
-
-		$Gen_value_str = $Gen_field_str = '';
-		if(is_array($Ent->PK)){
-			$PK_fields_str = join(",", $Ent->PK);
-		} else {
-			$PK_fields_str = $Ent->PK;
-			if(empty($DATA->{$Ent->PK})){
-				if(isset($Ent->Gen)){
-					$Gen_field_str = "$Ent->PK,";
-					$Gen_value_str = "NEXT VALUE FOR $Ent->Gen,";
-				}
-			} else {
-				if(!in_array($Ent->PK, $fields)){
-					$fields[] = $Ent->PK;
-				}
-			}
-		}
-
-		list($fieldSQL, $valuesSQL, $values) = build_sql($fields, $DATA, true);
-
-		# TODO: ja vajadzēs nodalīt GRANT tiesības pa INSERT/UPDATE, tad jāatdala UPDATE OR INSERT atsevišķos pieprasījumos
-		$sql = "UPDATE OR INSERT INTO $Ent->Table ($Gen_field_str$fieldSQL) VALUES ($Gen_value_str$valuesSQL) MATCHING ($PK_fields_str) RETURNING $PK_fields_str";
-
-		if($q = $this->query($sql, $values)){
-			$retPK = $this->fetch($q);
-			if(is_array($Ent->PK)){
-				return $retPK;
-			} else {
-				return $retPK->{$Ent->PK};
-			}
-		} else {
-			return false;
-		}
-	}
-	*/
 
 	function get_users(...$args){
 		list($PARAMS) = $args;
@@ -164,24 +122,14 @@ class Ibase_Layer extends DBLayer
 			return false;
 		}
 
-		return self::strip_rdb($this->fetch_all($q));
+		return ibase_strip_rdb($this->fetch_all($q));
 	}
 
 	function get_user($USER_NAME = null){
 		return ($u = $this->get_users($USER_NAME)) ? $u[0] : $u;
 	}
 
-	static function strip_rdb($data){
-		__object_walk_ref($data, function(&$item, &$k){
-			if((strpos($k, 'RDB$') === 0) || (strpos($k, 'SEC$') === 0)){
-				$k = substr($k, 4);
-				$item = trim($item);
-			}
-		});
-		return $data;
-	}
-
-	function table_info($table){
+	function get_table_info($table){
 		$table = strtoupper($table);
 		$sql = 'SELECT rf.*,
 			f.RDB$FIELD_SUB_TYPE,
@@ -194,14 +142,10 @@ class Ibase_Layer extends DBLayer
 		WHERE rf.RDB$RELATION_NAME = ?
 		ORDER BY rf.RDB$FIELD_POSITION';
 
-		$q = $this->query($sql, $table);
-		while($r = $this->fetch($q)){
-			$ret[] = self::strip_rdb($r);
-		}
-
-		return $ret??[];
+		return ibase_strip_rdb($this->execute($sql, [$table]));
 	}
 
+	# TODO: principā return vajadzētu array|object atkarībā no default fetch
 	function get_privileges($PARAMS = null){
 		$ret = [];
 
@@ -223,11 +167,11 @@ class Ibase_Layer extends DBLayer
 		}
 
 		if(!($q = $this->query($sql))){
-			return false;
+			return;
 		}
 
-		while($r = $this->fetch($q)){
-			$r = self::strip_rdb($r);
+		while($r = $this->fetch_object($q)){
+			$r = ibase_strip_rdb($r);
 
 			$k = $r->USER;
 			if($r->USER_TYPE == 13){
@@ -272,146 +216,42 @@ class Ibase_Layer extends DBLayer
 
 	function get_object_types(){
 		$sql = 'SELECT RDB$TYPE, RDB$TYPE_NAME FROM RDB$TYPES WHERE RDB$FIELD_NAME=\'RDB$OBJECT_TYPE\'';
-		$data = self::strip_rdb($this->execute($sql));
+		$data = ibase_strip_rdb($this->execute($sql));
 		foreach($data as $r){
 			$ret[$r->TYPE] = $r->TYPE_NAME;
 		}
 		return $ret??[];
 	}
 
-	static function path_info($DB_PATH){
-		if(count($parts = explode(":", $DB_PATH)) > 1){
-			$host = array_shift($parts);
-			$path = join(":", $parts);
-		} else {
-			$path = $DB_PATH;
-		}
-
-		$pi = pathinfo($path);
-
-		$pi['path'] = $path;
-		if(isset($host)){
-			$pi['host'] = $host;
-		}
-
-		return $pi;
+	function get_current_role(){
+		return trim(get_prop($this->execute_single('SELECT CURRENT_ROLE AS RLE FROM RDB$DATABASE'), 'RLE'));
 	}
 
-	function db_exists($db_path, $db_user, $db_password){
-		if(
-			($pi = self::path_info($db_path)) &&
-			($service = ibase_service_attach($pi['host'], $db_user, $db_password)) &&
-			ibase_db_info($service, $pi['path'], IBASE_STS_HDR_PAGES)
-		){
-			return true;
-		}
-		return false;
+	# TODO: params
+	function get_generators(){
+		return trimmer($this->execute('SELECT RDB$GENERATOR_NAME AS NAME
+		FROM RDB$GENERATORS
+		WHERE RDB$SYSTEM_FLAG = 0
+		ORDER BY RDB$GENERATOR_NAME'));
 	}
 
-	function current_role(){
-		return trim($this->execute_single('SELECT CURRENT_ROLE AS RLE FROM RDB$DATABASE')->RLE);
+	function get_tables(){
+		return trimmer($this->execute('SELECT r.RDB$RELATION_NAME AS NAME FROM RDB$RELATIONS AS r
+		LEFT JOIN RDB$VIEW_RELATIONS v ON v.RDB$VIEW_NAME = r.RDB$RELATION_NAME
+		WHERE v.RDB$VIEW_NAME IS NULL AND r.RDB$SYSTEM_FLAG = 0
+		ORDER BY r.RDB$RELATION_NAME'));
 	}
 
-	static function isql_args($params = null, $args = []){
-		$DEFAULTS = [
-			'USER'=>"sysdba",
-			'PASS'=>"masterkey",
-		];
-		$params = eoe($DEFAULTS)->merge($params);
+	function get_pk($table){
+		$sql = 'SELECT iseg.RDB$FIELD_NAME
+		FROM RDB$INDICES i
+		JOIN RDB$RELATION_CONSTRAINTS rc ON rc.RDB$INDEX_NAME = i.RDB$INDEX_NAME
+		JOIN RDB$INDEX_SEGMENTS iseg ON iseg.RDB$INDEX_NAME = i.RDB$INDEX_NAME
+		WHERE i.RDB$RELATION_NAME = ? AND rc.RDB$CONSTRAINT_TYPE = \'PRIMARY KEY\'';
 
-		if($params->USER){
-			$args[] = '-user';
-			$args[] = "'$params->USER'";
+		if($r = $this->execute_single($sql, [$table])){
+			return trim(get_prop($r, 'RDB$FIELD_NAME'));
 		}
-		if($params->PASS){
-			$args[] = '-pass';
-			$args[] = "'$params->PASS'";
-		}
-		if($params->DB){
-			$args[] = $params->DB;
-		}
-
-		return $args??[];
-	}
-
-	static function isql_exec($args = [], $input = '', $descriptorspec = []){
-		if(defined('STDOUT')){
-			$args[] = '-o';
-			# TODO: -o CON only on Windows, need test on linux
-			$args[] = is_windows() ? 'CON' : '/dev/stdout';
-		} else {
-			$args[] = '-o';
-			$tmpfname = tempnam(getenv('TMPDIR'), 'isql');
-			$args[] = $tmpfname;
-		}
-
-		$cmd = '"'.prepend_path(getenv('IBASE_BIN', true), "isql").'"';
-		// Wrapper
-		// https://github.com/cubiclesoft/createprocess-windows
-		if(is_windows() && !is_climode()){
-			$args = array_merge(['/w=5000', '/term', $cmd], $args);
-			$cmd = 'C:\bin\createprocess.exe';
-		}
-
-		# Capture isql output. isql tends to keep isql in interactive mode if no -i or -o specified
-		if($exe = proc_exec($cmd, $args, $input, $descriptorspec)){
-			if(isset($tmpfname)){
-				if($outp = file_get_contents($tmpfname)){
-					$exe[1] = $outp;
-				}
-				//unlink($tmpfname);
-			}
-		}
-		return $exe;
-	}
-
-	// args = ['DB', 'USER', 'PASS'];
-	# NOTE: Caur web karās pie kļūdas (nevar dabūt STDERR), tāpēc wrappers un killers.
-	# NOTE: timeout jāmaina lielākiem/lēnākiem skriptiem :E
-	static function isql($SQL, $params = null){
-		$args = self::isql_args($params, ['-e', '-noautocommit', '-bail', '-q']);
-
-		// $args[] = '-i';
-		// $tmpfname = tempnam(getenv('TMPDIR'), 'isql');
-		// file_put_contents($tmpfname, $SQL);
-		// $args[] = $tmpfname;
-
-		return self::isql_exec($args, $SQL);
-	}
-
-	static function isql_meta($database, $params = null){
-		$params = eoe($params);
-		$params->DB = $database;
-
-		return self::isql_exec(self::isql_args($params, ['-x']));
-	}
-
-	static function db_drop($db_name, $db_user, $db_password){
-		$sql = "DROP DATABASE;\n";
-
-		return self::isql($sql, [
-			'USER'=>$db_user,
-			'PASS'=>$db_password,
-			'DB'=>$db_name
-		]);
-	}
-
-	static function db_create($db_name, $db_user, $db_password, $body = ''){
-		$sql = sprintf(
-			"CREATE DATABASE '%s' USER '%s' PASSWORD '%s' PAGE_SIZE 8192 DEFAULT CHARACTER SET UTF8;\n",
-			ibase_quote($db_name),
-			ibase_quote($db_user),
-			ibase_quote($db_password),
-		);
-
-		if($body){
-			$sql .= $body."\n";
-		}
-
-		return self::isql($sql, [
-			'USER'=>$db_user,
-			'PASS'=>$db_password,
-		]);
 	}
 
 }
