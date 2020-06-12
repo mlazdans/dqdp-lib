@@ -24,8 +24,6 @@ abstract class DBLayer
 	abstract function rollback();
 	abstract function affected_rows();
 	abstract function close();
-	# TODO: rename insert_update
-	# abstract function insert_update($Ent, $fields, $DATA);
 
 	function set_dev(Bool $dev){
 		$this->dev = $dev;
@@ -42,14 +40,14 @@ abstract class DBLayer
 	}
 
 	function fetch_all(){
-		while($r = $this->{$this->execute_fetch_function}(...func_get_args())){
+		while($r = $this->fetch(...func_get_args())){
 			$ret[] = $r;
 		}
 		return $ret??[];
 	}
 
 	function execute_single(){
-		$data = $this->Execute(...func_get_args());
+		$data = $this->execute(...func_get_args());
 		if(is_array($data) && isset($data[0])){
 			return $data[0];
 		}
@@ -57,7 +55,6 @@ abstract class DBLayer
 		return [];
 	}
 
-	# TODO: ne tikai select, bet nākotnē arī insert utt
 	protected function is_dqdp_statement($args){
 		return (count($args) == 1) && $args[0] instanceof \dqdp\SQL\Statement;
 	}

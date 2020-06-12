@@ -2,7 +2,6 @@
 
 namespace dqdp\DBLayer;
 
-use dqdp\SQL\Insert;
 use Exception;
 use PDO;
 use PDOStatement;
@@ -33,7 +32,6 @@ class MySQL_PDO_Layer extends DBLayer
 	}
 
 	function connect($host = null, $username = null, $password = null, $database = null, $charset = null, $port = null){
-		//$dsn = "mysql:dbname=$database;host=$host;port=$port";
 		$dsn = [];
 		if($host)$dsn[]= "host=$host";
 		if($database)$dsn[]= "dbname=$database";
@@ -65,14 +63,6 @@ class MySQL_PDO_Layer extends DBLayer
 	function query(...$args){
 		try {
 			if($this->is_dqdp_statement($args)){
-				// if($args[0] instanceof Insert){
-				// 	sqlr($args);
-				// 	$q = $this->prepare($args[0]);
-				// 	$q2 = $q->execute($args[0]->vars());
-				// 	dumpr($q, $q2);
-				// 	die;
-				// }
-				//debug2file(printrr($args));
 				if(($q = $this->prepare($args[0])) && $q->execute($args[0]->vars())){
 					return $q;
 				}
@@ -164,59 +154,4 @@ class MySQL_PDO_Layer extends DBLayer
 		}
 		return $this->conn->prepare(...$args);
 	}
-
-	# TODO: bez Ent
-	# TODO: pārvietot uz Entity
-	/*
-	function insert_update($Ent, $fields, $DATA){
-		//list($Ent, $fields, $DATA) = func_get_args();
-
-		$Gen_value_str = $Gen_field_str = '';
-
-		if(is_array($Ent->PK)){
-			//$PK_fields_str = join(",", $Ent->PK);
-		} else {
-			//$PK_fields_str = $Ent->PK;
-			if(empty($DATA->{$Ent->PK})){
-				// if(isset($this->Gen)){
-				// 	$Gen_field_str = $Ent->PK.",";
-				// 	$Gen_value_str = "NULL,";
-				// }
-			} else {
-				if(!in_array($Ent->PK, $fields)){
-					$fields[] = $Ent->PK;
-				}
-			}
-		}
-
-		//list($fieldSQL, $valuesSQL, $values, $fields) = build_sql($fields, $DATA, true);
-		list($fields, $holders, $values) = build_sql_raw($fields, $DATA, true);
-		//printr($fields, $holders, $values);
-		$fieldSQL = join(",", $fields);
-		$insertSQL = join(",", $holders);
-
-		$updateSQL = [];
-		foreach($fields as $i=>$field){
-			$updateSQL[] = "$field = ".$holders[$i];
-		}
-		$updateSQL = join(", ",$updateSQL);
-
-		$sql = "INSERT INTO `$Ent->Table` ($Gen_field_str$fieldSQL) VALUES ($Gen_value_str$insertSQL) ON DUPLICATE KEY UPDATE $updateSQL";
-
-		$res = $this->query($sql, array_merge($values, $values));
-		if($res !== false){
-			if(is_array($Ent->PK)){
-				foreach($Ent->PK as $k){
-					$ret[] = $DATA->{$k};
-				}
-				return $ret??[];
-			} else {
-				return $this->last_id();
-			}
-			//return empty($DATA->{$Ent->PK}) ? $this->last_id() : $DATA->{$Ent->PK};
-		} else {
-			return false;
-		}
-	}
-	*/
 }

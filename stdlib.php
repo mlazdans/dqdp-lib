@@ -2099,7 +2099,7 @@ function get_prop($o, $k){
 			return $o->{$k};
 		}
 	} elseif(is_array($o)){
-		if(key_exists($o, $k)){
+		if(key_exists($k, $o)){
 			return $o[$k];
 		}
 	}

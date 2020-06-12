@@ -11,7 +11,7 @@ class Select extends Statement
 
 	function __construct(string $fields = null){
 		$this->parts = (object)[];
-		$this->parts->select = [];
+		$this->parts->fields = [];
 		$this->parts->from = [];
 		$this->parts->join = [];
 		$this->parts->where = new Condition;
@@ -33,7 +33,7 @@ class Select extends Statement
 	}
 
 	function __call(string $name, array $arguments){
-		# Reset parts, e.g. select, joins, etc
+		# Reset parts
 		if(strpos($name, 'Reset') === 0){
 			$part = strtolower(substr($name, 5));
 			if(isset($this->parts->{$part})){
@@ -61,7 +61,7 @@ class Select extends Statement
 	}
 
 	function Select(string $fields){
-		$this->parts->select[] = $fields;
+		$this->parts->fields[] = $fields;
 		return $this;
 	}
 
@@ -76,14 +76,10 @@ class Select extends Statement
 	}
 
 	function From($arg){
-		//if(is_object($v) && (get_class($v) == 'dqdp\SQL\Select')){
-		if(is_array($arg) && is_object($arg[0]) && (get_class($arg[0]) == 'dqdp\SQL\Select')){
+		if(is_array($arg) && $arg[0] instanceof \dqdp\SQL\Select){
 			list($sql, $alias) = $arg;
 			$this->parts->from[] = "($sql) $alias";
-			//foreach($sql->vars() as $v){
-				$this->parts->where->add_vars($sql->vars());
-			//}
-			//$this->add_vars($sql->vars());
+			$this->parts->where->add_vars($sql->vars());
 		} else {
 			$this->parts->from[] = $arg;
 		}
@@ -147,14 +143,9 @@ class Select extends Statement
 	}
 
 	protected function parse_mysql(){
-		$lines = ['SELECT'];
-
-		if($this->distinct){
-			$lines[] = 'DISTINCT';
-		}
-
-		$lines[] = $this->parts->select ? join(",\n", $this->parts->select) : '*';
-
+		$lines = [];
+		$this->merge_lines($lines, $this->select_parser());
+		$this->merge_lines($lines, $this->fields_parser());
 		$this->merge_lines($lines, $this->from_parser());
 		$this->merge_lines($lines, $this->join_parser());
 		$this->merge_lines($lines, $this->where_parser());
@@ -173,17 +164,14 @@ class Select extends Statement
 	}
 
 	protected function parse_fbird(){
-		$lines = ['SELECT'];
-
-		if($this->distinct){
-			$lines[] = 'DISTINCT';
-		}
+		$lines = [];
+		$this->merge_lines($lines, $this->select_parser());
 
 		if(!isset($this->rows) && isset($this->offset)){
 			$lines[] = "SKIP $this->offset";
 		}
 
-		$this->merge_lines($lines, $this->select_parser());
+		$this->merge_lines($lines, $this->fields_parser());
 		$this->merge_lines($lines, $this->from_parser());
 		$this->merge_lines($lines, $this->join_parser());
 		$this->merge_lines($lines, $this->where_parser());
@@ -200,7 +188,15 @@ class Select extends Statement
 	}
 
 	protected function _select(){
-		return [$this->parts->select ? join(",\n", $this->parts->select) : '*'];
+		$lines = ['SELECT'];
+		if($this->distinct){
+			$lines[] = 'DISTINCT';
+		}
+		return $lines;
+	}
+
+	protected function _fields(){
+		return [$this->parts->fields ? join(",\n", $this->parts->fields) : '*'];
 	}
 
 	# TODO: absrahēt ar parametriem. Varbūt kādā citā klasē pat
