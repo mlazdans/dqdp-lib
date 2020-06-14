@@ -2,11 +2,11 @@
 
 namespace dqdp;
 
+use dqdp\DBLayer\DBLayer;
 use dqdp\SQL\Insert;
 use dqdp\SQL\Select;
-use TypeError;
 
-class Entity {
+abstract class Entity implements EntityInterface {
 	var $Table;
 	var $PK;
 
@@ -16,6 +16,8 @@ class Entity {
 	protected function select(){
 		return (new Select("*"))->From($this->Table);
 	}
+
+	abstract protected function fields(): Array;
 
 	function get($ID, $params = null){
 		$params = eoe($params);
@@ -36,103 +38,13 @@ class Entity {
 	}
 
 	function search($params = null){
-		$params = eoe($params);
-		return $this->get_trans()->Query($this->set_filters($this->select(), $params));
+		return $this->get_trans()->Query($this->set_filters($this->select(), eoe($params)));
 	}
 
-	function set_default_filters(Select $sql, $params, $fields, $prefix = ''){
-		$params = eoe($params);
-		foreach($fields as $field=>$default){
-			if($params->isset($field)){
-				if(!is_null($params->{$field})){
-					$sql->Where(["$field = ?", $params->{$field}]);
-				}
-			} else {
-				$sql->Where(["$prefix$field = ?", $default]);
-			}
-		}
-
-		return $sql;
-	}
-
-	function set_null_filters(Select $sql, $params, $fields, $prefix = ''){
-		$params = eoe($params);
-		$fields = array_wrap($fields);
-		foreach($fields as $k){
-			if($params->isset($k)){
-				if(is_null($params->{$k})){
-					$sql->Where(["$prefix$k IS NULL"]);
-				} else {
-					$sql->Where(["$prefix$k = ?", $params->{$k}]);
-				}
-			}
-		}
-
-		return $sql;
-	}
-
-	function set_filters(Select $sql, $params = null){
-		$params = eoe($params);
-		if(is_array($this->PK)){
-		} else {
-			if($params->isset($this->PK) && is_empty($params->{$this->PK})){
-				trigger_error("Illegal PRIMARY KEY value for $this->PK", E_USER_ERROR);
-				return $sql;
-			}
-		}
-
-		$pks = array_wrap($this->PK);
-		foreach($pks as $k){
-			if($params->{$k}){
-				$sql->Where(["$this->Table.$k = ?", $params->{$k}]);
-			}
-		}
-
-		# TODO: multi field PK
-		if(!is_array($this->PK)){
-			$k = $this->PK."S";
-			if($params->isset($k)){
-				if(is_array($params->{$k})){
-					$IDS = $params->{$k};
-				} elseif(is_string($params->{$k})){
-					$IDS = explode(',',$params->{$k});
-				} else {
-					trigger_error("Illegal multiple PRIMARY KEY value for $this->PKS", E_USER_ERROR);
-				}
-				$sql->Where(sql_create_int_filter("$this->Table.{$this->PK}", $IDS));
-			}
-		}
-
-		$Order = $params->order_by??($params->ORDER_BY??'');
-		if($Order){
-			$sql->ResetOrderBy()->OrderBy($Order);
-		}
-
-		if($params->limit){
-			$sql->Rows($params->limit);
-		}
-
-		if($params->rows){
-			$sql->Rows($params->rows);
-		}
-
-		if($params->offset){
-			$sql->Offset($params->offset);
-		}
-
-		if($params->fields){
-			if(is_array($params->fields)){
-				$sql->ResetFields()->Select(join(", ", $params->fields));
-			} else {
-				$sql->ResetFields()->Select($params->fields);
-			}
-		}
-
-		return $sql;
-	}
-
-	function save(){
-		list($fields, $DATA) = func_get_args();
+	function save($DATA){
+		//list($fields, $DATA) = func_get_args();
+		$fields = $this->fields();
+		//list($DATA) = func_get_args();
 
 		$sql_fields = (array)merge_only($fields, $DATA);
 
@@ -200,22 +112,7 @@ class Entity {
 		return $this->ids_process("DELETE FROM $this->Table WHERE $this->PK = ?", ...func_get_args());
 	}
 
-	// Uncaught Exception(TypeError): Argument 1 passed to dqdp\Entity::set_trans() must be an instance of dqdp\DBLayer\DBLayer, resource given, called in D:\vienpatis\vienpatis\modules\journal\accounting.php on line 19 in dqdp\Entity.php on line 188
-	// set_trans(...) in modules\journal\accounting.php on line 19
-	// include(modules\journal\accounting.php) in dqdp\PHPTemplate.php on line 39
-	// include(...) in modules\journal.php on line 34
-	// include(modules\journal.php) in dqdp\PHPTemplate.php on line 39
-	// include(...) in public\main.php on line 10
-
-	function set_trans(...$args){
-		list($dba) = $args;
-		if(!($dba instanceof \dqdp\DBLayer\DBLayer)){
-			//$msg = sprintf("Argument 1 passed to set_trans() must be an instance of dqdp\DBLayer\DBLayer, %s given, called in %s on line %d");
-			$msg = sprintf("Argument 1 passed to set_trans() must be an instance of dqdp\DBLayer\DBLayer, %s given", gettype($dba));
-			throw new TypeError($msg);
-			//trigger_error("asdad", E_USER_ERROR);
-		}
-
+	function set_trans(DBLayer $dba){
 		$this->dba = $dba;
 
 		if($dba instanceof \dqdp\DBLayer\Ibase_Layer){
@@ -229,24 +126,152 @@ class Entity {
 		return $this;
 	}
 
-	function get_trans(){
+	function get_trans() : DBLayer {
 		return $this->dba;
 	}
 
-	# TODO: šiem trans() te nevajadzētu būt
-	function new_trans(){
-		$this->dba = $this->dba->trans();
-		return $this;
+	protected function set_default_filters(Select $sql, $DATA, array $defaults, $prefix = null){
+		$DATA = eoe($DATA);
+
+		if(is_null($prefix)){
+			$prefix = "$this->Table.";
+		}
+
+		foreach($defaults as $field=>$value){
+			if($DATA->exists($field)){
+				if(!is_null($DATA->{$field})){
+					# TODO: f-ija, kā build_sql
+					$sql->Where(["$prefix$field = ?", $DATA->{$field}]);
+				}
+			} else {
+				$sql->Where(["$prefix$field = ?", $value]);
+			}
+		}
+
+		return $sql;
 	}
 
-	function commit(...$args){
-		return $this->dba->commit(...$args);
+	# TODO: abstract out funkcionālo daļu
+	# TODO: uz Select???
+	protected function set_null_filters(Select $sql, $DATA, array $fields, $prefix = null){
+		$DATA = eoe($DATA);
+
+		if(is_null($prefix)){
+			$prefix = "$this->Table.";
+		}
+
+		foreach($fields as $k){
+			if($DATA->exists($k)){
+				if(is_null($DATA->{$k})){
+					$sql->Where(["$prefix$k IS NULL"]);
+				} else {
+					# TODO: f-ija, kā build_sql
+					$sql->Where(["$prefix$k = ?", $DATA->{$k}]);
+				}
+			}
+		}
+
+		return $sql;
 	}
 
-	function rollback(...$args){
-		return $this->dba->rollback(...$args);
+	protected function set_non_null_filters(Select $sql, $DATA, array $fields, $prefix = null){
+		$DATA = eoe($DATA);
+
+		if(is_null($prefix)){
+			$prefix = "$this->Table.";
+		}
+
+		foreach($fields as $k){
+			if($DATA->exists($k)){
+				# TODO: f-ija, kā build_sql
+				$sql->Where(["$prefix$k = ?", $DATA->{$k}]);
+			}
+		}
+
+		return $sql;
 	}
 
+	protected function set_field_filters(Select $sql, $DATA, array $fields, $prefix = null){
+		$DATA = eoe($DATA);
+
+		if(is_null($prefix)){
+			$prefix = "$this->Table.";
+		}
+
+		foreach($fields as $k){
+			if($DATA->$k){
+				# TODO: f-ija, kā build_sql
+				$sql->Where(["$prefix$k = ?", $DATA->{$k}]);
+			}
+		}
+
+		return $sql;
+	}
+
+	protected function set_filters(Select $sql, $filters = null){
+		$filters = eoe($filters);
+		if(is_array($this->PK)){
+		} else {
+			//if($filters->exists($this->PK) && is_empty($filters->{$this->PK})){
+			if($filters->exists($this->PK) && is_null($filters->{$this->PK})){
+				trigger_error("Illegal PRIMARY KEY value for $this->PK", E_USER_ERROR);
+				return $sql;
+			}
+		}
+
+		$pks = array_wrap($this->PK);
+		foreach($pks as $k){
+			if($filters->exists($k) && !is_null($filters->{$k})){
+				$sql->Where(["$this->Table.$k = ?", $filters->{$k}]);
+			}
+		}
+
+		# TODO: multi field PK
+		if(!is_array($this->PK)){
+			$k = $this->PK."S";
+			if($filters->exists($k)){
+				if(is_array($filters->{$k})){
+					$IDS = $filters->{$k};
+				} elseif(is_string($filters->{$k})){
+					$IDS = explode(',',$filters->{$k});
+				} else {
+					trigger_error("Illegal multiple PRIMARY KEY value for $this->PKS", E_USER_ERROR);
+				}
+				# TODO: keys var būt arī ne-int!!!!
+				$sql->Where(sql_create_int_filter("$this->Table.{$this->PK}", $IDS));
+			}
+		}
+
+		# TODO: unify
+		$Order = $filters->order_by??($filters->ORDER_BY??'');
+		if($Order){
+			$sql->ResetOrderBy()->OrderBy($Order);
+		}
+
+		if($filters->limit){
+			$sql->Rows($filters->limit);
+		}
+
+		if($filters->rows){
+			$sql->Rows($filters->rows);
+		}
+
+		if($filters->offset){
+			$sql->Offset($filters->offset);
+		}
+
+		if($filters->fields){
+			if(is_array($filters->fields)){
+				$sql->ResetFields()->Select(join(", ", $filters->fields));
+			} else {
+				$sql->ResetFields()->Select($filters->fields);
+			}
+		}
+
+		return $sql;
+	}
+
+	# TODO: savest kārtībā
 	protected function ids_process(...$args){
 		$sql = array_shift($args);
 		$IDS = array_shift($args);
@@ -266,4 +291,19 @@ class Entity {
 		}
 		return $ret;
 	}
+
+	# TODO: šiem trans() te nevajadzētu būt?
+	function new_trans(){
+		$this->dba = $this->dba->trans();
+		return $this;
+	}
+
+	function commit(...$args){
+		return $this->dba->commit(...$args);
+	}
+
+	function rollback(...$args){
+		return $this->dba->rollback(...$args);
+	}
+	###
 }

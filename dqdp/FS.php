@@ -60,9 +60,9 @@ class FS extends Entity {
 			'fs_fsid', 'fs_uid', 'fs_depth', 'fs_type', 'fs_name', 'fs_ext', 'fs_fullname', 'fs_fullpath',
 			'fs_contents', 'fs_mime', 'fs_entered', 'fs_updated'
 		];
-		$this->set_null_filters($sql, $DATA, $filters, "$this->Table.");
+		$this->set_null_filters($sql, $DATA, $filters);
 
-		if($DATA->isset('fs_fullpath_hash')){
+		if($DATA->exists('fs_fullpath_hash')){
 			$sql->Where(["fs_fullpath_hash = SHA1(?)", $DATA->fs_fullpath_hash]);
 		}
 
@@ -80,17 +80,19 @@ class FS extends Entity {
 		return parent::set_filters($sql, $DATA);
 	}
 
+	function fields(): array {
+		return [
+			'fs_fsid', 'fs_uid', 'fs_depth', 'fs_type', 'fs_name', 'fs_ext', 'fs_fullname', 'fs_fullpath',
+			'fs_fullpath_hash', 'fs_contents', 'fs_size', 'fs_mime', 'fs_entered', 'fs_updated'
+		];
+	}
+
 	function save(){
 		list($DATA) = func_get_args();
 
 		$DATA = eo($DATA);
 
-		$fields = [
-			'fs_fsid', 'fs_uid', 'fs_depth', 'fs_type', 'fs_name', 'fs_ext', 'fs_fullname', 'fs_fullpath', 'fs_fullpath_hash',
-			'fs_contents', 'fs_size', 'fs_mime', 'fs_entered', 'fs_updated'
-		];
-
-		if(!$DATA->isset('fs_fullpath_hash')){
+		if(!$DATA->exists('fs_fullpath_hash')){
 			$fs_fullpath = $DATA->fs_fullpath;
 			$DATA->fs_fullpath_hash = function() use ($fs_fullpath) {
 				return ["SHA1(?)", $fs_fullpath];
@@ -101,7 +103,7 @@ class FS extends Entity {
 			$DATA->fs_uid = $this->uid;
 		}
 
-		return parent::save($fields, $DATA);
+		return parent::save($DATA);
 	}
 
 	// function chroot($path){

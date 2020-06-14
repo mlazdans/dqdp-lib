@@ -22,7 +22,20 @@ final class EoTest extends TestCase
 		$DATA->N = null;
 
 		$this->assertFalse(isset($DATA->N));
-		$this->assertTrue($DATA->isset('N'));
+		$this->assertTrue($DATA->exists('N'));
+		$this->assertTrue(is_empty($DATA->N));
+	}
+
+	function testNonEmptyEo2(){
+		$DATA = eo([
+			'l1'=>[
+				'l2'=>[]
+			]
+		]);
+
+		$this->assertFalse(empty($DATA));
+		$this->assertTrue(is_empty($DATA));
+		$this->assertTrue(is_empty($DATA->l1));
 	}
 
 	function testNull1(){

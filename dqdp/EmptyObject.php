@@ -20,7 +20,7 @@ class EmptyObject
 		return isset($this->{$v}) ? $this->{$v} : null;
 	}
 
-	function isset($v){
+	function exists($v){
 		return property_exists($this, $v);
 	}
 
