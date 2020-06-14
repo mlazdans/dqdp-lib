@@ -12,9 +12,9 @@ final class Ibase {
 function ibase_db_create($db_name, $db_user, $db_password, $body = ''){
 	$sql = sprintf(
 		"CREATE DATABASE '%s' USER '%s' PASSWORD '%s' PAGE_SIZE 8192 DEFAULT CHARACTER SET UTF8;\n",
-		ibase_quote($db_name),
-		ibase_quote($db_user),
-		ibase_quote($db_password),
+		ibase_escape($db_name),
+		ibase_escape($db_user),
+		ibase_escape($db_password),
 	);
 
 	if($body){
@@ -114,10 +114,8 @@ function ibase_type2json_type($type){
 	return $js_types[$type]??'auto';
 }
 
-function ibase_quote($data){
-	return __object_map($data, function($item){
-		return str_replace("'", "''", $item);
-	});
+function ibase_escape($data){
+	return str_replace("'", "''", $data);
 }
 
 function ibase_isql_exec($args = [], $input = '', $descriptorspec = []){
@@ -204,7 +202,7 @@ function ibase_strip_rdb($data){
 	return $data;
 }
 
-function ibase_path_info($DB_PATH){
+function ibase_pathinfo($DB_PATH){
 	if(count($parts = explode(":", $DB_PATH)) > 1){
 		$host = array_shift($parts);
 		$path = join(":", $parts);
@@ -224,7 +222,7 @@ function ibase_path_info($DB_PATH){
 
 function ibase_db_exists($db_path, $db_user, $db_password){
 	if(
-		($pi = ibase_path_info($db_path)) &&
+		($pi = ibase_pathinfo($db_path)) &&
 		($service = ibase_service_attach($pi['host'], $db_user, $db_password)) &&
 		ibase_db_info($service, $pi['path'], IBASE_STS_HDR_PAGES)
 	){

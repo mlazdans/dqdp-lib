@@ -7,7 +7,7 @@
 
 namespace dqdp\FS;
 
-use dqdp\DBLayer\DBLayer;
+use dqdp\DBA\DBA;
 use dqdp\FS\Entity;
 
 class FS {
@@ -19,12 +19,12 @@ class FS {
 		$this->Ent = new Entity;
 	}
 
-	function set_trans(DBLayer $dba) {
+	function set_trans(DBA $dba) {
 		$this->Ent->set_trans($dba);
 		return $this;
 	}
 
-	function get_trans(): DBLayer {
+	function get_trans(): DBA {
 		return $this->Ent->get_trans();
 	}
 

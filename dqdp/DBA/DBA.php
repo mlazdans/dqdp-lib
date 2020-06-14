@@ -1,11 +1,11 @@
 <?php
 
-namespace dqdp\DBLayer;
+namespace dqdp\DBA;
 
-class DBException extends \RuntimeException {
+class DBAException extends \RuntimeException {
 }
 
-abstract class DBLayer
+abstract class DBA
 {
 	var $use_exceptions = true;
 	var $dev = true;
@@ -24,6 +24,7 @@ abstract class DBLayer
 	abstract function rollback();
 	abstract function affected_rows();
 	abstract function close();
+	abstract function escape($v);
 
 	function set_dev(Bool $dev){
 		$this->dev = $dev;

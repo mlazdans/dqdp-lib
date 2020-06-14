@@ -2,7 +2,7 @@
 
 namespace dqdp\Entity;
 
-use dqdp\DBLayer\DBLayer;
+use dqdp\DBA\DBA;
 use dqdp\SQL\Insert;
 use dqdp\SQL\Select;
 
@@ -115,21 +115,21 @@ abstract class Entity implements EntityInterface {
 		return $this->ids_process("DELETE FROM $this->Table WHERE $this->PK = ?", ...func_get_args());
 	}
 
-	function set_trans(DBLayer $dba){
+	function set_trans(DBA $dba){
 		$this->dba = $dba;
 
-		if($dba instanceof \dqdp\DBLayer\Ibase_Layer){
+		if($dba instanceof \dqdp\DBA\IBase){
 			$this->lex = 'fbird';
 		}
 
-		if($dba instanceof \dqdp\DBLayer\MySQL_PDO_Layer){
+		if($dba instanceof \dqdp\DBA\MySQL_PDO){
 			$this->lex = 'mysql';
 		}
 
 		return $this;
 	}
 
-	function get_trans() : DBLayer {
+	function get_trans() : DBA {
 		return $this->dba;
 	}
 
