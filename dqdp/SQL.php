@@ -1,6 +1,6 @@
 <?php
 
-namespace dqdp\SQL;
+namespace dqdp;
 
 class SQL
 {

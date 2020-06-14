@@ -5,18 +5,17 @@
 // Path names are case sensitive, components are separated with forward slash (/).
 // INSERT INTO fs (fs_id, fs_fsid, fs_uid, fs_depth, fs_type, fs_name, fs_fullpath, fs_fullpath_hash) VALUES (1, NULL, NULL, 0, 1, '/', '/', SHA1('/'))
 
-namespace dqdp\FS;
+namespace dqdp;
 
-use dqdp\DBA\DBA;
-use dqdp\FS\Entity;
+use dqdp\DBA;
 
-class FS {
+class FS implements DBA\TransInterface {
 	var $uid;
 	protected $Ent;
 
 	function __construct($uid = NULL){
 		$this->uid = $uid;
-		$this->Ent = new Entity;
+		$this->Ent = new FS\Entity;
 	}
 
 	function set_trans(DBA $dba) {
@@ -28,7 +27,7 @@ class FS {
 		return $this->Ent->get_trans();
 	}
 
-	# Apply uid
+	# Nav īsti skaisti, bet lai neaizmirstās pielikt uid
 	private function defaults_params($params){
 		if($this->uid){
 			$params['fs_uid'] = $this->uid;

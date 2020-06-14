@@ -2,8 +2,6 @@
 
 namespace dqdp\SQL;
 
-use InvalidArgumentException;
-
 class Condition extends Statement
 {
 	const AND = 1;

@@ -6,7 +6,7 @@ use Exception;
 use PDO;
 use PDOStatement;
 
-class MySQL_PDO extends DBA
+class MySQL_PDO extends \dqdp\DBA
 {
 	var $conn;
 	protected $transactionCounter = 0;

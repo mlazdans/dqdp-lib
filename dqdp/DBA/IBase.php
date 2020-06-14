@@ -6,7 +6,7 @@ use dqdp\SQL\Select;
 
 require_once('ibaselib.php');
 
-class IBase extends DBA
+class IBase extends \dqdp\DBA
 {
 	var $conn;
 	var $tr;

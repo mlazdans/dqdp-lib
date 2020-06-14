@@ -27,7 +27,7 @@ namespace dqdp\FS;
 
 use dqdp\SQL\Select;
 
-class Entity extends \dqdp\Entity\Entity {
+class Entity extends \dqdp\Entity {
 	function __construct(){
 		$this->Table = 'fs';
 		$this->PK = 'fs_id';

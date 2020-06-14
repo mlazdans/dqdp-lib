@@ -2,6 +2,8 @@
 
 namespace dqdp\SQL;
 
+use dqdp\SQL;
+
 abstract class Statement
 {
 	protected $lex;
