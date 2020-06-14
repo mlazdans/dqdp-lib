@@ -2,7 +2,7 @@
 
 namespace dqdp\Settings;
 
-class Entity extends \dqdp\Entity
+class Entity extends \dqdp\Entity\Entity
 {
 	function __construct(){
 		$this->Table = 'settings';

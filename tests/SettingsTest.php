@@ -1,7 +1,7 @@
 <?php
 
-use dqdp\Settings;
 use dqdp\DBLayer\MySQL_PDO_Layer;
+use dqdp\Settings\Settings as Settings;
 use PHPUnit\Framework\TestCase;
 
 class SettingsTest extends TestCase

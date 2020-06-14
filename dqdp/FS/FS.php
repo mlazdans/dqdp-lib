@@ -31,8 +31,10 @@ CREATE TABLE `fs` (
 
 namespace dqdp;
 
+use dqdp\Entity\Entity;
 use dqdp\SQL\Select;
 
+# TODO: bez direct Entity
 class FS extends Entity {
 	var $uid;
 
@@ -87,9 +89,7 @@ class FS extends Entity {
 		];
 	}
 
-	function save(){
-		list($DATA) = func_get_args();
-
+	function save($DATA){
 		$DATA = eo($DATA);
 
 		if(!$DATA->exists('fs_fullpath_hash')){

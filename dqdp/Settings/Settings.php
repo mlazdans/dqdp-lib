@@ -3,7 +3,7 @@
 namespace dqdp\Settings;
 
 use dqdp\DBLayer\DBLayer;
-use dqdp\EntityInterface;
+use dqdp\Entity\EntityInterface;
 
 /* Ibase
 CREATE TABLE SETTINGS
@@ -46,7 +46,7 @@ class Settings implements EntityInterface
 {
 	var $CLASS;
 	protected $DB_STRUCT;
-	protected $SDATA = [];
+	protected $DATA = [];
 	protected $Ent;
 
 	function __construct($class){
@@ -83,12 +83,12 @@ class Settings implements EntityInterface
 		return $this->Ent->search($PARAMS);
 	}
 
-	function save($DATA = null){
-		$SDATA = eoe($this->SDATA);
+	function save(){
+		$DATA = eoe($this->DATA);
 
 		$ret = true;
 		foreach($this->DB_STRUCT as $k=>$v){
-			if($SDATA->exists($k)){
+			if($DATA->exists($k)){
 				$v = strtoupper($v);
 				$DB_DATA = eo([
 					'SET_CLASS'=>$this->CLASS,
@@ -96,9 +96,9 @@ class Settings implements EntityInterface
 				]);
 
 				if($v == 'SERIALIZE'){
-					$DB_DATA->{"SET_$v"} = serialize($SDATA->{$k});
+					$DB_DATA->{"SET_$v"} = serialize($DATA->{$k});
 				} else {
-					$DB_DATA->{"SET_$v"} = $SDATA->{$k};
+					$DB_DATA->{"SET_$v"} = $DATA->{$k};
 				}
 
 				$ret = $ret && $this->Ent->save($DB_DATA);
@@ -136,7 +136,7 @@ class Settings implements EntityInterface
 	}
 
 	function reset(){
-		$this->SDATA = [];
+		$this->DATA = [];
 		return $this;
 	}
 
@@ -147,13 +147,13 @@ class Settings implements EntityInterface
 		} elseif(is_object($k)){
 			$this->set_array(get_object_vars($k));
 		} else {
-			$this->SDATA[$k] = $v;
+			$this->DATA[$k] = $v;
 		}
 		return $this;
 	}
 
 	function set_array($new_data){
-		$this->SDATA = array_merge($this->SDATA, $new_data);
+		$this->DATA = array_merge($this->DATA, $new_data);
 		return $this;
 	}
 
@@ -176,6 +176,7 @@ class Settings implements EntityInterface
 			$ret[$r->SET_KEY] = $r->{"SET_$v"};
 		}
 
+		# TODO: respektēt default f
 		return $ret??(object)[];
 	}
 
