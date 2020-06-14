@@ -96,10 +96,6 @@ class MySQL_PDO_Layer extends DBLayer
 		return $q->Fetch(PDO::FETCH_OBJ);
 	}
 
-	function last_id(){
-		return $this->conn->lastInsertId();
-	}
-
 	// function trans(){
 	// 	if (!$this->transactionCounter++) {
 	// 		return $this->conn->beginTransaction();
@@ -141,7 +137,7 @@ class MySQL_PDO_Layer extends DBLayer
 	}
 
 	function affected_rows(){
-		trigger_error("Not implemented", E_USER_ERROR);
+		return $this->row_count;
 	}
 
 	function close(){

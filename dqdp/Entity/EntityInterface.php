@@ -1,7 +1,6 @@
 <?php
 
-# TODO: namespace dqdp\Entity;
-namespace dqdp;
+namespace dqdp\Entity;
 
 use dqdp\DBLayer\DBLayer;
 

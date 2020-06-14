@@ -81,11 +81,11 @@ class Ibase_Layer extends DBLayer
 	}
 
 	function affected_rows(){
-		trigger_error("Not implemented", E_USER_ERROR);
+		return ibase_affected_rows($this->tr??$this->conn);
 	}
 
 	function close(){
-		trigger_error("Not implemented", E_USER_ERROR);
+		ibase_close($this->conn);
 	}
 
 	function prepare(...$args){

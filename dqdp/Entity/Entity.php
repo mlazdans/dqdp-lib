@@ -1,10 +1,12 @@
 <?php
 
-namespace dqdp;
+namespace dqdp\Entity;
 
 use dqdp\DBLayer\DBLayer;
 use dqdp\SQL\Insert;
 use dqdp\SQL\Select;
+
+require_once('mysqllib.php');
 
 abstract class Entity implements EntityInterface {
 	var $Table;
@@ -96,7 +98,7 @@ abstract class Entity implements EntityInterface {
 					return $ret??[];
 				} else {
 					if(empty($sql_fields[$this->PK])){
-						return $this->get_trans()->last_id();
+						return mysql_last_id($this->get_trans());
 					} else {
 						return $sql_fields[$this->PK];
 					}
@@ -109,6 +111,7 @@ abstract class Entity implements EntityInterface {
 
 	function delete(){
 		# TODO: multi field PK
+		# TODO: dqdp\SQL\Statement
 		return $this->ids_process("DELETE FROM $this->Table WHERE $this->PK = ?", ...func_get_args());
 	}
 
