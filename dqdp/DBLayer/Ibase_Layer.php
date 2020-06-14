@@ -254,4 +254,15 @@ class Ibase_Layer extends DBLayer
 		}
 	}
 
+	// function get_fields($table){
+	// 	$sql = 'SELECT F.RDB$RELATION_NAME, F.RDB$FIELD_NAME
+	// 	FROM RDB$RELATION_FIELDS F
+	// 	JOIN RDB$RELATIONS R ON F.RDB$RELATION_NAME = R.RDB$RELATION_NAME
+	// 	AND R.RDB$VIEW_BLR IS NULL
+	// 	AND (R.RDB$SYSTEM_FLAG IS NULL OR R.RDB$SYSTEM_FLAG = 0)
+	// 	WHERE R.RDB$RELATION_NAME = ?
+	// 	ORDER BY 1, F.RDB$FIELD_POSITION';
+	// 	return ibase_strip_rdb($this->execute($sql, [$table]));
+	// }
+
 }

@@ -604,10 +604,6 @@ function translit($data){
 
 function is_empty($data = null){
 	return __object_reduce($data, function($carry, $item){
-		# TODO: šķiet, ka šis checks nav vajadzīgs?
-		if(is_array($item) || is_object($item)){
-			return $carry && is_empty($item);
-		}
 		return $carry && empty($item);
 	}, true);
 }
@@ -867,6 +863,7 @@ function __query($query_string = '', $format = '', $delim = '&amp;', $allowed = 
 	return $q2;
 }
 
+# TODO: tas nestrādā, kā plānots
 function format_debug($v, $depth = 0){
 	$vars = __object_map($v, function($item) use ($depth){
 		if(is_scalar($item) && mb_detect_encoding($item)){
@@ -890,7 +887,7 @@ function sqlr(){
 		if(!is_climode())print '<code class="sql">';
 		if(is_object($v) && $v instanceof dqdp\SQL\Statement){
 			print_r((string)$v);
-			if(property_exists($v, 'vars')){
+			if(method_exists($v, 'vars')){
 				print ("\n\n[Bind vars]\n");
 				print_r(format_debug($v->{'vars'}()));
 			}
@@ -1614,7 +1611,7 @@ function eo_debug(dqdp\EmptyObject $o, $keys = null){
 
 	$ret = [];
 	foreach($keys as $k){
-		if(!$o->isset($k)){
+		if(!$o->exists($k)){
 			continue;
 		}
 		$msg = "$k=";
