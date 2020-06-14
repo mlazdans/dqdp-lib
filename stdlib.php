@@ -2,7 +2,7 @@
 
 use dqdp\LV;
 use dqdp\QueueMailer;
-use dqdp\EmptyObject;
+use dqdp\StdObject;
 use dqdp\SQL\Condition;
 use PHPMailer\PHPMailer\PHPMailer;
 
@@ -1592,19 +1592,19 @@ function build_sql_raw($fields, $DATA = null, $skip_nulls = false){
 // 	return [join(",", $fields), join(",", array_fill(0, count($fields), "?")), $values??[],$fields];
 // }
 
-function eo($data = null){
-	return new EmptyObject($data);
+function eo($data = null) : StdObject {
+	return new StdObject($data);
 }
 
 function eoe($data = null){
-	if($data instanceof dqdp\EmptyObject){
+	if($data instanceof dqdp\StdObject){
 		return $data;
 	} else {
 		return eo($data);
 	}
 }
 
-function eo_debug(dqdp\EmptyObject $o, $keys = null){
+function eo_debug(StdObject $o, $keys = null){
 	if(is_null($keys)){
 		$keys = array_keys(get_object_vars($o));
 	}
@@ -1615,7 +1615,7 @@ function eo_debug(dqdp\EmptyObject $o, $keys = null){
 			continue;
 		}
 		$msg = "$k=";
-		if($o->{$k} instanceof dqdp\EmptyObject){
+		if($o->{$k} instanceof dqdp\StdObject){
 			$msg .= 'eo{'.eo_debug($o->{$k}).'}';
 		} elseif(is_object($o->{$k})){
 			$msg .= "{".join(",", get_object_vars($o->{$k}))."}";

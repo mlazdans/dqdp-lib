@@ -1,12 +1,12 @@
 <?php
 
-namespace dqdp\DBLayer;
+namespace dqdp\DBA;
 
 use Exception;
 use PDO;
 use PDOStatement;
 
-class MySQL_PDO_Layer extends DBLayer
+class MySQL_PDO extends DBA
 {
 	var $conn;
 	protected $transactionCounter = 0;
@@ -14,7 +14,7 @@ class MySQL_PDO_Layer extends DBLayer
 
 	protected function handle_err($e){
 		if($this->use_exceptions){
-			throw new DBException($e);
+			throw new DBAException($e);
 		} else {
 			trigger_error($e->getMessage());
 			return false;
@@ -149,5 +149,9 @@ class MySQL_PDO_Layer extends DBLayer
 			return $this->conn->prepare((string)$args[0]);
 		}
 		return $this->conn->prepare(...$args);
+	}
+
+	function escape($v){
+		return trim($this->conn->quote($v), "'");
 	}
 }

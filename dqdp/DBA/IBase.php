@@ -1,12 +1,12 @@
 <?php
 
-namespace dqdp\DBLayer;
+namespace dqdp\DBA;
 
 use dqdp\SQL\Select;
 
 require_once('ibaselib.php');
 
-class Ibase_Layer extends DBLayer
+class IBase extends DBA
 {
 	var $conn;
 	var $tr;
@@ -93,6 +93,10 @@ class Ibase_Layer extends DBLayer
 			return ibase_prepare($this->tr??$this->conn, (string)$args[0]);
 		}
 		return ibase_prepare($this->tr??$this->conn, ...$args);
+	}
+
+	function escape($v){
+		return ibase_escape($v);
 	}
 
 	function get_users(...$args){

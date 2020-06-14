@@ -2,7 +2,7 @@
 
 namespace dqdp\Settings;
 
-use dqdp\DBLayer\DBLayer;
+use dqdp\DBA\DBA;
 use dqdp\Entity\EntityInterface;
 
 /* Ibase
@@ -115,12 +115,12 @@ class Settings implements EntityInterface
 		// $params->SET_KEY = $ID;
 	}
 
-	function set_trans(DBLayer $dba) {
+	function set_trans(DBA $dba) {
 		$this->Ent->set_trans($dba);
 		return $this;
 	}
 
-	function get_trans(): DBLayer {
+	function get_trans(): DBA {
 		return $this->Ent->get_trans();
 	}
 

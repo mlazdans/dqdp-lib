@@ -2,7 +2,7 @@
 
 namespace dqdp;
 
-class EmptyObject
+class StdObject
 {
 	static $debug = false;
 
@@ -12,7 +12,7 @@ class EmptyObject
 	}
 
 	function __get($v){
-		if(EmptyObject::$debug){
+		if(StdObject::$debug){
 			if(!isset($this->{$v})){
 				trigger_error("$v not set");
 			}

@@ -1,15 +1,16 @@
 <?php
 
-use dqdp\DBLayer\MySQL_PDO_Layer;
+use dqdp\DBA\MySQL_PDO;
 use dqdp\Settings\Settings as Settings;
 use PHPUnit\Framework\TestCase;
 
+# TODO: atsevišķi DBA
 class SettingsTest extends TestCase
 {
 	protected static $db;
 
 	public static function setUpBeforeClass(): void {
-		self::$db = new MySQL_PDO_Layer;
+		self::$db = new MySQL_PDO;
 		self::$db->connect('localhost', 'root', '', 'dblayer_test');
 	}
 

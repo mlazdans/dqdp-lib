@@ -2,7 +2,7 @@
 
 namespace dqdp\Entity;
 
-use dqdp\DBLayer\DBLayer;
+use dqdp\DBA\DBA;
 
 interface EntityInterface {
 	function get($ID, $params = null);
@@ -11,6 +11,6 @@ interface EntityInterface {
 	function search($params = null);
 	function save($DATA);
 	function delete();
-	function set_trans(DBLayer $dba);
-	function get_trans() : DBLayer;
+	function set_trans(DBA $dba);
+	function get_trans() : DBA;
 }
