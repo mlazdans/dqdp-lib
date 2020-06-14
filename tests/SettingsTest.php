@@ -1,7 +1,7 @@
 <?php
 
 use dqdp\DBA\MySQL_PDO;
-use dqdp\Settings\Settings as Settings;
+use dqdp\Settings;
 use PHPUnit\Framework\TestCase;
 
 # TODO: atsevišķi DBA

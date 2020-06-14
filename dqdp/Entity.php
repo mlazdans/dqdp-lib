@@ -1,8 +1,8 @@
 <?php
 
-namespace dqdp\Entity;
+namespace dqdp;
 
-use dqdp\DBA\DBA;
+use dqdp\DBA;
 use dqdp\SQL\Insert;
 use dqdp\SQL\Select;
 

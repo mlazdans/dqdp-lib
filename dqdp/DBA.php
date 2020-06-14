@@ -1,9 +1,6 @@
 <?php
 
-namespace dqdp\DBA;
-
-class DBAException extends \RuntimeException {
-}
+namespace dqdp;
 
 abstract class DBA
 {
@@ -26,7 +23,7 @@ abstract class DBA
 	abstract function close();
 	abstract function escape($v);
 
-	function set_dev(Bool $dev){
+	function set_dev(bool $dev){
 		$this->dev = $dev;
 		return $this;
 	}

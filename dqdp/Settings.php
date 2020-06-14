@@ -1,9 +1,9 @@
 <?php
 
-namespace dqdp\Settings;
+namespace dqdp;
 
-use dqdp\DBA\DBA;
-use dqdp\Entity\EntityInterface;
+use dqdp\DBA;
+use dqdp\EntityInterface;
 
 /* Ibase
 CREATE TABLE SETTINGS
@@ -51,7 +51,7 @@ class Settings implements EntityInterface
 
 	function __construct($class){
 		$this->CLASS = $class;
-		$this->Ent = new Entity;
+		$this->Ent = new Settings\Entity;
 	}
 
 	# Interface f-ns
@@ -83,7 +83,7 @@ class Settings implements EntityInterface
 		return $this->Ent->search($PARAMS);
 	}
 
-	function save(){
+	function save($DATA = null){
 		$DATA = eoe($this->DATA);
 
 		$ret = true;
