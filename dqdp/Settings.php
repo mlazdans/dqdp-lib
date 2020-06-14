@@ -41,7 +41,6 @@ CREATE TABLE settings
 );
 */
 
-
 class Settings implements EntityInterface
 {
 	var $CLASS;

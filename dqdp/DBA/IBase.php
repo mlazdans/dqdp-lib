@@ -40,14 +40,16 @@ class IBase extends \dqdp\DBA
 
 	function query(...$args){
 		if($this->is_dqdp_statement($args)){
-			return ibase_query($this->tr??$this->conn, $args[0], ...$args[0]->vars());
+			$q = ibase_query($this->tr??$this->conn, $args[0], ...$args[0]->vars());
 		} elseif(is_resource($args[0])) {
-			return ibase_execute(...$args);
+			$q = ibase_execute(...$args);
 		} elseif(count($args) == 2) {
-			return ibase_query($this->tr??$this->conn, $args[0], ...$args[1]);
+			$q = ibase_query($this->tr??$this->conn, $args[0], ...$args[1]);
+		} else {
+			$q = ibase_query($this->tr??$this->conn, ...$args);
 		}
 
-		return ibase_query($this->tr??$this->conn, ...$args);
+		return $q;
 	}
 
 	private function __fetch($func, ...$args){

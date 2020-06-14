@@ -87,7 +87,7 @@ abstract class Entity implements EntityInterface {
 				if(is_array($this->PK)){
 					return $retPK;
 				} else {
-					return $retPK->{$this->PK};
+					return get_prop($retPK, $this->PK);
 				}
 			}
 			if($this->lex == 'mysql'){
@@ -120,6 +120,9 @@ abstract class Entity implements EntityInterface {
 
 		if($dba instanceof \dqdp\DBA\IBase){
 			$this->lex = 'fbird';
+			if(!is_array($this->PK)){
+				$this->PK = strtoupper($this->PK);
+			}
 		}
 
 		if($dba instanceof \dqdp\DBA\MySQL_PDO){
@@ -222,8 +225,7 @@ abstract class Entity implements EntityInterface {
 			}
 		}
 
-		$pks = array_wrap($this->PK);
-		foreach($pks as $k){
+		foreach(array_enfold($this->PK) as $k){
 			if($filters->exists($k) && !is_null($filters->{$k})){
 				$sql->Where(["$this->Table.$k = ?", $filters->{$k}]);
 			}

@@ -61,4 +61,11 @@ final class EoTest extends TestCase
 		$this->assertTrue(isset($a[0]) === false);
 		$this->assertTrue(isset($a['test']) === false);
 	}
+
+	// function test_unset1(){
+	// 	$a = ["a"=>1, "b"=>2, "c"=>3];
+	// 	$a['b'] = null;
+	// 	printr($a);
+	// 	$this->assertTrue($a === ["a"=>1, "c"=>3]);
+	// }
 }
