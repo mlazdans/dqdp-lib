@@ -5,7 +5,6 @@ namespace dqdp;
 abstract class DBA
 {
 	var $use_exceptions = true;
-	var $dev = true;
 
 	protected $execute_fetch_function = 'fetch_assoc';
 
@@ -22,11 +21,6 @@ abstract class DBA
 	abstract function affected_rows();
 	abstract function close();
 	abstract function escape($v);
-
-	function set_dev(bool $dev){
-		$this->dev = $dev;
-		return $this;
-	}
 
 	function set_default_fetch_function($func){
 		$this->execute_fetch_function = $func;

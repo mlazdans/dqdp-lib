@@ -1,13 +1,13 @@
 <?php
-// write, read to/from file descriptor
-// mkdir, rmdir, creat, unlink, link, symlink
-// stat, utimes, chmod, chown, chgrp
-// Path names are case sensitive, components are separated with forward slash (/).
-// INSERT INTO fs (fs_id, fs_fsid, fs_uid, fs_depth, fs_type, fs_name, fs_fullpath, fs_fullpath_hash) VALUES (1, NULL, NULL, 0, 1, '/', '/', SHA1('/'))
 
 namespace dqdp;
 
 use dqdp\DBA;
+
+// write, read to/from file descriptor
+// mkdir, rmdir, creat, unlink, link, symlink
+// stat, utimes, chmod, chown, chgrp
+// Path names are case sensitive, components are separated with forward slash (/).
 
 class FS implements DBA\TransInterface {
 	var $uid;
@@ -28,45 +28,51 @@ class FS implements DBA\TransInterface {
 	}
 
 	# Nav īsti skaisti, bet lai neaizmirstās pielikt uid
-	private function defaults_params($params){
+	private function defaults_params($params = null){
+		$params = eoe($params);
 		if($this->uid){
-			$params['fs_uid'] = $this->uid;
+			$params->fs_uid = $this->uid;
 		}
 		return $params;
 	}
 
-	private function get_single($params = []){
+	private function get_single($params = null){
 		return $this->Ent->get_single($this->defaults_params($params));
 	}
 
-	private function get_all($params = []){
+	private function get_all($params = null){
 		return $this->Ent->get_all($this->defaults_params($params));
 	}
 
-	function get_by_fullpath($path, $params = []){
-		$params["fs_fullpath_hash"] = $this->path($path);
+	function get_by_fullpath($path, $params = null){
+		$params = $this->defaults_params($params);
+		//$params["fs_fullpath_hash"] = $this->path($path);
+		$params->fs_fullpath = $this->path($path);
 
 		return $this->get_single($params);
 	}
 
 	function read($path){
-		if($data = $this->get_by_fullpath($path, ['get_contents'=>1, 'fs_type'=>0])){
-			return $data['fs_contents'];
+		if($data = eo(ktolower($this->get_by_fullpath($path, ['get_contents'=>1, 'fs_type'=>0])))){
+			return $data->fs_contents;
 		}
 
 		return false;
 	}
 
 	function write($path, $contents){
-		if($data = $this->get_by_fullpath($path)){
-			if($data['fs_type'] == 1){
+		if($data = eo(ktolower($this->get_by_fullpath($path)))){
+			if($data->fs_type == 1){
 				return false;
 			}
 			$params = [
-				'fs_id'=>$data['fs_id'],
-				'fs_fullpath'=>$data['fs_fullpath'],
+				'fs_id'=>$data->fs_id,
+				'fs_fullpath'=>$data->fs_fullpath,
 				'fs_contents'=>$contents,
 				'fs_size'=>strlen($contents),
+				'fs_updated'=>function(){
+					return "CURRENT_TIMESTAMP";
+				}
 			];
 		} else {
 			$parts = explode("/", $this->path($path));
@@ -103,38 +109,51 @@ class FS implements DBA\TransInterface {
 	}
 
 	function is_dir($path){
-		$params = ["fs_type"=>1];
+		$params = $this->defaults_params();
+		$params->fs_type = 1;
 
 		return $this->get_by_fullpath($path, $params) ? true : false;
 	}
 
 	function file_exists($path){
-		$params = ["fields"=>["fs_fsid"]];
+		$params = $this->defaults_params();
+		$params->fields = ["fs_fsid"];
 
 		return $this->get_by_fullpath($path, $params) ? true : false;
 	}
 
 	function rm($path){
-		$sql = "DELETE FROM $this->Table WHERE fs_fullpath_hash = SHA1(?)";
+		# TODO: pielikt uid, citādi var dzēst citus ierakstus
+		$params = $this->defaults_params();
+		$params->fs_fullpath = $path;
+		//$sql = "DELETE FROM $this->Table WHERE fs_fullpath_hash = SHA1(?)";
+		$sql = "DELETE FROM $this->Table WHERE fs_fullpath = ?";
 
 		return $this->get_trans()->Execute($sql, [$path]) ? true : false;
 	}
 
 	function dirmax($path){
-		$params = ["get_dir_max"=>$this->path($path).'/'];
+		$params = $this->defaults_params();
+		$params->get_dir_max = $this->path($path);
+		if($params->get_dir_max != '/'){
+			$params->get_dir_max .= '/';
+		}
 
 		return $this->get_all($params);
 	}
 
 	function rmtree($path){
 		$ret = true;
-		$max = $this->dirmax($path);
+		$max = ktolower($this->dirmax($path));
 
-		foreach($max as $entry){
-			if(!($ret = $this->rm($entry['fs_fullpath']))){
-				return false;
-			}
-		}
+		$IDS = getbyk($max, 'fs_id');
+		$ret = $this->Ent->delete($IDS);
+
+		// foreach($max as $entry){
+		// 	if(!($ret = $this->rm(eo(ktolower($entry))->fs_id))){
+		// 		return false;
+		// 	}
+		// }
 
 		return $ret;
 	}
@@ -145,9 +164,10 @@ class FS implements DBA\TransInterface {
 		$parts = explode("/", $this->path($path));
 		foreach($parts as $i=>$p){
 			$fs_fullpath .= "$p/";
-			if($exists = $this->get_by_fullpath($fs_fullpath)){
-				$fs_fsid = $exists['fs_id'];
-				if($exists['fs_type'] == 0){ // fail, file
+			$exists = eo(ktolower($this->get_by_fullpath($fs_fullpath)));
+			if(!is_empty($exists)){
+				$fs_fsid = $exists->fs_id;
+				if($exists->fs_type == 0){ // fail, file
 					return false;
 				}
 			} else {
@@ -169,19 +189,23 @@ class FS implements DBA\TransInterface {
 		return $fs_fsid;
 	}
 
-	function scandir($path, $params = []){
-		return ($data = $this->scandirraw($path, $params)) ? array_getk($data, 'fs_name') : false;
+	function scandir($path, $params = null){
+		$params = $this->defaults_params($params);
+		return ($data = ktolower($this->scandirraw($path, $params))) ? getbyk($data, 'fs_name') : false;
+		//return ($data = $this->scandirraw($path, $params)) ? array_getk($data, 'fs_name') : false;
 	}
 
-	function scandirraw($path, $params = []){
-		$d = $this->get_by_fullpath($this->path($path));
+	function scandirraw($path, $params = null){
+		$params = $this->defaults_params($params);
+		$d = $this->get_by_fullpath($this->path($path), $params);
 		// if($sort == SCANDIR_SORT_ASCENDING){
 		// 	$orderby = "$this->Table.fs_fullpath ASC";
 		// } elseif($sort == SCANDIR_SORT_DESCENDING){
 		// 	$orderby = "$this->Table.fs_fullpath DESC";
 		// }
 
-		$params['fs_fsid'] = $d['fs_id'];
+
+		$params->fs_fsid = $d->fs_id;
 
 		return $this->get_all($params);
 	}

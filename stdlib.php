@@ -490,13 +490,12 @@ function browse_flat($path, callable $function){
 	return $ret??[];
 }
 
-function compacto($data){
+function compacto($data) {
 	return __object_filter($data, function($item){
-		return (strlen($item) > 0);
+		return strlen($item) > 0 ? $item : null;
 	});
 }
 
-# TODO: pielikt visiem __object_*() key parametru tāpat kā __object_walk_ref()
 function __object_walk($data, $func, $i = null){
 	if(is_array($data)){
 		foreach($data as $k=>$v){
@@ -506,7 +505,6 @@ function __object_walk($data, $func, $i = null){
 		foreach(get_object_vars($data) as $k=>$v){
 			__object_walk($v, $func, $k);
 		}
-		//__object_walk(get_object_vars($data), $func);
 	} else {
 		$func($data, $i);
 	}
@@ -536,50 +534,56 @@ function __object_walk_ref(&$data, $func, &$i = null){
 	}
 }
 
-function __object_filter($data, $func){
-	$ndata = null;
+# $func  atgriež vērtību, ja der
+function __object_filter($data, $func, $i = null){
 	if(is_array($data)){
-		$ndata = [];
 		foreach($data as $k=>$v){
-			if(__object_filter($v, $func) !== null){
-				$ndata[$k] = $v;
+			if($v2 = __object_filter($v, $func, $k)){
+				$data[$k] = $v2;
+			} else {
+				unset($data[$k]);
 			}
 		}
 	} elseif(is_object($data)) {
-		return __object_filter(get_object_vars($data), $func);
-	} else {
-		if($func($data)){
-			$ndata = $data;
+		foreach(get_object_vars($data) as $k=>$v){
+			if($v2 = __object_filter($v, $func, $k)){
+				$data->{$k} = $v2;
+			} else {
+				unset($data->{$k});
+			}
 		}
+	} else {
+		$data = $func($data, $i);
 	}
 
-	return $ndata;
+	return $data;
 }
 
-function __object_map($data, $func){
+function __object_map($data, $func, $i = null){
 	if(is_array($data)){
-		$ndata = [];
 		foreach($data as $k=>$v){
-			$ndata[$k] = __object_map($v, $func);
+			$data[$k] = __object_map($v, $func, $k);
 		}
 	} elseif(is_object($data)){
-		$ndata = (object)__object_map(get_object_vars($data), $func);
+		foreach(get_object_vars($data) as $k=>$v){
+			$data->{$k} = __object_map($v, $func, $k);
+		}
 	} else {
-		$ndata = $func($data);
+		$data = $func($data, $i);
 	}
-	return $ndata;
+
+	return $data;
 }
 
-function __object_reduce($data, $func, $initial = null, $key = null){
-	$carry = $initial;
+function __object_reduce($data, $func, $carry = null, $i = null){
 	if(is_array($data)){
 		foreach($data as $k=>$v){
 			$carry = __object_reduce($v, $func, $carry, $k);
 		}
 	} elseif(is_object($data)) {
-		$carry = __object_reduce(get_object_vars($data), $func, $carry, $key);
+		$carry = __object_reduce(get_object_vars($data), $func, $carry, $i);
 	} else {
-		$carry = $func($carry, $data, $key);
+		$carry = $func($carry, $data, $i);
 	}
 	return $carry;
 }
@@ -656,7 +660,7 @@ function specialchars($data){
 	});
 }
 
-function date_in_periods($date, Array $periods){
+function date_in_periods($date, array $periods){
 	if(empty($periods)){
 		return false;
 	}
@@ -1748,14 +1752,6 @@ function debug2file($msg){
 	file_put_contents(getenv('TMPDIR').'./debug.log', sprintf("[%s] %s\n", date('c'), $msg), FILE_APPEND);
 }
 
-function array_flatten(Array $a){
-	$ret = [];
-	array_walk_recursive($a, function($item) use (&$ret) {
-		$ret[] = $item;
-	});
-	return $ret;
-}
-
 function get_ex_rate($CURR_ID, $date = false){
 	$ts = $date ? strtotime($date) : time();
 
@@ -1773,16 +1769,14 @@ function get_ex_rate($CURR_ID, $date = false){
 	return false;
 }
 
-function array_wrap($v){
+function array_enfold($v) : array {
 	return is_array($v) ? $v : [$v];
 }
 
-function array_wrap_items($a, $s1, $s2 = null){
-	return __object_map($a, function($v) use ($s1, $s2){
+function wrap_elements($o, $s1, $s2 = null){
+	return __object_map($o, function($v) use ($s1, $s2){
 		return $s1.$v.($s2??$s1);
 	});
-
-	return $a;
 }
 
 # Select from key value pairs array
@@ -1807,7 +1801,7 @@ function options_select($data, $vk, $lk, $selected = null){
 	return join("", $ret??[]);
 }
 
-function array_search_k($arr, $k, $v){
+function array_search_k(array $arr, $k, $v){
 	foreach($arr as $i=>$item){
 		if(is_object($item)){
 			$cmpv = $item->{$k}??null;
@@ -1820,7 +1814,6 @@ function array_search_k($arr, $k, $v){
 			return $i;
 		}
 	}
-	return null;
 }
 
 # TODO: refactor
@@ -1946,14 +1939,8 @@ function is_valid_email($email){
 	return ($username && $domain && (is_valid_host($domain) || checkdnsrr($domain, 'MX')));
 }
 
-function accept_gzip(){
+function accepts_gzip(){
 	return substr_count($_SERVER['HTTP_ACCEPT_ENCODING']??'', 'gzip');
-}
-
-function array_getk($data, $k){
-	return array_map(function($item) use ($k){
-		return $item[$k] ?? null;
-	}, $data);
 }
 
 function get_mime($buf){
@@ -2041,6 +2028,7 @@ function hl(&$data, $kw)
 	//unstrip_script($data, $keys, $scripts);
 } // hl
 
+# TODO: pārbaudīt vai tas nesakrīt ar translit
 function substitute_change($str){
 	$patt = array(
 		"'Ā'", "'Č'", "'Ē'", "'Ģ'", "'Ī'", "'Ķ'", "'Ļ'", "'Ņ'", "'Ō'", "'Ŗ'", "'Š'", "'Ū'", "'Ž'",
@@ -2102,6 +2090,41 @@ function get_prop($o, $k){
 	}
 }
 
+function set_prop(&$o, $k, $v){
+	if(is_object($o)){
+		return $o->{$k} = $v;
+	} elseif(is_array($o)){
+		return $o[$k] = $v;
+	}
+}
+
 function str_ends($haystack, $needle) {
 	return 0 === substr_compare($haystack, $needle, -strlen($needle));
+}
+
+function ktolower($data){
+	__object_walk_ref($data, function(&$item, &$k){
+		$k = strtolower($k);
+	});
+	return $data;
+}
+
+function array_flatten(array $a) : array {
+	return flatten($a);
+}
+
+function flatten($o) : array {
+	__object_walk($o, function($i) use (&$ret){
+		$ret[] = $i;
+	});
+
+	return $ret??[];
+}
+
+function getbyk($o, $k){
+	return flatten(__object_filter($o, function($item, $i) use ($k){
+		if($i === $k){
+			return $item;
+		}
+	}));
 }
