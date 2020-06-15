@@ -29,7 +29,7 @@ class FS implements DBA\TransInterface {
 
 	# Nav īsti skaisti, bet lai neaizmirstās pielikt uid
 	private function defaults_params($params = null){
-		$params = eoe($params);
+		$params = eo($params);
 		if($this->uid){
 			$params->fs_uid = $this->uid;
 		}
@@ -61,13 +61,14 @@ class FS implements DBA\TransInterface {
 	}
 
 	function write($path, $contents){
-		if($data = eo(ktolower($this->get_by_fullpath($path)))){
-			if($data->fs_type == 1){
+		$exists = eo(ktolower($this->get_by_fullpath($path)));
+		if($exists->fs_id){
+			if($exists->fs_type == 1){
 				return false;
 			}
-			$params = [
-				'fs_id'=>$data->fs_id,
-				'fs_fullpath'=>$data->fs_fullpath,
+			$DATA = [
+				'fs_id'=>$exists->fs_id,
+				'fs_fullpath'=>$exists->fs_fullpath,
 				'fs_contents'=>$contents,
 				'fs_size'=>strlen($contents),
 				'fs_updated'=>function(){
@@ -82,7 +83,7 @@ class FS implements DBA\TransInterface {
 			$fs_name = join(".", $fn_parts);
 			$dir = join("/", $parts);
 			if($fs_fsid = $this->mkdir($dir)){
-				$params = [
+				$DATA = [
 					'fs_fsid'=>$fs_fsid,
 					'fs_uid'=>$this->uid,
 					'fs_depth'=>count($parts),
@@ -97,25 +98,25 @@ class FS implements DBA\TransInterface {
 			}
 		}
 
-		if(!isset($params)){
+		if(!isset($DATA)){
 			return false;
 		}
 
 		if($fs_mime = get_mime($contents)){
-			$params['fs_mime'] = $fs_mime;
+			$DATA['fs_mime'] = $fs_mime;
 		}
 
-		return $this->Ent->save($params);
+		return $this->Ent->save($DATA);
 	}
 
-	function is_dir($path){
+	function is_dir($path) : bool {
 		$params = $this->defaults_params();
 		$params->fs_type = 1;
 
 		return $this->get_by_fullpath($path, $params) ? true : false;
 	}
 
-	function file_exists($path){
+	function file_exists($path) : bool {
 		$params = $this->defaults_params();
 		$params->fields = ["fs_fsid"];
 
@@ -143,25 +144,24 @@ class FS implements DBA\TransInterface {
 	}
 
 	function rmtree($path){
-		$ret = true;
 		$max = ktolower($this->dirmax($path));
-
-		$IDS = getbyk($max, 'fs_id');
-		$ret = $this->Ent->delete($IDS);
-
-		// foreach($max as $entry){
-		// 	if(!($ret = $this->rm(eo(ktolower($entry))->fs_id))){
-		// 		return false;
-		// 	}
-		// }
+		$ret = $this->Ent->delete(getbyk($max, 'fs_id'));
 
 		return $ret;
+	}
+
+	private function explode_path($path){
+		if($path == "/"){
+			return [''];
+		} else {
+			return explode("/", $this->path($path));
+		}
 	}
 
 	function mkdir($path){
 		$fs_fsid = NULL;
 		$fs_fullpath = '';
-		$parts = explode("/", $this->path($path));
+		$parts = $this->explode_path($this->path($path));
 		foreach($parts as $i=>$p){
 			$fs_fullpath .= "$p/";
 			$exists = eo(ktolower($this->get_by_fullpath($fs_fullpath)));
@@ -190,9 +190,11 @@ class FS implements DBA\TransInterface {
 	}
 
 	function scandir($path, $params = null){
-		$params = $this->defaults_params($params);
-		return ($data = ktolower($this->scandirraw($path, $params))) ? getbyk($data, 'fs_name') : false;
-		//return ($data = $this->scandirraw($path, $params)) ? array_getk($data, 'fs_name') : false;
+		if(($data = $this->scandirraw($path, $params)) === false){
+			return false;
+		}
+
+		return getbyk(ktolower($data), 'fs_name');
 	}
 
 	function scandirraw($path, $params = null){
@@ -204,8 +206,7 @@ class FS implements DBA\TransInterface {
 		// 	$orderby = "$this->Table.fs_fullpath DESC";
 		// }
 
-
-		$params->fs_fsid = $d->fs_id;
+		$params->fs_fsid = get_prop(ktolower($d), 'fs_id');
 
 		return $this->get_all($params);
 	}

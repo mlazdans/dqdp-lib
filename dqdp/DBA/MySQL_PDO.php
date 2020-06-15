@@ -120,7 +120,9 @@ class MySQL_PDO extends \dqdp\DBA
 	// }
 
 	function trans(){
-		return $this->conn->beginTransaction();
+		$this->conn->beginTransaction();
+		$this->transactionCounter++;
+		return $this;
 	}
 
 	function commit() {
