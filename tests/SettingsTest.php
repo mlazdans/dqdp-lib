@@ -2,6 +2,7 @@
 
 use dqdp\DBA\MySQL_PDO;
 use dqdp\Settings;
+use dqdp\SQL;
 use PHPUnit\Framework\TestCase;
 
 # TODO: atsevišķi DBA
@@ -10,8 +11,9 @@ class SettingsTest extends TestCase
 	protected static $db;
 
 	public static function setUpBeforeClass(): void {
+		SQL::$lex = 'mysql';
 		self::$db = new MySQL_PDO;
-		self::$db->connect('localhost', 'root', '', 'dblayer_test');
+		self::$db->connect('localhost', 'root', '', 'dqdp_tests');
 	}
 
 	// protected function setUp(): void {
