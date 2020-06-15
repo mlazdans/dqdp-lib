@@ -85,8 +85,8 @@ class stdlibTest extends TestCase
 		$a = ['k'=>1,'A'=>''];
 		$this->assertEquals(compacto($a), ['k'=>1]);
 
-		$a = ['k'=>1,'A'=>[]];
-		$this->assertEquals(compacto($a), ['k'=>1]);
+		$a = ['k'=>1,'A'=>[0,0,1]];
+		$this->assertEquals(compacto($a), ['k'=>1,'A'=>[2=>1]]);
 
 		$a = ['k'=>1,'A'=>[1]];
 		$this->assertEquals(compacto($a), ['k'=>1, 'A'=>[1]]);
@@ -99,6 +99,9 @@ class stdlibTest extends TestCase
 
 		$a = new StdObject(['k'=>1,'A'=>'']);
 		$this->assertEquals(compacto($a), new StdObject(['k'=>1]));
+
+		$a = new StdObject(['k'=>1,'A'=>[0,0,1]]);
+		$this->assertEquals(compacto($a), new StdObject(['k'=>1,'A'=>[2=>1]]));
 	}
 
 	function test_flatten1(){
@@ -135,4 +138,19 @@ class stdlibTest extends TestCase
 		$a = new StdObject(["a"=>["b"=>3,"c"=>4,5]]);
 		$this->assertEquals(flatten($a), [3,4,5]);
 	}
+
+	function test_getbyk1(){
+		$a = ['k'=>1,'A'=>2];
+		$this->assertEquals(getbyk($a, 'k'), [1]);
+
+		$a = [['k'=>1],['A'=>2]];
+		$this->assertEquals(getbyk($a, 'k'), [1]);
+
+		$a = [['k'=>1],['k'=>2]];
+		$this->assertEquals(getbyk($a, 'k'), [1,2]);
+
+		$a = [['k'=>1],['k'=>2],['a'=>['k'=>3]]];
+		$this->assertEquals(getbyk($a, 'k'), [1,2,3]);
+	}
+
 }

@@ -3,7 +3,7 @@
 use dqdp\DBA\IBase;
 use dqdp\SQL;
 
-class IBaseTest extends FSTest
+class FS_IBaseTest extends FSTest
 {
 	public static function setUpBeforeClass(): void {
 		$DB_PARAMS = [
