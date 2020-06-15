@@ -41,13 +41,29 @@ class IBase extends \dqdp\DBA
 	function query(...$args){
 		if($this->is_dqdp_statement($args)){
 			$q = ibase_query($this->tr??$this->conn, $args[0], ...$args[0]->vars());
-		} elseif(is_resource($args[0])) {
-			$q = ibase_execute(...$args);
-		} elseif(count($args) == 2) {
-			$q = ibase_query($this->tr??$this->conn, $args[0], ...$args[1]);
+		} elseif((count($args) == 2) && is_resource($args[0]) && is_array($args[1])) {
+			//$q = ibase_execute(...$args);
+			$q = ibase_execute($args[0], ...$args[1]);
+			//$q = ibase_execute($this->tr??$this->conn, $args[0], ...$args[1]);
+		} elseif((count($args) == 2) && is_array($args[1])) {
+			//printr($args);
+			if(($q2 = $this->prepare($args[0])) && ($q = ibase_execute($q2, ...$args[1]))){
+			}
+			//$q = ibase_query($this->tr??$this->conn, $args[0], ...$args[1]);
 		} else {
 			$q = ibase_query($this->tr??$this->conn, ...$args);
 		}
+
+		// if($this->is_dqdp_statement($args)){
+		// 	$q = ibase_query($this->tr??$this->conn, $args[0], ...$args[0]->vars());
+		// } elseif(is_resource($args[0])) {
+		// 	$q = ibase_execute(...$args);
+		// 	//$q = ibase_execute($args[0], ...$args[1]);
+		// } elseif(count($args) == 2) {
+		// 	$q = ibase_query($this->tr??$this->conn, $args[0], ...$args[1]);
+		// } else {
+		// 	$q = ibase_query($this->tr??$this->conn, ...$args);
+		// }
 
 		return $q;
 	}
@@ -75,11 +91,15 @@ class IBase extends \dqdp\DBA
 	}
 
 	function commit(){
-		return ibase_commit($this->tr);
+		$ret = ibase_commit($this->tr);
+		$this->tr = null;
+		return $ret;
 	}
 
 	function rollback(){
-		return ibase_rollback($this->tr);
+		$ret = ibase_rollback($this->tr);
+		$this->tr = null;
+		return $ret;
 	}
 
 	function affected_rows(){

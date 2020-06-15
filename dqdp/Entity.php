@@ -290,7 +290,7 @@ abstract class Entity implements EntityInterface {
 
 		$ret = true;
 		foreach($IDS as $ID){
-			$ret = $ret && $this->get_trans()->execute($smt, $ID);
+			$ret = $ret && $this->get_trans()->execute($smt, [$ID]);
 			// $params = array_merge([$smt], $args, [$ID]);
 			// $ret = $ret && call_user_func_array('ibase_execute', $params);
 		}

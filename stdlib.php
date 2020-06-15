@@ -492,7 +492,7 @@ function browse_flat($path, callable $function){
 
 function compacto($data) {
 	return __object_filter($data, function($item){
-		return strlen($item) > 0 ? $item : null;
+		return (bool)$item;
 	});
 }
 
@@ -534,8 +534,41 @@ function __object_walk_ref(&$data, $func, &$i = null){
 	}
 }
 
-# $func  atgriež vērtību, ja der
+/**
+ * Nebūtu slikti izdomāt veidu, kā ērtāk apstrādāt obj un array pašā $func
+ * Pagaidām $func dabū tikai ne-(obj|arr)
+ * Tas palīdzētu tādām f-ijām, kas čeko [] vai empty object
+ */
 function __object_filter($data, $func, $i = null){
+	if(is_array($data)){
+		foreach($data as $k=>$v){
+			$v2 = __object_filter($v, $func, $k);
+			if(is_null($v2)){
+				unset($data[$k]);
+			} else {
+				$data[$k] = $v2;
+			}
+		}
+		return $data;
+	} elseif(is_object($data)) {
+		$d = clone $data;
+		foreach(get_object_vars($d) as $k=>$v){
+			$v2 = __object_filter($v, $func, $k);
+			if(is_null($v2)){
+				unset($d->{$k});
+			} else {
+				$d->{$k} = $v2;
+			}
+		}
+		return $d;
+	} else {
+		if($v = $func($data, $i)){
+			return $data;
+		}
+	}
+}
+/*
+function __object_filterk($data, $func, $i = null){
 	if(is_array($data)){
 		foreach($data as $k=>$v){
 			if($v2 = __object_filter($v, $func, $k)){
@@ -544,35 +577,38 @@ function __object_filter($data, $func, $i = null){
 				unset($data[$k]);
 			}
 		}
+		return $data;
 	} elseif(is_object($data)) {
-		foreach(get_object_vars($data) as $k=>$v){
+		$d = clone $data;
+		foreach(get_object_vars($d) as $k=>$v){
 			if($v2 = __object_filter($v, $func, $k)){
-				$data->{$k} = $v2;
+				$d->{$k} = $v2;
 			} else {
-				unset($data->{$k});
+				unset($d->{$k});
 			}
 		}
+		return $d;
 	} else {
-		$data = $func($data, $i);
+		return $func($data, $i);
 	}
-
-	return $data;
 }
+*/
 
 function __object_map($data, $func, $i = null){
 	if(is_array($data)){
 		foreach($data as $k=>$v){
 			$data[$k] = __object_map($v, $func, $k);
 		}
+		return $data;
 	} elseif(is_object($data)){
+		$d = clone $data;
 		foreach(get_object_vars($data) as $k=>$v){
-			$data->{$k} = __object_map($v, $func, $k);
+			$d->{$k} = __object_map($v, $func, $k);
 		}
+		return $d;
 	} else {
-		$data = $func($data, $i);
+		return $func($data, $i);
 	}
-
-	return $data;
 }
 
 function __object_reduce($data, $func, $carry = null, $i = null){
@@ -2123,8 +2159,6 @@ function flatten($o) : array {
 
 function getbyk($o, $k){
 	return flatten(__object_filter($o, function($item, $i) use ($k){
-		if($i === $k){
-			return $item;
-		}
+		return $i === $k;
 	}));
 }
