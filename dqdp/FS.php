@@ -124,7 +124,6 @@ class FS implements DBA\TransInterface {
 	}
 
 	function rm($path){
-		# TODO: pielikt uid, citādi var dzēst citus ierakstus
 		$params = $this->defaults_params();
 		$params->fs_fullpath = $path;
 		//$sql = "DELETE FROM $this->Table WHERE fs_fullpath_hash = SHA1(?)";

@@ -3,8 +3,9 @@
 use dqdp\LV;
 use dqdp\QueueMailer;
 use dqdp\StdObject;
-use dqdp\SQL\Condition;
 use PHPMailer\PHPMailer\PHPMailer;
+
+require_once("qblib.php");
 
 final class dqdp {
 	static public $DATE_FORMAT = 'd.m.Y';
@@ -496,7 +497,7 @@ function compacto($data) {
 	});
 }
 
-function __object_walk($data, $func, $i = null){
+function __object_walk($data, callable $func, $i = null){
 	if(is_array($data)){
 		foreach($data as $k=>$v){
 			__object_walk($v, $func, $k);
@@ -510,7 +511,7 @@ function __object_walk($data, $func, $i = null){
 	}
 }
 
-function __object_walk_ref(&$data, $func, &$i = null){
+function __object_walk_ref(&$data, callable $func, &$i = null){
 	if(is_array($data)){
 		foreach($data as $k=>&$v){
 			$oldK = $k;
@@ -539,7 +540,7 @@ function __object_walk_ref(&$data, $func, &$i = null){
  * Pagaidām $func dabū tikai ne-(obj|arr)
  * Tas palīdzētu tādām f-ijām, kas čeko [] vai empty object
  */
-function __object_filter($data, $func, $i = null){
+function __object_filter($data, callable $func, $i = null){
 	if(is_array($data)){
 		foreach($data as $k=>$v){
 			$v2 = __object_filter($v, $func, $k);
@@ -594,7 +595,7 @@ function __object_filterk($data, $func, $i = null){
 }
 */
 
-function __object_map($data, $func, $i = null){
+function __object_map($data, callable $func, $i = null){
 	if(is_array($data)){
 		foreach($data as $k=>$v){
 			$data[$k] = __object_map($v, $func, $k);
@@ -611,7 +612,7 @@ function __object_map($data, $func, $i = null){
 	}
 }
 
-function __object_reduce($data, $func, $carry = null, $i = null){
+function __object_reduce($data, callable $func, $carry = null, $i = null){
 	if(is_array($data)){
 		foreach($data as $k=>$v){
 			$carry = __object_reduce($v, $func, $carry, $k);
@@ -946,7 +947,7 @@ function printr(){
 	__output_wrapper(func_get_args(), "print_r");
 }
 
-function __output_wrapper($data, $func){
+function __output_wrapper($data, callable $func){
 	foreach($data as $v){
 		if(is_climode()){
 			$func($v);
@@ -1210,7 +1211,7 @@ function emailex($params){
 		$mail->send();
 		return true;
 	} catch (Exception $e) {
-		throw $e;
+		return $e;
 	}
 }
 
@@ -1396,44 +1397,6 @@ function vardiem($int, $CURR_ID){
 	return LV::vardiem($int, $CURR_ID);
 }
 
-# $value = stdval or comma separated multiples
-function sql_create_int_filter($field, $values){
-	$v = array_map(function($i){
-		return (int)$i;
-	}, $values); // explode(",", $values)
-
-	return ["$field IN (".join(",", array_fill(0, count($v), "?")).")", $v];
-}
-
-function sql_create_filter($filter, $join = "AND"){
-	if(!is_array($filter)){
-		$filter = [$filter];
-	}
-	return $filter ? sprintf("(%s)", join(" $join ", $filter)) : '';
-}
-
-function sql_add_filter(&$filter, &$values, $newf){
-	if(!isset($newf[0])){
-		return;
-	}
-
-	$filter[] = $newf[0];
-
-	if(!isset($newf[1])){
-		return;
-	}
-
-	if(is_array($newf[1])){
-		$values = array_merge($values, $newf[1]);
-	} else {
-		$values[] = $newf[1];
-	}
-}
-
-function where($filter, $join = "AND"){
-	return ($f = sql_create_filter($filter, $join)) ? " WHERE $f" : '';
-}
-
 function xml2array($xml, $d = 0) {
 	//print str_repeat(" ", $d * 2).sprintf("%s(%s)\n", $xml->getName(), $xml->count());
 	if($xml->count()){
@@ -1470,12 +1433,12 @@ function kdsort(&$a){
 	}
 }
 
-function __merge($o1, $o2, $fields){
+function __merge($o1, $o2, array $fields = null){
 	if(is_null($o1) && is_null($o2)){
 		return null;
 	}
 
-	if(is_object($o2)){
+	if(is_object($o2) && ($o2 instanceof stdClass || $o2 instanceof StdObject || $o2 instanceof Traversable)){
 		$a2 = get_object_vars($o2);
 	} elseif(is_array($o2)){
 		$a2 = $o2;
@@ -1503,10 +1466,10 @@ function __merge($o1, $o2, $fields){
 }
 
 function merge($o1, $o2){
-	return __merge($o1, $o2, null);
+	return __merge($o1, $o2);
 }
 
-function merge_only($fields, $o1, $o2 = null){
+function merge_only(array $fields, $o1, $o2 = null){
 	if(is_null($o2)){
 		$o2 = $o1;
 		$o1 = is_array($o2) ? [] : (is_object($o2) ? new stdClass : $o1);
@@ -1565,72 +1528,6 @@ function between($v, $s, $e){
 function within($v, $s, $e){
 	return ($v > $s) && ($v < $e);
 }
-
-# TODO: DATA arī array
-function __build_sql($fields, $DATA = null, $skip_nulls = false, $join = false){
-	$new_fields = [];
-	foreach($fields as $k){
-		if($skip_nulls && !property_exists($DATA, $k)){
-			continue;
-		}
-
-		if(property_exists($DATA, $k)){
-			if(is_callable([$DATA, $k]) || $DATA->{$k} instanceof Closure){
-				$fret = $DATA->$k->__invoke();
-				# Ja nav uzstādīts otrs parametrs, neliekam to pie fields vai holders
-				if(array_key_exists(0, $fret) && array_key_exists(1, $fret)){
-					list($h, $v) = $fret;
-				} elseif(array_key_exists(0, $fret)) {
-					$new_fields[] = $k;
-					$holders[] = $fret[0];
-					continue;
-				}
-			} else {
-				$h = "?";
-				$v = $DATA->{$k};
-			}
-		} else {
-			$h = "?";
-			$v = null;
-		}
-
-		$new_fields[] = $k;
-		$holders[] = $h;
-		$values[] = $v;
-	}
-
-	if($join){
-		return [join(",", $new_fields), join(",", $holders), $values??[]];
-	} else {
-		return [$new_fields, $holders, $values];
-	}
-}
-
-# TODO: atstāt tikai f-iju ar array output
-function build_sql($fields, $DATA = null, $skip_nulls = false){
-	return __build_sql($fields, $DATA, $skip_nulls, true);
-}
-function build_sql_raw($fields, $DATA = null, $skip_nulls = false){
-	return __build_sql($fields, $DATA, $skip_nulls, false);
-}
-
-# NOTE (2020-01-31): Pagaidām nedzēst ārā
-// function build_sql($fields, $DATA = null, $skip_nulls = false){
-// 	foreach($fields as $i=>$k){
-// 		if($skip_nulls){
-// 			//if(isset($DATA->{$k})){
-// 			if(property_exists($DATA, $k)){
-// 				$values[] = $DATA->{$k};
-// 			} else {
-// 				unset($fields[$i]);
-// 			}
-// 		} else {
-// 			$values[] = $DATA->{$k} ?? null;
-// 		}
-// 	}
-
-// 	return [join(",", $fields), join(",", array_fill(0, count($fields), "?")), $values??[],$fields];
-// }
 
 function eo($data = null) : StdObject {
 	return new StdObject($data);
@@ -1867,84 +1764,9 @@ function parse_search_q($q, $minWordLen = 0){
 	return array_unique($words);
 }
 
-function search_to_sql_cond($q, $fields, $minWordLen = 0){
-	$words = parse_search_q($q, $minWordLen);
-	if(!is_array($fields)){
-		$fields = array($fields);
-	}
-
-	$MainCond = new Condition();
-	foreach($words as $word){
-		$Cond = new Condition();
-		foreach($fields as $field){
-			$Cond->add_condition(["UPPER($field) LIKE ?", "%".$word."%"], Condition::OR);
-		}
-		$MainCond->add_condition($Cond, Condition::AND);
-	}
-
-	return $MainCond;
-}
-
 function split_words($q){
 	$words = preg_split('/\s+/', trim($q));
 	return $words;
-}
-
-function search_fn_ci($word, $field, $Cond){
-	$Cond->add_condition(["UPPER($field) LIKE ?", "%".mb_strtoupper($word)."%"], Condition::OR);
-}
-
-function search_fn_nci($word, $field, $Cond){
-	$Cond->add_condition(["$field LIKE ?", "%".$word."%"], Condition::OR);
-}
-
-function search_sql(string $q, array $fields, callable $fn = null){
-	return __search_sql($q, $fields, $fn??'search_fn_ci');
-}
-
-function search_fn_nci_binary($word, $field, $Cond){
-	$Cond->add_condition(["UPPER(CONVERT($field USING utf8)) LIKE ?", "%".mb_strtoupper($word)."%"], Condition::OR);
-}
-
-function __search_sql(string $q, array $fields, callable $fn){
-	$words = array_unique(split_words($q));
-
-	$MainCond = new Condition();
-	foreach($words as $word){
-		$Cond = new Condition();
-		foreach($fields as $field){
-			($fn)($word, $field, $Cond);
-		}
-		$MainCond->add_condition($Cond, Condition::AND);
-	}
-
-	return $MainCond;
-}
-
-function search_to_sql($q, $fields, $minWordLen = 0){
-	$words = parse_search_q($q, $minWordLen);
-	if(!is_array($fields)){
-		$fields = array($fields);
-	}
-
-	$match = '';
-	$values = [];
-	foreach($words as $word){
-		$tmp = '';
-		foreach($fields as $field){
-			//$tmp .= "UPPER($field) LIKE ? COLLATE UNICODE_CI_AI ESCAPE '\\' OR ";
-			$tmp .= "UPPER($field) LIKE ? OR ";
-			$values[] = "%".$word."%";
-		}
-		$tmp = substr($tmp, 0, -4);
-		if($tmp)
-			$match .= "($tmp) AND ";
-	}
-	$match = substr($match, 0, -5);
-	if($match){
-		return ["($match)", $values];
-	}
-	return ["", []];
 }
 
 function is_valid_host($host){

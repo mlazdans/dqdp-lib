@@ -46,12 +46,12 @@ class Select extends Statement
 	}
 
 	function ResetDistinct(){
-		$this->parts->where = new Condition;
+		$this->distinct = false;
 		return $this;
 	}
 
 	function ResetWhere(){
-		$this->distinct = false;
+		$this->parts->where = new Condition;
 		return $this;
 	}
 
@@ -99,6 +99,11 @@ class Select extends Statement
 
 	function Where($condition){
 		$this->parts->where->add_condition($condition);
+		return $this;
+	}
+
+	function WhereIn($field, $v){
+		$this->parts->where->add_condition(qb_filter_in($field, $v));
 		return $this;
 	}
 

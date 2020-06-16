@@ -1,8 +1,10 @@
 <?php
 
-namespace dqdp;
+namespace dqdp\Entity;
 
-interface EntityInterface extends DBA\TransInterface {
+use dqdp\DBA\TransInterface;
+
+interface EntityInterface extends TransInterface {
 	function get($ID, $params = null);
 	function get_all($params = null);
 	function get_single($params = null);
