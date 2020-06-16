@@ -2,10 +2,11 @@
 
 namespace dqdp;
 
+use dqdp\DBA\TransInterface;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-class QueueMailer extends PHPMailer
+class QueueMailer extends PHPMailer implements TransInterface
 {
 	var $TR;
 	private $q;
@@ -16,11 +17,12 @@ class QueueMailer extends PHPMailer
 		$this->Mailer = 'queue';
 	}
 
-	function set_trans($tr){
-		$this->TR = $tr;
+	function set_trans(DBA $dba){
+		$this->TR = $dba;
+		return $this;
 	}
 
-	function get_trans(){
+	function get_trans() : DBA {
 		return $this->TR;
 	}
 
@@ -40,18 +42,28 @@ class QueueMailer extends PHPMailer
 			'MAILER_OBJ'=>serialize($ObjData),
 			'SENDER'=>$this->From,
 			'RECIPIENT'=>serialize($this->all_recipients),
+			'CREATE_TIME'=>static function(){
+				return 'CURRENT_TIMESTAMP';
+			},
+			'TIME_TO_SEND'=>static function(){
+				return 'CURRENT_TIMESTAMP';
+			}
 		];
 
-		$fields = array_keys($DATA);
+		$Ent = (new QueueMailer\Entity)->set_trans($this->get_trans());
 
-		list($fieldSQL, $valuesSQL, $values) = build_sql($fields, (object)$DATA, true);
-		$sql = "INSERT INTO MAIL_QUEUE (ID,CREATE_TIME,TIME_TO_SEND,$fieldSQL) VALUES (NEXT VALUE FOR GEN_MAIL_QUEUE_ID,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,$valuesSQL) RETURNING ID";
+		return $Ent->save($DATA);
 
-		if($q = $this->get_trans()->query($sql, $values)){
-			$r = $this->get_trans()->fetch($q);
-			return $r->ID;
-		}
-		return false;
+		// $fields = array_keys($DATA);
+
+		// list($fieldSQL, $valuesSQL, $values) = build_sql($fields, (object)$DATA, true);
+		// $sql = "INSERT INTO MAIL_QUEUE (ID,CREATE_TIME,TIME_TO_SEND,$fieldSQL) VALUES (NEXT VALUE FOR GEN_MAIL_QUEUE_ID,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,$valuesSQL) RETURNING ID";
+
+		// if($q = $this->get_trans()->query($sql, $values)){
+		// 	$r = $this->get_trans()->fetch($q);
+		// 	return $r->ID;
+		// }
+		// return false;
 	}
 
 	function getQueue(){

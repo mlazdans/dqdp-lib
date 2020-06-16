@@ -3,7 +3,7 @@
 namespace dqdp;
 
 use dqdp\DBA;
-use dqdp\EntityInterface;
+use dqdp\Entity\EntityInterface;
 
 /* Ibase
 CREATE TABLE SETTINGS

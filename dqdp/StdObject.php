@@ -2,29 +2,95 @@
 
 namespace dqdp;
 
-class StdObject
+use Countable;
+use Iterator;
+
+class StdObject implements Iterator, Countable
 {
-	static $debug = false;
+	private $__stdo_debug = false;
+	// private $__stdo_keys = [];
+	private $__stdo_i = 0;
 
 	function __construct($initValues = null){
 		$this->merge($initValues);
 		return $this;
 	}
 
-	function __get($v){
-		if(StdObject::$debug){
-			if(!isset($this->{$v})){
-				trigger_error("$v not set");
-			}
-		}
-		return isset($this->{$v}) ? $this->{$v} : null;
+	private function is_protected($k){
+		return strpos($k, '__stdo_') === 0;
 	}
 
-	function exists($v){
-		return property_exists($this, $v);
+	private function debug_msg($msg){
+		if($this->__stdo_debug){
+			trigger_error($msg);
+		}
+	}
+
+	function set_debug(bool $mode){
+		$this->__stdo_debug = $mode;
+	}
+
+	function __get($k){
+		if($this->is_protected($k)){
+			$this->debug_msg("Can not access private property $k");
+		// } elseif($this->exists($k)){
+		// 	return $this->{$k};
+		} else{
+			$this->debug_msg("$k not set");
+		}
+	}
+
+	function __set($k, $v){
+		if($this->is_protected($k)){
+			$this->debug_msg("Can not access private property $k");
+		} else {
+			// if(!$this->exists($k)){
+			// 	$this->__stdo_keys[] = $k;
+			// }
+			$this->{$k} = $v;
+		}
+	}
+
+	function __unset($k){
+		print "$k:!";
+		if($this->is_protected($k)){
+			$this->debug_msg("Can not access private property $k");
+		} else {
+			print "$k:!";
+		}
+	}
+
+	function exists($k){
+		return property_exists($this, $k);
 	}
 
 	function merge($o){
 		return merge($this, $o);
+	}
+
+	function count() : int {
+		return count(get_object_vars($this));
+		//return count($this->__stdo_keys);
+	}
+
+	function current() {
+		return $this->{$this->key()};
+	}
+
+	function key() {
+		return get_object_vars($this)[$this->__stdo_i]??null;
+		//return $this->__stdo_keys[$this->__stdo_i]??null;
+	}
+
+	function next() : void {
+		++$this->__stdo_i;
+	}
+
+	function rewind() : void {
+		$this->__stdo_i = 0;
+	}
+
+	function valid() : bool {
+		return $this->exists($this->key());
 	}
 }

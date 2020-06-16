@@ -3,8 +3,10 @@
 namespace dqdp;
 
 use dqdp\DBA;
+use dqdp\Entity\EntityInterface;
 use dqdp\SQL\Insert;
 use dqdp\SQL\Select;
+use dqdp\SQL\Statement;
 
 require_once('mysqllib.php');
 
@@ -44,11 +46,7 @@ abstract class Entity implements EntityInterface {
 	}
 
 	function save($DATA){
-		//list($fields, $DATA) = func_get_args();
-		$fields = $this->fields();
-		//list($DATA) = func_get_args();
-
-		$sql_fields = (array)merge_only($fields, $DATA);
+		$sql_fields = (array)merge_only($this->fields(), $DATA);
 
 		if(!is_array($this->PK)){
 			$PK_val = get_prop($DATA, $this->PK);
@@ -56,7 +54,7 @@ abstract class Entity implements EntityInterface {
 				if($this->lex == 'fbird'){
 					if(!empty($this->Gen)){
 						$sql_fields[$this->PK] = function(){
-							return ["NEXT VALUE FOR $this->Gen"];
+							return "NEXT VALUE FOR $this->Gen";
 						};
 					}
 				}
@@ -136,7 +134,7 @@ abstract class Entity implements EntityInterface {
 		return $this->dba;
 	}
 
-	protected function set_default_filters(Select $sql, $DATA, array $defaults, $prefix = null){
+	protected function set_default_filters(Statement $sql, $DATA, array $defaults, $prefix = null){
 		$DATA = eoe($DATA);
 
 		if(is_null($prefix)){
@@ -159,7 +157,7 @@ abstract class Entity implements EntityInterface {
 
 	# TODO: abstract out funkcionālo daļu
 	# TODO: uz Select???
-	protected function set_null_filters(Select $sql, $DATA, array $fields, $prefix = null){
+	protected function set_null_filters(Statement $sql, $DATA, array $fields, $prefix = null){
 		$DATA = eoe($DATA);
 
 		if(is_null($prefix)){
@@ -180,7 +178,7 @@ abstract class Entity implements EntityInterface {
 		return $sql;
 	}
 
-	protected function set_non_null_filters(Select $sql, $DATA, array $fields, $prefix = null){
+	protected function set_non_null_filters(Statement $sql, $DATA, array $fields, $prefix = null){
 		$DATA = eoe($DATA);
 
 		if(is_null($prefix)){
@@ -197,7 +195,7 @@ abstract class Entity implements EntityInterface {
 		return $sql;
 	}
 
-	protected function set_field_filters(Select $sql, $DATA, array $fields, $prefix = null){
+	protected function set_field_filters(Statement $sql, $DATA, array $fields, $prefix = null){
 		$DATA = eoe($DATA);
 
 		if(is_null($prefix)){
@@ -214,7 +212,7 @@ abstract class Entity implements EntityInterface {
 		return $sql;
 	}
 
-	protected function set_filters(Select $sql, $filters = null){
+	protected function set_filters(Statement $sql, $filters = null){
 		$filters = eoe($filters);
 		if(is_array($this->PK)){
 		} else {
@@ -242,8 +240,7 @@ abstract class Entity implements EntityInterface {
 				} else {
 					trigger_error("Illegal multiple PRIMARY KEY value for $this->PKS", E_USER_ERROR);
 				}
-				# TODO: keys var būt arī ne-int!!!!
-				$sql->Where(sql_create_int_filter("$this->Table.{$this->PK}", $IDS));
+				$sql->Where(qb_filter_in("$this->Table.{$this->PK}", $IDS));
 			}
 		}
 

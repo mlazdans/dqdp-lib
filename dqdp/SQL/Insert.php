@@ -48,12 +48,12 @@ class Insert extends Statement
 
 	# TODO: cache build_sql_raw() output
 	function vars(){
-		$build = build_sql_raw(array_keys($this->vars), eo($this->vars), true);
+		$build = build_sql(array_keys($this->vars), eo($this->vars), true);
 		return $build[2];
 	}
 
 	protected function _values(){
-		list($fields, $holders) = build_sql_raw(array_keys($this->vars), eo($this->vars), true);
+		list($fields, $holders) = build_sql(array_keys($this->vars), eo($this->vars), true);
 		$lines[] = "(".join(',', $fields).")";
 		$lines[] = "VALUES";
 		$lines[] = "(".join(',', $holders).")";
