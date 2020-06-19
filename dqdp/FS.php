@@ -76,11 +76,15 @@ class FS implements DBA\TransInterface {
 				}
 			];
 		} else {
-			$parts = explode("/", $this->path($path));
+			$parts = $this->explode_path($path);
 			$file_name = array_pop($parts);
-			$fn_parts = explode(".", $file_name);
-			$fs_ext = array_pop($fn_parts);
-			$fs_name = join(".", $fn_parts);
+			$pi = pathinfo($file_name);
+			//$fn_parts = explode(".", $file_name);
+			//printr("\n", $pi);
+			// $fs_ext = array_pop($fn_parts);
+			// $fs_name = join(".", $fn_parts);
+			$fs_name = $pi['filename']??null;
+			$fs_ext = $pi['extension']??null;
 			$dir = join("/", $parts);
 			if($fs_fsid = $this->mkdir($dir)){
 				$DATA = [
@@ -193,18 +197,18 @@ class FS implements DBA\TransInterface {
 			return false;
 		}
 
-		return getbyk(ktolower($data), 'fs_name');
+		return getbyk(ktolower($data), 'fs_fullname');
 	}
 
 	function scandirraw($path, $params = null){
-		$params = $this->defaults_params($params);
-		$d = $this->get_by_fullpath($this->path($path), $params);
+		$d = $this->get_by_fullpath($this->path($path), $this->defaults_params());
 		// if($sort == SCANDIR_SORT_ASCENDING){
 		// 	$orderby = "$this->Table.fs_fullpath ASC";
 		// } elseif($sort == SCANDIR_SORT_DESCENDING){
 		// 	$orderby = "$this->Table.fs_fullpath DESC";
 		// }
 
+		$params = $this->defaults_params($params);
 		$params->fs_fsid = get_prop(ktolower($d), 'fs_id');
 
 		return $this->get_all($params);

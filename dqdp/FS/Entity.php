@@ -112,6 +112,8 @@ class Entity extends \dqdp\Entity {
 			$sql->Select("fs_contents");
 		}
 
+		//sqlr($sql);
+
 		return parent::set_filters($sql, $DATA);
 	}
 

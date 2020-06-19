@@ -13,7 +13,7 @@ class FS_IBaseTest extends FSTest
 		];
 
 		SQL::$lex = 'fbird';
-
 		self::$db = (new IBase)->connect_params($DB_PARAMS);
+		//self::$db->set_default_fetch_function('fetch_object');
 	}
 }
