@@ -51,15 +51,6 @@ class StdObject implements Iterator, Countable
 		}
 	}
 
-	function __unset($k){
-		print "$k:!";
-		if($this->is_protected($k)){
-			$this->debug_msg("Can not access private property $k");
-		} else {
-			print "$k:!";
-		}
-	}
-
 	function exists($k){
 		return property_exists($this, $k);
 	}

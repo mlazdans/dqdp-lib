@@ -502,7 +502,7 @@ function __object_walk($data, callable $func, $i = null){
 		foreach($data as $k=>$v){
 			__object_walk($v, $func, $k);
 		}
-	} elseif(is_object($data)) {
+	} elseif($data instanceof stdClass || $data instanceof Traversable) {
 		foreach(get_object_vars($data) as $k=>$v){
 			__object_walk($v, $func, $k);
 		}
@@ -521,7 +521,7 @@ function __object_walk_ref(&$data, callable $func, &$i = null){
 				unset($data[$oldK]);
 			}
 		}
-	} elseif(is_object($data)) {
+	} elseif($data instanceof stdClass || $data instanceof Traversable) {
 		foreach(get_object_vars($data) as $k=>$v){
 			$oldK = $k;
 			__object_walk_ref($data->{$k}, $func, $k);
@@ -551,7 +551,7 @@ function __object_filter($data, callable $func, $i = null){
 			}
 		}
 		return $data;
-	} elseif(is_object($data)) {
+	} elseif($data instanceof stdClass || $data instanceof Traversable) {
 		$d = clone $data;
 		foreach(get_object_vars($d) as $k=>$v){
 			$v2 = __object_filter($v, $func, $k);
@@ -601,7 +601,7 @@ function __object_map($data, callable $func, $i = null){
 			$data[$k] = __object_map($v, $func, $k);
 		}
 		return $data;
-	} elseif(is_object($data)){
+	} elseif($data instanceof stdClass || $data instanceof Traversable){
 		$d = clone $data;
 		foreach(get_object_vars($data) as $k=>$v){
 			$d->{$k} = __object_map($v, $func, $k);
@@ -617,7 +617,7 @@ function __object_reduce($data, callable $func, $carry = null, $i = null){
 		foreach($data as $k=>$v){
 			$carry = __object_reduce($v, $func, $carry, $k);
 		}
-	} elseif(is_object($data)) {
+	} elseif($data instanceof stdClass || $data instanceof Traversable) {
 		$carry = __object_reduce(get_object_vars($data), $func, $carry, $i);
 	} else {
 		$carry = $func($carry, $data, $i);
@@ -926,7 +926,7 @@ function format_debug($v, $depth = 0){
 function sqlr(){
 	__output_wrapper(func_get_args(), function($v){
 		if(!is_climode())print '<code class="sql">';
-		if(is_object($v) && $v instanceof dqdp\SQL\Statement){
+		if($v instanceof dqdp\SQL\Statement){
 			print_r((string)$v);
 			if(method_exists($v, 'vars')){
 				print ("\n\n[Bind vars]\n");
@@ -1438,7 +1438,7 @@ function __merge($o1, $o2, array $fields = null){
 		return null;
 	}
 
-	if(is_object($o2) && ($o2 instanceof stdClass || $o2 instanceof StdObject || $o2 instanceof Traversable)){
+	if($o2 instanceof stdClass || $o2 instanceof Traversable){
 		$a2 = get_object_vars($o2);
 	} elseif(is_array($o2)){
 		$a2 = $o2;
@@ -1454,7 +1454,7 @@ function __merge($o1, $o2, array $fields = null){
 		}
 	}
 
-	if(is_object($o1)){
+	if($o1 instanceof stdClass || $o1 instanceof Traversable){
 		foreach($a2 as $k=>$v)$o1->{$k} = merge($o1->{$k}??null, $v);
 	} elseif(is_array($o1)){
 		foreach($a2 as $k=>$v)$o1[$k] = merge($o1, $v);
@@ -1529,11 +1529,11 @@ function within($v, $s, $e){
 	return ($v > $s) && ($v < $e);
 }
 
-function eo($data = null) : StdObject {
+function eo($data = null): StdObject {
 	return new StdObject($data);
 }
 
-function eoe($data = null){
+function eoe($data = null): StdObject {
 	if($data instanceof dqdp\StdObject){
 		return $data;
 	} else {
@@ -1541,6 +1541,7 @@ function eoe($data = null){
 	}
 }
 
+# TODO: apvienot sqlr,eo_debug,printr
 function eo_debug(StdObject $o, $keys = null){
 	if(is_null($keys)){
 		$keys = array_keys(get_object_vars($o));

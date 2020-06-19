@@ -56,7 +56,31 @@ abstract class FSTest extends TestCase
 
 		$tr = self::$db->trans();
 		$FS = (new FS())->set_trans($tr);
-		$this->assertTrue($FS->write("/test", "some data") !== false);
+		$this->assertTrue($FS->write("/test.txt", "some data") !== false);
+		$this->assertTrue($tr->commit());
+
+		$tr = self::$db->trans();
+		$FS = (new FS())->set_trans($tr);
+		$this->assertEquals($FS->scandir("/"), ['test.txt']);
+		$this->assertTrue($tr->commit());
+	}
+
+	public function test4() {
+		$this->delete_all();
+
+		$tr = self::$db->trans();
+		$FS = (new FS())->set_trans($tr);
+		$this->assertTrue($FS->mkdir("/") !== false);
+		$this->assertTrue($FS->mkdir("/b") !== false);
+		$this->assertTrue($FS->mkdir("/c") !== false);
+		$this->assertTrue($FS->mkdir("/d/d") !== false);
+		$this->assertTrue($FS->write("/d/d/test.txt", "some data") !== false);
+		$this->assertTrue($tr->commit());
+
+		$tr = self::$db->trans();
+		$FS = (new FS())->set_trans($tr);
+		$this->assertEquals($FS->scandir("/d/d/"), ['test.txt']);
+		$this->assertEquals($FS->scandir("/d/d"), ['test.txt']);
 		$this->assertTrue($tr->commit());
 	}
 

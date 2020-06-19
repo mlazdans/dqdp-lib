@@ -152,5 +152,4 @@ class stdlibTest extends TestCase
 		$a = [['k'=>1],['k'=>2],['a'=>['k'=>3]]];
 		$this->assertEquals(getbyk($a, 'k'), [1,2,3]);
 	}
-
 }
