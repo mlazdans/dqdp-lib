@@ -897,7 +897,7 @@ function __query($query_string = '', $format = '', $delim = '&amp;', $allowed = 
 	// 	$ret[] = "$k=$v";
 	// }
 	// $q1 = join($delim, $ret);
-	$q2 = http_build_query($QS, null, $delim);
+	$q2 = http_build_query($QS, "", $delim);
 	// print "\n$q1\n$q2\n";
 	// die;
 
