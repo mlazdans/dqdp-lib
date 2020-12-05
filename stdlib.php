@@ -882,7 +882,7 @@ function __query($query_string = '', $format = '', $delim = '&amp;', $allowed = 
 	}
 
 	foreach($FORMAT as $k=>$v){
-		if($k{0} == '-'){
+		if($k[0] == '-'){
 			$k2 = substr($k, 1);
 			if(!$v || $v == $QS[$k2]){
 				unset($QS[$k2]);
@@ -1715,8 +1715,7 @@ function wrap_elements($o, $s1, $s2 = null){
 
 # Select from key value pairs array
 function html_select_prepare($data, $k_field, $l_field = null){
-	$datas = eoe($data);
-	foreach($datas as $v){
+	foreach($data as $v){
 		yield $v->{$k_field} => $v->{$l_field??$k_field};
 	}
 }
