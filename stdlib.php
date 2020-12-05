@@ -612,6 +612,7 @@ function __object_map($data, callable $func, $i = null){
 	}
 }
 
+// TODO: bool carry should return immediately
 function __object_reduce($data, callable $func, $carry = null, $i = null){
 	if(is_array($data)){
 		foreach($data as $k=>$v){
@@ -622,6 +623,7 @@ function __object_reduce($data, callable $func, $carry = null, $i = null){
 	} else {
 		$carry = $func($carry, $data, $i);
 	}
+
 	return $carry;
 }
 
