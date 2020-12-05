@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace dqdp;
 
 use Countable;
@@ -11,12 +13,13 @@ class StdObject implements Iterator, Countable
 	// private $__stdo_keys = [];
 	private $__stdo_i = 0;
 
-	function __construct($initValues = null){
+	function __construct($initValues = null) {
 		$this->merge($initValues);
+
 		return $this;
 	}
 
-	private function is_protected($k){
+	private function is_protected($k): bool {
 		return strpos($k, '__stdo_') === 0;
 	}
 
@@ -51,7 +54,7 @@ class StdObject implements Iterator, Countable
 		}
 	}
 
-	function exists($k){
+	function exists($k): bool {
 		return property_exists($this, $k);
 	}
 
@@ -73,15 +76,15 @@ class StdObject implements Iterator, Countable
 		//return $this->__stdo_keys[$this->__stdo_i]??null;
 	}
 
-	function next() : void {
+	function next(): void {
 		++$this->__stdo_i;
 	}
 
-	function rewind() : void {
+	function rewind(): void {
 		$this->__stdo_i = 0;
 	}
 
-	function valid() : bool {
+	function valid(): bool {
 		return $this->exists($this->key());
 	}
 }

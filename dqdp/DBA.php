@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace dqdp;
 
 abstract class DBA
@@ -22,8 +24,9 @@ abstract class DBA
 	abstract function close();
 	abstract function escape($v);
 
-	function set_default_fetch_function($func){
+	function set_default_fetch_function($func): DBA {
 		$this->execute_fetch_function = $func;
+
 		return $this;
 	}
 
@@ -35,6 +38,7 @@ abstract class DBA
 		while($r = $this->fetch(...func_get_args())){
 			$ret[] = $r;
 		}
+
 		return $ret??[];
 	}
 
@@ -47,7 +51,7 @@ abstract class DBA
 		return [];
 	}
 
-	protected function is_dqdp_statement($args){
+	protected function is_dqdp_statement($args): bool {
 		return (count($args) == 1) && $args[0] instanceof \dqdp\SQL\Statement;
 	}
 

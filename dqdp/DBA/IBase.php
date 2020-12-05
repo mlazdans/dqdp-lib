@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace dqdp\DBA;
 
 use dqdp\SQL\Select;
@@ -18,19 +20,22 @@ class IBase extends \dqdp\DBA
 		$username = $params['username'] ?? '';
 		$password = $params['password'] ?? '';
 		$charset = $params['charset'] ?? 'utf8';
-		$buffers = $params['buffers'] ?? null;
-		$dialect = $params['dialect'] ?? null;
+		$buffers = $params['buffers'] ?? 0;
+		$dialect = $params['dialect'] ?? 0;
 		$role = $params['role'] ?? '';
+
 		return $this->connect($database, $username, $password, $charset, $buffers, $dialect, $role);
 	}
 
 	function connect(...$args){
 		$this->conn = ibase_connect(...$args);
+
 		return $this;
 	}
 
 	function execute(...$args){
 		$q = $this->query(...$args);
+
 		if($q && is_resource($q)){
 			$data = $this->fetch_all($q);
 		}
@@ -38,9 +43,9 @@ class IBase extends \dqdp\DBA
 		return isset($data) ? $data : $q;
 	}
 
-	function query(...$args){
+	function query(...$args) {
 		if($this->is_dqdp_statement($args)){
-			$q = ibase_query($this->tr??$this->conn, $args[0], ...$args[0]->vars());
+			$q = ibase_query($this->tr??$this->conn, (string)$args[0], ...$args[0]->vars());
 		} elseif((count($args) == 2) && is_resource($args[0]) && is_array($args[1])) {
 			//$q = ibase_execute(...$args);
 			$q = ibase_execute($args[0], ...$args[1]);
@@ -68,10 +73,11 @@ class IBase extends \dqdp\DBA
 		return $q;
 	}
 
-	private function __fetch($func, ...$args){
+	private function __fetch(callable $func, ...$args){
 		if(!isset($args[1])){
 			$args[1] = self::$FETCH_FLAGS;
 		}
+
 		return $func(...$args);
 	}
 
@@ -87,41 +93,45 @@ class IBase extends \dqdp\DBA
 		$tr = ibase_trans($this->conn, ...$args);
 		$o = clone $this;
 		$o->tr = $tr;
+
 		return $o;
 	}
 
-	function commit(){
+	function commit(): bool {
 		$ret = ibase_commit($this->tr);
 		$this->tr = null;
+
 		return $ret;
 	}
 
-	function rollback(){
+	function rollback(): bool {
 		$ret = ibase_rollback($this->tr);
 		$this->tr = null;
+
 		return $ret;
 	}
 
-	function affected_rows(){
+	function affected_rows(): int {
 		return ibase_affected_rows($this->tr??$this->conn);
 	}
 
-	function close(){
-		ibase_close($this->conn);
+	function close(): bool {
+		return ibase_close($this->conn);
 	}
 
 	function prepare(...$args){
 		if($this->is_dqdp_statement($args)){
 			return ibase_prepare($this->tr??$this->conn, (string)$args[0]);
 		}
+
 		return ibase_prepare($this->tr??$this->conn, ...$args);
 	}
 
-	function escape($v){
+	function escape($v): string {
 		return ibase_escape($v);
 	}
 
-	function get_users(...$args){
+	function get_users(...$args): array {
 		list($PARAMS) = $args;
 
 		if(is_scalar($PARAMS)){
@@ -172,7 +182,7 @@ class IBase extends \dqdp\DBA
 	}
 
 	# TODO: principā return vajadzētu array|object atkarībā no default fetch
-	function get_privileges($PARAMS = null){
+	function get_privileges($PARAMS = null): array {
 		$ret = [];
 
 		if(is_scalar($PARAMS)){
@@ -193,7 +203,7 @@ class IBase extends \dqdp\DBA
 		}
 
 		if(!($q = $this->query($sql))){
-			return;
+			return $ret;
 		}
 
 		while($r = $this->fetch_object($q)){
@@ -240,35 +250,36 @@ class IBase extends \dqdp\DBA
 		return $ret;
 	}
 
-	function get_object_types(){
+	function get_object_types(): array {
 		$sql = 'SELECT RDB$TYPE, RDB$TYPE_NAME FROM RDB$TYPES WHERE RDB$FIELD_NAME=\'RDB$OBJECT_TYPE\'';
 		$data = ibase_strip_rdb($this->execute($sql));
 		foreach($data as $r){
 			$ret[$r->TYPE] = $r->TYPE_NAME;
 		}
+
 		return $ret??[];
 	}
 
-	function get_current_role(){
+	function get_current_role(): string {
 		return trim(get_prop($this->execute_single('SELECT CURRENT_ROLE AS RLE FROM RDB$DATABASE'), 'RLE'));
 	}
 
 	# TODO: params
-	function get_generators(){
+	function get_generators(): array {
 		return trimmer($this->execute('SELECT RDB$GENERATOR_NAME AS NAME
 		FROM RDB$GENERATORS
 		WHERE RDB$SYSTEM_FLAG = 0
 		ORDER BY RDB$GENERATOR_NAME'));
 	}
 
-	function get_tables(){
+	function get_tables(): array {
 		return trimmer($this->execute('SELECT r.RDB$RELATION_NAME AS NAME FROM RDB$RELATIONS AS r
 		LEFT JOIN RDB$VIEW_RELATIONS v ON v.RDB$VIEW_NAME = r.RDB$RELATION_NAME
 		WHERE v.RDB$VIEW_NAME IS NULL AND r.RDB$SYSTEM_FLAG = 0
 		ORDER BY r.RDB$RELATION_NAME'));
 	}
 
-	function get_pk($table){
+	function get_pk($table): ?string {
 		$sql = 'SELECT iseg.RDB$FIELD_NAME
 		FROM RDB$INDICES i
 		JOIN RDB$RELATION_CONSTRAINTS rc ON rc.RDB$INDEX_NAME = i.RDB$INDEX_NAME
@@ -278,6 +289,8 @@ class IBase extends \dqdp\DBA
 		if($r = $this->execute_single($sql, [$table])){
 			return trim(get_prop($r, 'RDB$FIELD_NAME'));
 		}
+
+		return null;
 	}
 
 	// function get_fields($table){
