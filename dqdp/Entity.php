@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace dqdp;
 
 use dqdp\DBA;
@@ -17,19 +19,20 @@ abstract class Entity implements EntityInterface {
 	protected $lex;
 	protected $dba;
 
-	protected function select(){
+	protected function select(): Select {
 		return (new Select("*"))->From($this->Table);
 	}
 
-	abstract protected function fields(): Array;
+	abstract protected function fields(): array;
 
 	function get($ID, $params = null){
 		$params = eoe($params);
 		$params->{$this->PK} = $ID;
+
 		return $this->get_single($params);
 	}
 
-	function get_all($params = null){
+	function get_all($params = null): array {
 		if($q = $this->search($params)){
 			return $this->get_trans()->fetch_all($q);
 		}
@@ -130,7 +133,7 @@ abstract class Entity implements EntityInterface {
 		return $this;
 	}
 
-	function get_trans() : DBA {
+	function get_trans(): DBA {
 		return $this->dba;
 	}
 
@@ -212,7 +215,7 @@ abstract class Entity implements EntityInterface {
 		return $sql;
 	}
 
-	protected function set_filters(Statement $sql, $filters = null){
+	protected function set_filters(Statement $sql, $filters = null): Statement {
 		$filters = eoe($filters);
 		if(is_array($this->PK)){
 		} else {
@@ -297,6 +300,7 @@ abstract class Entity implements EntityInterface {
 	# TODO: šiem trans() te nevajadzētu būt?
 	function new_trans(){
 		$this->dba = $this->dba->trans();
+
 		return $this;
 	}
 

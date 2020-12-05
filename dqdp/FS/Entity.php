@@ -51,6 +51,7 @@ CREATE TABLE fs (
 namespace dqdp\FS;
 
 use dqdp\SQL\Select;
+use dqdp\SQL\Statement;
 
 class Entity extends \dqdp\Entity {
 	// protected $hash_f = 'SHA1';
@@ -78,7 +79,7 @@ class Entity extends \dqdp\Entity {
 	// 	return $this->hash_f;
 	// }
 
-	function select(){
+	function select(): Select {
 		return (
 			new Select(
 				"fs_id, fs_fsid, fs_uid, fs_depth, fs_type, fs_name, fs_ext, fs_fullname, fs_fullpath,".
@@ -86,7 +87,7 @@ class Entity extends \dqdp\Entity {
 			))->From($this->Table);
 	}
 
-	function set_filters($sql, $DATA = null){
+	function set_filters(Statement $sql, $DATA = null): Statement {
 		$DATA = eoe($DATA);
 
 		$filters = [

@@ -4,6 +4,7 @@ namespace dqdp\QueueMailer;
 
 use dqdp\SQL\Condition;
 use dqdp\SQL\Select;
+use dqdp\SQL\Statement;
 
 class Entity extends \dqdp\Entity
 {
@@ -13,13 +14,13 @@ class Entity extends \dqdp\Entity
 		$this->Gen = 'GEN_MAIL_QUEUE_ID';
 	}
 
-	function select(){
+	function select(): Select {
 		return (new Select)
 		->From($this->Table)
 		->OrderBy('CREATE_TIME DESC');
 	}
 
-	function set_filters($sql, $DATA = null){
+	function set_filters(Statement $sql, $DATA = null): Statement {
 		$DATA = eoe($DATA);
 		$Cond = new Condition;
 		if($DATA->SENT)$Cond->add_condition('SENT_TIME IS NOT NULL', Condition::OR);
