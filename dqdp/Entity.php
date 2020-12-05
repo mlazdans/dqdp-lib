@@ -137,7 +137,7 @@ abstract class Entity implements EntityInterface {
 		return $this->dba;
 	}
 
-	protected function set_default_filters(Statement $sql, $DATA, array $defaults, $prefix = null){
+	protected function set_default_filters(Statement $sql, $DATA, array $defaults, $prefix = null): Statement {
 		$DATA = eoe($DATA);
 
 		if(is_null($prefix)){
@@ -160,7 +160,7 @@ abstract class Entity implements EntityInterface {
 
 	# TODO: abstract out funkcionālo daļu
 	# TODO: uz Select???
-	protected function set_null_filters(Statement $sql, $DATA, array $fields, $prefix = null){
+	protected function set_null_filters(Statement $sql, $DATA, array $fields, string $prefix = null): Statement {
 		$DATA = eoe($DATA);
 
 		if(is_null($prefix)){
@@ -181,7 +181,7 @@ abstract class Entity implements EntityInterface {
 		return $sql;
 	}
 
-	protected function set_non_null_filters(Statement $sql, $DATA, array $fields, $prefix = null){
+	protected function set_non_null_filters(Statement $sql, $DATA, array $fields, string $prefix = null): Statement {
 		$DATA = eoe($DATA);
 
 		if(is_null($prefix)){
@@ -198,7 +198,7 @@ abstract class Entity implements EntityInterface {
 		return $sql;
 	}
 
-	protected function set_field_filters(Statement $sql, $DATA, array $fields, $prefix = null){
+	protected function set_field_filters(Statement $sql, $DATA, array $fields, string $prefix = null): Statement {
 		$DATA = eoe($DATA);
 
 		if(is_null($prefix)){
