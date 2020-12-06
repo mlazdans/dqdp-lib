@@ -124,9 +124,7 @@ abstract class Entity implements EntityInterface {
 			if(!is_array($this->PK)){
 				$this->PK = strtoupper($this->PK);
 			}
-		}
-
-		if($dba instanceof \dqdp\DBA\MySQL_PDO){
+		} elseif($dba instanceof \dqdp\DBA\MySQL_PDO){
 			$this->lex = 'mysql';
 		}
 
@@ -215,7 +213,7 @@ abstract class Entity implements EntityInterface {
 		return $sql;
 	}
 
-	protected function set_filters(Statement $sql, $filters = null): Statement {
+	protected function set_filters(Statement $sql, iterable $filters): Statement {
 		$filters = eoe($filters);
 		if(is_array($this->PK)){
 		} else {
