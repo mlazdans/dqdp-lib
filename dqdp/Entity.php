@@ -6,6 +6,7 @@ namespace dqdp;
 
 use dqdp\DBA;
 use dqdp\Entity\EntityInterface;
+use dqdp\Entity\Table;
 use dqdp\SQL\Insert;
 use dqdp\SQL\Select;
 use dqdp\SQL\Statement;
@@ -13,20 +14,26 @@ use dqdp\SQL\Statement;
 require_once('mysqllib.php');
 
 abstract class Entity implements EntityInterface {
-	var $Table;
-	var $PK;
-
-	protected $lex;
-	protected $dba;
-
-	protected function select(): Select {
-		return (new Select("*"))->From($this->Table);
-	}
+	protected Table $Table;
+	protected DBA $dba;
+	protected string $lex;
+	protected string $tableName;
+	protected $PK;
 
 	abstract protected function fields(): array;
 
+	function __construct(){
+		$this->tableName = $this->Table->getName();
+		$this->PK = $this->Table->getPK();
+	}
+
+	protected function select(): Select {
+		return (new Select("*"))->From($this->tableName);
+	}
+
 	function get($ID, ?iterable $filters = null){
 		$filters = eoe($filters);
+
 		$filters->{$this->PK} = $ID;
 
 		return $this->get_single($filters);
@@ -68,7 +75,7 @@ abstract class Entity implements EntityInterface {
 			}
 		}
 
-		$sql = (new Insert)->Into($this->Table)
+		$sql = (new Insert)->Into($this->tableName)
 			->Values($sql_fields)
 			->Update();
 
@@ -110,7 +117,7 @@ abstract class Entity implements EntityInterface {
 	function delete(){
 		# TODO: multi field PK
 		# TODO: dqdp\SQL\Statement
-		return $this->ids_process("DELETE FROM $this->Table WHERE $this->PK = ?", ...func_get_args());
+		return $this->ids_process("DELETE FROM $this->tableName WHERE $this->PK = ?", ...func_get_args());
 	}
 
 	function set_trans(DBA $dba){
@@ -118,9 +125,9 @@ abstract class Entity implements EntityInterface {
 
 		if($dba instanceof \dqdp\DBA\IBase){
 			$this->lex = 'fbird';
-			if(!is_array($this->PK)){
-				$this->PK = strtoupper($this->PK);
-			}
+			// if(!is_array($this->PK)){
+			// 	$this->PK = strtoupper($this->PK);
+			// }
 		} elseif($dba instanceof \dqdp\DBA\MySQL_PDO){
 			$this->lex = 'mysql';
 		}
@@ -136,7 +143,7 @@ abstract class Entity implements EntityInterface {
 		$DATA = eoe($DATA);
 
 		if(is_null($prefix)){
-			$prefix = "$this->Table.";
+			$prefix = "$this->tableName.";
 		}
 
 		foreach($defaults as $field=>$value){
@@ -159,7 +166,7 @@ abstract class Entity implements EntityInterface {
 		$DATA = eoe($DATA);
 
 		if(is_null($prefix)){
-			$prefix = "$this->Table.";
+			$prefix = "$this->tableName.";
 		}
 
 		foreach($fields as $k){
@@ -180,7 +187,7 @@ abstract class Entity implements EntityInterface {
 		$DATA = eoe($DATA);
 
 		if(is_null($prefix)){
-			$prefix = "$this->Table.";
+			$prefix = "$this->tableName.";
 		}
 
 		foreach($fields as $k){
@@ -197,7 +204,7 @@ abstract class Entity implements EntityInterface {
 		$DATA = eoe($DATA);
 
 		if(is_null($prefix)){
-			$prefix = "$this->Table.";
+			$prefix = "$this->tableName.";
 		}
 
 		foreach($fields as $k){
@@ -223,7 +230,7 @@ abstract class Entity implements EntityInterface {
 
 		foreach(array_enfold($this->PK) as $k){
 			if($filters->exists($k) && !is_null($filters->{$k})){
-				$sql->Where(["$this->Table.$k = ?", $filters->{$k}]);
+				$sql->Where(["$this->tableName.$k = ?", $filters->{$k}]);
 			}
 		}
 
@@ -238,7 +245,7 @@ abstract class Entity implements EntityInterface {
 				} else {
 					trigger_error("Illegal multiple PRIMARY KEY value for $this->PKS", E_USER_ERROR);
 				}
-				$sql->Where(qb_filter_in("$this->Table.{$this->PK}", $IDS));
+				$sql->Where(qb_filter_in("$this->tableName.{$this->PK}", $IDS));
 			}
 		}
 
