@@ -9,7 +9,7 @@ use dqdp\DBA;
 // stat, utimes, chmod, chown, chgrp
 // Path names are case sensitive, components are separated with forward slash (/).
 
-class FS implements DBA\TransInterface {
+class FS implements DBA\TransactionInterface {
 	var $uid;
 	protected $Ent;
 
@@ -20,6 +20,7 @@ class FS implements DBA\TransInterface {
 
 	function set_trans(DBA $dba) {
 		$this->Ent->set_trans($dba);
+
 		return $this;
 	}
 
@@ -33,6 +34,7 @@ class FS implements DBA\TransInterface {
 		if($this->uid){
 			$params->fs_uid = $this->uid;
 		}
+
 		return $params;
 	}
 
@@ -66,6 +68,7 @@ class FS implements DBA\TransInterface {
 			if($exists->fs_type == 1){
 				return false;
 			}
+
 			$DATA = [
 				'fs_id'=>$exists->fs_id,
 				'fs_fullpath'=>$exists->fs_fullpath,

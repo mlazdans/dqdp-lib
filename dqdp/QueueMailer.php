@@ -2,11 +2,11 @@
 
 namespace dqdp;
 
-use dqdp\DBA\TransInterface;
+use dqdp\DBA\TransactionInterface;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-class QueueMailer extends PHPMailer implements TransInterface
+class QueueMailer extends PHPMailer implements TransactionInterface
 {
 	var $TR;
 	private $q;
@@ -19,6 +19,7 @@ class QueueMailer extends PHPMailer implements TransInterface
 
 	function set_trans(DBA $dba){
 		$this->TR = $dba;
+
 		return $this;
 	}
 
@@ -99,12 +100,14 @@ class QueueMailer extends PHPMailer implements TransInterface
 			if($this->smtpSend($r->MIME_HEADERS,$r->MIME_BODY)){
 				$sql = "UPDATE MAIL_QUEUE SET SENT_TIME = CURRENT_TIMESTAMP, ERROR_MSG = NULL WHERE ID = ?";
 				$this->get_trans()->query($sql, [$r->ID]);
+
 				return true;
 			}
 		} catch (Exception $e) {
 			$this->ErrorInfo = $e->getMessage();
 			$sql = "UPDATE MAIL_QUEUE SET TRY_SENT = TRY_SENT + 1, ERROR_MSG = ? WHERE ID = ?";
 			$this->get_trans()->query($sql, [$e->getMessage(), $r->ID]);
+
 			return false;
 		}
 	}

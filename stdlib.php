@@ -1476,6 +1476,7 @@ function merge_only(array $fields, $o1, $o2 = null){
 		$o2 = $o1;
 		$o1 = is_array($o2) ? [] : (is_object($o2) ? new stdClass : $o1);
 	}
+
 	return __merge($o1, $o2, $fields);
 }
 
@@ -1966,6 +1967,7 @@ function ktolower($data){
 	__object_walk_ref($data, function(&$item, &$k){
 		$k = strtolower($k);
 	});
+
 	return $data;
 }
 

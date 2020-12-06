@@ -25,27 +25,27 @@ abstract class Entity implements EntityInterface {
 
 	abstract protected function fields(): array;
 
-	function get($ID, iterable $params = null){
-		$params = eoe($params);
-		$params->{$this->PK} = $ID;
+	function get($ID, ?iterable $filters = null){
+		$filters = eoe($filters);
+		$filters->{$this->PK} = $ID;
 
-		return $this->get_single($params);
+		return $this->get_single($filters);
 	}
 
-	function get_all(iterable $params = null): array {
-		if($q = $this->search($params)){
+	function get_all(?iterable $filters = null): array {
+		if($q = $this->search($filters)){
 			return $this->get_trans()->fetch_all($q);
 		}
 	}
 
-	function get_single(iterable $params = null){
-		if($q = $this->search($params)){
+	function get_single(?iterable $filters = null){
+		if($q = $this->search($filters)){
 			return $this->get_trans()->fetch($q);
 		}
 	}
 
-	function search(iterable $params = null){
-		return $this->get_trans()->Query($this->set_filters($this->select(), eoe($params)));
+	function search(?iterable $filters = null){
+		return $this->get_trans()->Query($this->set_filters($this->select(), $filters));
 	}
 
 	function save(iterable $DATA){
@@ -68,18 +68,14 @@ abstract class Entity implements EntityInterface {
 			}
 		}
 
-		$sql = (new Insert)
-		->Into($this->Table)
-		->Values($sql_fields)
-		->Update()
-		;
+		$sql = (new Insert)->Into($this->Table)
+			->Values($sql_fields)
+			->Update();
 
 		if($this->lex == 'fbird'){
 			$PK_fields_str = is_array($this->PK) ? join(",", $this->PK) : $this->PK;
-			$sql
-			->after("values", "matching", "MATCHING ($PK_fields_str)")
-			->after("values", "returning", "RETURNING $PK_fields_str")
-			;
+			$sql->after("values", "matching", "MATCHING ($PK_fields_str)")
+				->after("values", "returning", "RETURNING $PK_fields_str");
 		}
 
 		if($q = $this->get_trans()->query($sql)){
@@ -91,6 +87,7 @@ abstract class Entity implements EntityInterface {
 					return get_prop($retPK, $this->PK);
 				}
 			}
+
 			if($this->lex == 'mysql'){
 				if(is_array($this->PK)){
 					foreach($this->PK as $k){
@@ -213,7 +210,7 @@ abstract class Entity implements EntityInterface {
 		return $sql;
 	}
 
-	protected function set_filters(Statement $sql, iterable $filters): Statement {
+	protected function set_filters(Statement $sql, ?iterable $filters = null): Statement {
 		$filters = eoe($filters);
 		if(is_array($this->PK)){
 		} else {

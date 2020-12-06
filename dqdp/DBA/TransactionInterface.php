@@ -6,7 +6,7 @@ namespace dqdp\DBA;
 
 use dqdp\DBA;
 
-interface TransInterface {
+interface TransactionInterface {
 	function set_trans(DBA $dba);
 	function get_trans(): DBA;
 }
