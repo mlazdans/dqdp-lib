@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace dqdp\Entity;
 
-class Table {
+abstract class Table {
 	protected string $Name;
 	protected $PK;
 
@@ -16,4 +16,5 @@ class Table {
 		return $this->Name;
 	}
 
+	abstract function getFields() : array;
 }

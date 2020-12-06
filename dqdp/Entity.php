@@ -20,8 +20,6 @@ abstract class Entity implements EntityInterface {
 	protected string $tableName;
 	protected $PK;
 
-	abstract protected function fields(): array;
-
 	function __construct(){
 		$this->tableName = $this->Table->getName();
 		$this->PK = $this->Table->getPK();
@@ -56,7 +54,7 @@ abstract class Entity implements EntityInterface {
 	}
 
 	function save(iterable $DATA){
-		$sql_fields = (array)merge_only($this->fields(), $DATA);
+		$sql_fields = (array)merge_only($this->Table->getFields(), $DATA);
 
 		if(!is_array($this->PK)){
 			$PK_val = get_prop($DATA, $this->PK);
