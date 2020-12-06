@@ -11,18 +11,18 @@ abstract class DBA
 	protected $execute_fetch_function = 'fetch_assoc';
 
 	abstract function connect();
-	abstract function connect_params($params);
+	abstract function connect_params(iterable $params);
 	abstract function query();
 	abstract function prepare();
 	abstract function fetch_assoc();
 	abstract function fetch_object();
 	abstract function execute();
 	abstract function trans();
-	abstract function commit();
-	abstract function rollback();
-	abstract function affected_rows();
-	abstract function close();
-	abstract function escape($v);
+	abstract function commit(): bool;
+	abstract function rollback(): bool;
+	abstract function affected_rows(): int;
+	abstract function close(): bool;
+	abstract function escape($v): string;
 
 	function set_default_fetch_function($func): DBA {
 		$this->execute_fetch_function = $func;

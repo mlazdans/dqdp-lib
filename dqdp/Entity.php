@@ -25,30 +25,30 @@ abstract class Entity implements EntityInterface {
 
 	abstract protected function fields(): array;
 
-	function get($ID, $params = null){
+	function get($ID, iterable $params = null){
 		$params = eoe($params);
 		$params->{$this->PK} = $ID;
 
 		return $this->get_single($params);
 	}
 
-	function get_all($params = null): array {
+	function get_all(iterable $params = null): array {
 		if($q = $this->search($params)){
 			return $this->get_trans()->fetch_all($q);
 		}
 	}
 
-	function get_single($params = null){
+	function get_single(iterable $params = null){
 		if($q = $this->search($params)){
 			return $this->get_trans()->fetch($q);
 		}
 	}
 
-	function search($params = null){
+	function search(iterable $params = null){
 		return $this->get_trans()->Query($this->set_filters($this->select(), eoe($params)));
 	}
 
-	function save($DATA){
+	function save(iterable $DATA){
 		$sql_fields = (array)merge_only($this->fields(), $DATA);
 
 		if(!is_array($this->PK)){

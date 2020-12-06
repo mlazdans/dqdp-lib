@@ -28,6 +28,7 @@ class MySQL_PDO extends \dqdp\DBA
 		$database = $params['database'] ?? '';
 		$charset = $params['charset'] ?? 'utf8';
 		$port = $params['port'] ?? 3306;
+
 		return $this->connect($host, $username, $password, $database, $charset, $port);
 	}
 
@@ -44,6 +45,7 @@ class MySQL_PDO extends \dqdp\DBA
 			$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 			$this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
 			//$this->conn->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
+
 			return $this;
 		} catch (Exception $e) {
 			return $this->handle_err($e);
@@ -76,6 +78,7 @@ class MySQL_PDO extends \dqdp\DBA
 					return $q;
 				}
 			}
+
 			return $q = $this->conn->query(...$args);
 		} catch (Exception $e) {
 			return $this->handle_err($e);
@@ -88,11 +91,13 @@ class MySQL_PDO extends \dqdp\DBA
 
 	function fetch_assoc(...$args){
 		list($q) = $args;
+
 		return $q->Fetch(PDO::FETCH_ASSOC);
 	}
 
 	function fetch_object(...$args){
 		list($q) = $args;
+
 		return $q->Fetch(PDO::FETCH_OBJ);
 	}
 
@@ -122,38 +127,43 @@ class MySQL_PDO extends \dqdp\DBA
 	function trans(){
 		$this->conn->beginTransaction();
 		$this->transactionCounter++;
+
 		return $this;
 	}
 
-	function commit() {
+	function commit(): bool {
 		return $this->conn->commit();
 	}
 
-	function rollback(){
+	function rollback(): bool {
 		return $this->conn->rollBack();
 	}
 
 	function auto_commit(...$args){
 		list($b) = $args;
+
 		return $this->conn->setAttribute(PDO::ATTR_AUTOCOMMIT, $b);
 	}
 
-	function affected_rows(){
+	function affected_rows(): int {
 		return $this->row_count;
 	}
 
-	function close(){
+	function close(): bool {
 		$this->conn = null;
+
+		return true;
 	}
 
 	function prepare(...$args){
 		if($this->is_dqdp_statement($args)){
 			return $this->conn->prepare((string)$args[0]);
+		} else {
+			return $this->conn->prepare(...$args);
 		}
-		return $this->conn->prepare(...$args);
 	}
 
-	function escape($v){
+	function escape($v): string {
 		return trim($this->conn->quote($v), "'");
 	}
 }
