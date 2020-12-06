@@ -82,7 +82,7 @@ class Settings implements EntityInterface
 		return $this->Ent->search($PARAMS);
 	}
 
-	function save($DATA = null){
+	function save(iterable $DATA){
 		$DATA = eoe($this->DATA);
 
 		$ret = true;
