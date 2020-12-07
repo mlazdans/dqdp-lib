@@ -2,11 +2,12 @@
 
 declare(strict_types = 1);
 
-namespace dqdp;
+namespace dqdp\DBA;
 
-use dqdp\DBA;
+use dqdp\DBA\driver\IBase;
+use dqdp\DBA\driver\MySQL_PDO;
+use dqdp\Entity\AbstractTable;
 use dqdp\Entity\EntityInterface;
-use dqdp\Entity\Table;
 use dqdp\SQL\Insert;
 use dqdp\SQL\Select;
 use dqdp\SQL\Statement;
@@ -14,8 +15,8 @@ use dqdp\SQL\Statement;
 require_once('mysqllib.php');
 
 abstract class Entity implements EntityInterface {
-	protected Table $Table;
-	protected DBA $dba;
+	protected AbstractTable $Table;
+	protected AbstractDBA $dba;
 	protected string $lex;
 	protected string $tableName;
 	protected $PK;
@@ -118,22 +119,22 @@ abstract class Entity implements EntityInterface {
 		return $this->ids_process("DELETE FROM $this->tableName WHERE $this->PK = ?", ...func_get_args());
 	}
 
-	function set_trans(DBA $dba){
+	function set_trans(AbstractDBA $dba){
 		$this->dba = $dba;
 
-		if($dba instanceof \dqdp\DBA\IBase){
+		if($dba instanceof IBase){
 			$this->lex = 'fbird';
 			// if(!is_array($this->PK)){
 			// 	$this->PK = strtoupper($this->PK);
 			// }
-		} elseif($dba instanceof \dqdp\DBA\MySQL_PDO){
+		} elseif($dba instanceof MySQL_PDO){
 			$this->lex = 'mysql';
 		}
 
 		return $this;
 	}
 
-	function get_trans(): DBA {
+	function get_trans(): AbstractDBA {
 		return $this->dba;
 	}
 

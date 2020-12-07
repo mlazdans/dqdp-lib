@@ -2,13 +2,14 @@
 
 declare(strict_types = 1);
 
-namespace dqdp\DBA;
+namespace dqdp\DBA\driver;
 
+use dqdp\DBA\AbstractDBA;
 use dqdp\SQL\Select;
 
 require_once('ibaselib.php');
 
-class IBase extends \dqdp\DBA
+class IBase extends AbstractDBA
 {
 	var $conn;
 	var $tr;
@@ -131,14 +132,14 @@ class IBase extends \dqdp\DBA
 		return ibase_escape($v);
 	}
 
-	function get_users(...$args): array {
-		list($PARAMS) = $args;
+	function get_users(?iterable $F = null): array {
+		$F = eoe($F);
 
-		if(is_scalar($PARAMS)){
-			$PARAMS = eo(['USER_NAME'=>$PARAMS]);
-		} else {
-			$PARAMS = eoe($PARAMS);
-		}
+		// if(is_scalar($PARAMS)){
+		// 	$PARAMS = eo(['USER_NAME'=>$PARAMS]);
+		// } else {
+		// 	$PARAMS = eoe($PARAMS);
+		// }
 
 		$sql = (new Select)->From('SEC$USERS')
 		->Select('SEC$USER_NAME, SEC$FIRST_NAME, SEC$MIDDLE_NAME,SEC$LAST_NAME')
@@ -147,9 +148,9 @@ class IBase extends \dqdp\DBA
 		->Select('IIF(SEC$ADMIN, 1, 0) AS IS_ADMIN')
 		->Where('SEC$PLUGIN = \'Srp\'');
 
-		if($PARAMS->USER_NAME){
-			$sql->Where(['SEC$USER_NAME = ?', $PARAMS->USER_NAME]);
-		} else {
+		if($F->USER_NAME){
+			$sql->Where(['SEC$USER_NAME = ?', $F->USER_NAME]);
+		} elseif($F->CURRENT_USER) {
 			$sql->Where('SEC$USER_NAME = CURRENT_USER');
 			//(SEC$USER_NAME = CURRENT_USER OR CURRENT_USER = \'SYSDBA\') AND
 		}
@@ -162,7 +163,11 @@ class IBase extends \dqdp\DBA
 	}
 
 	function get_user($USER_NAME = null){
-		return ($u = $this->get_users($USER_NAME)) ? $u[0] : $u;
+		return ($u = $this->get_users(['USER_NAME'=>$USER_NAME])) ? $u[0] : $u;
+	}
+
+	function get_current_user(){
+		return ($u = $this->get_users(["CURRENT_USER"=>true])) ? $u[0] : $u;
 	}
 
 	function get_table_info($table){

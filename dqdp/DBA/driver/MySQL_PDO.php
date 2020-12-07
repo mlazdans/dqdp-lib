@@ -1,12 +1,14 @@
 <?php
 
-namespace dqdp\DBA;
+namespace dqdp\DBA\driver;
 
+use dqdp\DBA\AbstractDBA;
+use dqdp\DBA\DBAException;
 use Exception;
 use PDO;
 use PDOStatement;
 
-class MySQL_PDO extends \dqdp\DBA
+class MySQL_PDO extends AbstractDBA
 {
 	var $conn;
 	protected $transactionCounter = 0;

@@ -2,9 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace dqdp;
+namespace dqdp\DBA;
 
-abstract class DBA
+abstract class AbstractDBA
 {
 	var $use_exceptions = true;
 
@@ -24,7 +24,7 @@ abstract class DBA
 	abstract function close(): bool;
 	abstract function escape($v): string;
 
-	function set_default_fetch_function($func): DBA {
+	function set_default_fetch_function($func): AbstractDBA {
 		$this->execute_fetch_function = $func;
 
 		return $this;

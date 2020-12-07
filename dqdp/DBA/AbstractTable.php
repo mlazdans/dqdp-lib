@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace dqdp\Entity;
 
-abstract class Table {
+abstract class AbstractTable {
 	protected string $Name;
 	protected $PK;
 
