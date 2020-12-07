@@ -2,8 +2,8 @@
 
 require_once("stdlib.php");
 
-final class Ibase {
-	static public $FIELD_TYPES = [
+function ibase_field_types(){
+	return [
 		7=>'SMALLINT', 8=>'INTEGER', 9=>'QUAD', 10=>'FLOAT', 11=>'D_FLOAT', 12=>'DATE', 13=>'TIME',
 		14=>'CHAR', 16=>'INT64', 27=>'DOUBLE', 35=>'TIMESTAMP', 37=>'VARCHAR', 40=>'CSTRING', 261=>'BLOB'
 	];
@@ -38,7 +38,7 @@ function ibase_db_drop($db_name, $db_user, $db_password){
 }
 
 function ibase_field_type($r){
-	$FIELD_TYPES = Ibase::$FIELD_TYPES;
+	$FIELD_TYPES = ibase_field_types();
 
 	$type = isset($FIELD_TYPES[$r->{'RDB$FIELD_TYPE'}]) ? $FIELD_TYPES[$r->{'RDB$FIELD_TYPE'}] : false;
 
@@ -195,10 +195,11 @@ function ibase_get_meta($database, $params = null){
 function ibase_strip_rdb($data){
 	__object_walk_ref($data, function(&$item, &$k){
 		if((strpos($k, 'RDB$') === 0) || (strpos($k, 'SEC$') === 0)){
-			$k = substr($k, 4);
+			$k = trim(substr($k, 4));
 			$item = trim($item);
 		}
 	});
+
 	return $data;
 }
 
