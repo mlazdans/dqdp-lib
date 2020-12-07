@@ -42,6 +42,7 @@ abstract class AbstractDBA
 		return $ret??[];
 	}
 
+	// TODO: fetch only one
 	function execute_single(){
 		$data = $this->execute(...func_get_args());
 		if(is_array($data) && isset($data[0])){
