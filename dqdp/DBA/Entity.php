@@ -14,7 +14,9 @@ abstract class Entity implements EntityInterface {
 	// protected string $tableName;
 	// protected $PK;
 
-	abstract function getTable();
+	function getTable() {
+		return $this->Table;
+	}
 
 	function __construct(){
 		$this->tableName = $this->Table->getName();
@@ -47,6 +49,10 @@ abstract class Entity implements EntityInterface {
 
 	function search(?iterable $filters = null){
 		return $this->get_trans()->Query($this->set_filters($this->select(), $filters));
+	}
+
+	function save(iterable $DATA){
+		return $this->get_trans()->save($DATA, $this->getTable());
 	}
 
 	// function save(iterable $DATA){

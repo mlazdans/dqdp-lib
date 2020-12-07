@@ -7,9 +7,16 @@ namespace dqdp\Settings;
 use dqdp\DBA\AbstractTable;
 
 class SettingsTable extends AbstractTable {
-	function __construct(){
-		$this->Name = 'settings';
-		$this->PK = ['SET_CLASS','SET_KEY'];
+	function getName(): string {
+		return 'settings';
+	}
+
+	function getPK(){
+		return ['SET_CLASS','SET_KEY'];
+	}
+
+	function getGen(): ?string {
+		return null;
 	}
 
 	function getFields(): array {

@@ -3,7 +3,9 @@
 namespace dqdp\DBA\driver;
 
 use dqdp\DBA\AbstractDBA;
+use dqdp\DBA\AbstractTable;
 use dqdp\DBA\DBAException;
+use dqdp\SQL\Insert;
 use Exception;
 use PDO;
 use PDOStatement;
@@ -167,5 +169,43 @@ class MySQL_PDO extends AbstractDBA
 
 	function escape($v): string {
 		return trim($this->conn->quote($v), "'");
+	}
+
+	function save(iterable $DATA, AbstractTable $Table){
+		$sql_fields = (array)merge_only($Table->getFields(), $DATA);
+
+		$PK = $Table->getPK();
+		if(!is_array($PK)){
+			$PK_val = get_prop($DATA, $PK);
+			if(is_null($PK_val)){
+			} else {
+				$sql_fields[$PK] = $PK_val;
+			}
+		}
+
+		$sql = (new Insert)->Into($Table->getName())
+			->Values($sql_fields)
+			->Update();
+
+		if($this->query($sql)){
+			if(is_array($PK)){
+				foreach($PK as $k){
+					$ret[] = get_prop($DATA, $k);
+				}
+				return $ret??[];
+			} else {
+				if(empty($sql_fields[$PK])){
+					return $this->mysql_last_id();
+				} else {
+					return $sql_fields[$PK];
+				}
+			}
+		} else {
+			return false;
+		}
+	}
+
+	private function mysql_last_id(){
+		return get_prop($this->execute_single("SELECT LAST_INSERT_ID() AS last_id"), 'last_id');
 	}
 }

@@ -23,6 +23,7 @@ abstract class AbstractDBA
 	abstract function affected_rows(): int;
 	abstract function close(): bool;
 	abstract function escape($v): string;
+	abstract function save(iterable $DATA, AbstractTable $Table);
 
 	function set_default_fetch_function($func): AbstractDBA {
 		$this->execute_fetch_function = $func;
