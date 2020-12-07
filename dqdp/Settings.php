@@ -2,8 +2,8 @@
 
 namespace dqdp;
 
-use dqdp\DBA;
-use dqdp\Entity\EntityInterface;
+use dqdp\DBA\AbstractDBA;
+use dqdp\DBA\EntityInterface;
 
 /* Ibase
 CREATE TABLE SETTINGS
@@ -114,12 +114,12 @@ class Settings implements EntityInterface
 		// $params->SET_KEY = $ID;
 	}
 
-	function set_trans(DBA $dba) {
+	function set_trans(AbstractDBA $dba) {
 		$this->Ent->set_trans($dba);
 		return $this;
 	}
 
-	function get_trans(): DBA {
+	function get_trans(): AbstractDBA {
 		return $this->Ent->get_trans();
 	}
 

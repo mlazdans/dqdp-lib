@@ -4,9 +4,9 @@ declare(strict_types = 1);
 
 namespace dqdp\Settings;
 
-use dqdp\Entity\Table;
+use dqdp\DBA\AbstractTable;
 
-class SettingsTable extends Table {
+class SettingsTable extends AbstractTable {
 	function __construct(){
 		$this->Name = 'settings';
 		$this->PK = ['SET_CLASS','SET_KEY'];

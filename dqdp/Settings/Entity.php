@@ -2,7 +2,9 @@
 
 namespace dqdp\Settings;
 
-class Entity extends \dqdp\Entity
+use dqdp\DBA\Entity as DBAEntity;
+
+class Entity extends DBAEntity
 {
 	function __construct(){
 		$this->Table = new SettingsTable;
