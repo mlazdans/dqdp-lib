@@ -11,8 +11,8 @@ abstract class Entity implements EntityInterface {
 	// protected AbstractTable $Table;
 	// protected AbstractDBA $dba;
 	// TODO: get rid off
-	// protected string $tableName;
-	// protected $PK;
+	protected string $tableName;
+	protected $PK;
 
 	function getTable() {
 		return $this->Table;
