@@ -5,8 +5,8 @@ declare(strict_types = 1);
 namespace dqdp\DBA;
 
 abstract class AbstractTable {
-	protected string $Name;
 	protected $PK;
+	protected string $Name;
 
 	function getPK(){
 		return $this->PK;

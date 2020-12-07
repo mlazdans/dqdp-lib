@@ -4,20 +4,17 @@ declare(strict_types = 1);
 
 namespace dqdp\DBA;
 
-use dqdp\DBA\driver\IBase;
-use dqdp\DBA\driver\MySQL_PDO;
-use dqdp\SQL\Insert;
 use dqdp\SQL\Select;
 use dqdp\SQL\Statement;
 
-require_once('mysqllib.php');
-
 abstract class Entity implements EntityInterface {
-	protected AbstractTable $Table;
-	protected AbstractDBA $dba;
-	protected string $lex;
-	protected string $tableName;
-	protected $PK;
+	// protected AbstractTable $Table;
+	// protected AbstractDBA $dba;
+	// TODO: get rid off
+	// protected string $tableName;
+	// protected $PK;
+
+	abstract function getTable();
 
 	function __construct(){
 		$this->tableName = $this->Table->getName();
@@ -52,64 +49,64 @@ abstract class Entity implements EntityInterface {
 		return $this->get_trans()->Query($this->set_filters($this->select(), $filters));
 	}
 
-	function save(iterable $DATA){
-		$sql_fields = (array)merge_only($this->Table->getFields(), $DATA);
+	// function save(iterable $DATA){
+	// 	$sql_fields = (array)merge_only($this->Table->getFields(), $DATA);
 
-		if(!is_array($this->PK)){
-			$PK_val = get_prop($DATA, $this->PK);
-			if(is_null($PK_val)){
-				if($this->lex == 'fbird'){
-					if(!empty($this->Gen)){
-						$sql_fields[$this->PK] = function(){
-							return "NEXT VALUE FOR $this->Gen";
-						};
-					}
-				}
-				if($this->lex == 'mysql'){
-				}
-			} else {
-				$sql_fields[$this->PK] = $PK_val;
-			}
-		}
+	// 	if(!is_array($this->PK)){
+	// 		$PK_val = get_prop($DATA, $this->PK);
+	// 		if(is_null($PK_val)){
+	// 			if($this->lex == 'fbird'){
+	// 				if($Gen = $this->Table->getGen()){
+	// 					$sql_fields[$this->PK] = function() use ($Gen) {
+	// 						return "NEXT VALUE FOR $Gen";
+	// 					};
+	// 				}
+	// 			} elseif($this->lex == 'mysql'){
+	// 			}
+	// 		} else {
+	// 			$sql_fields[$this->PK] = $PK_val;
+	// 		}
+	// 	}
 
-		$sql = (new Insert)->Into($this->tableName)
-			->Values($sql_fields)
-			->Update();
+	// 	$sql = (new Insert)->Into($this->tableName)
+	// 		->Values($sql_fields)
+	// 		->Update();
 
-		if($this->lex == 'fbird'){
-			$PK_fields_str = is_array($this->PK) ? join(",", $this->PK) : $this->PK;
-			$sql->after("values", "matching", "MATCHING ($PK_fields_str)")
-				->after("values", "returning", "RETURNING $PK_fields_str");
-		}
+	// 	if($this->lex == 'fbird'){
+	// 		$PK_fields_str = is_array($this->PK) ? join(",", $this->PK) : $this->PK;
+	// 		$sql->after("values", "matching", "MATCHING ($PK_fields_str)")
+	// 			->after("values", "returning", "RETURNING $PK_fields_str");
+	// 	}
 
-		if($q = $this->get_trans()->query($sql)){
-			if($this->lex == 'fbird'){
-				$retPK = $this->get_trans()->fetch($q);
-				if(is_array($this->PK)){
-					return $retPK;
-				} else {
-					return get_prop($retPK, $this->PK);
-				}
-			}
+	// 	sqlr($sql);
+	// 	if($q = $this->get_trans()->query($sql)){
+	// 		if($this->lex == 'fbird'){
+	// 			$retPK = $this->get_trans()->fetch($q);
+	// 			if(is_array($this->PK)){
+	// 				return $retPK;
+	// 			} else {
+	// 				return get_prop($retPK, $this->PK);
+	// 			}
+	// 		}
 
-			if($this->lex == 'mysql'){
-				if(is_array($this->PK)){
-					foreach($this->PK as $k){
-						$ret[] = get_prop($DATA, $k);
-					}
-					return $ret??[];
-				} else {
-					if(empty($sql_fields[$this->PK])){
-						return mysql_last_id($this->get_trans());
-					} else {
-						return $sql_fields[$this->PK];
-					}
-				}
-			}
-		} else {
-			return false;
-		}
-	}
+	// 		if($this->lex == 'mysql'){
+	// 			if(is_array($this->PK)){
+	// 				foreach($this->PK as $k){
+	// 					$ret[] = get_prop($DATA, $k);
+	// 				}
+	// 				return $ret??[];
+	// 			} else {
+	// 				if(empty($sql_fields[$this->PK])){
+	// 					return mysql_last_id($this->get_trans());
+	// 				} else {
+	// 					return $sql_fields[$this->PK];
+	// 				}
+	// 			}
+	// 		}
+	// 	} else {
+	// 		return false;
+	// 	}
+	// }
 
 	function delete(){
 		# TODO: multi field PK
@@ -120,14 +117,14 @@ abstract class Entity implements EntityInterface {
 	function set_trans(AbstractDBA $dba){
 		$this->dba = $dba;
 
-		if($dba instanceof IBase){
-			$this->lex = 'fbird';
-			// if(!is_array($this->PK)){
-			// 	$this->PK = strtoupper($this->PK);
-			// }
-		} elseif($dba instanceof MySQL_PDO){
-			$this->lex = 'mysql';
-		}
+		// if($dba instanceof IBase){
+		// 	$this->lex = 'fbird';
+		// 	// if(!is_array($this->PK)){
+		// 	// 	$this->PK = strtoupper($this->PK);
+		// 	// }
+		// } elseif($dba instanceof MySQL_PDO){
+		// 	$this->lex = 'mysql';
+		// }
 
 		return $this;
 	}
