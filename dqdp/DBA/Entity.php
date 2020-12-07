@@ -8,8 +8,8 @@ use dqdp\SQL\Select;
 use dqdp\SQL\Statement;
 
 abstract class Entity implements EntityInterface {
-	// protected AbstractTable $Table;
-	// protected AbstractDBA $dba;
+	public AbstractTable $Table;
+	protected AbstractDBA $dba;
 	// TODO: get rid off
 	protected string $tableName;
 	protected $PK;
