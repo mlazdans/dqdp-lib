@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace dqdp\Entity;
+namespace dqdp\DBA;
 
 abstract class AbstractTable {
 	protected string $Name;

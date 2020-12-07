@@ -6,8 +6,6 @@ namespace dqdp\DBA;
 
 use dqdp\DBA\driver\IBase;
 use dqdp\DBA\driver\MySQL_PDO;
-use dqdp\Entity\AbstractTable;
-use dqdp\Entity\EntityInterface;
 use dqdp\SQL\Insert;
 use dqdp\SQL\Select;
 use dqdp\SQL\Statement;

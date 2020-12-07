@@ -2,9 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace dqdp\Entity;
-
-use dqdp\DBA\TransactionInterface;
+namespace dqdp\DBA;
 
 interface EntityInterface extends TransactionInterface {
 	function get($ID, ?iterable $filters = null);
