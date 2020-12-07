@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 // fs_fullpath_hash varchar(40) NOT NULL,
 
 /*IBase
