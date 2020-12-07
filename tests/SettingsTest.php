@@ -1,6 +1,6 @@
 <?php
 
-use dqdp\DBA\MySQL_PDO;
+use dqdp\DBA\driver\MySQL_PDO;
 use dqdp\Settings;
 use dqdp\SQL;
 use PHPUnit\Framework\TestCase;
@@ -31,7 +31,7 @@ class SettingsTest extends TestCase
 		]);
 
 		$settings->set('TEST', 22);
-		$settings->save();
+		$settings->save([]);
 		//print_r($settings);
 	}
 

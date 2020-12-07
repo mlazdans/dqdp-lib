@@ -3,6 +3,7 @@
 namespace dqdp;
 
 use dqdp\DBA;
+use dqdp\DBA\AbstractDBA;
 
 // write, read to/from file descriptor
 // mkdir, rmdir, creat, unlink, link, symlink
@@ -18,13 +19,13 @@ class FS implements DBA\TransactionInterface {
 		$this->Ent = new FS\Entity;
 	}
 
-	function set_trans(DBA $dba) {
+	function set_trans(AbstractDBA $dba) {
 		$this->Ent->set_trans($dba);
 
 		return $this;
 	}
 
-	function get_trans(): DBA {
+	function get_trans(): AbstractDBA {
 		return $this->Ent->get_trans();
 	}
 

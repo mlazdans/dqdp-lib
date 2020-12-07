@@ -1,6 +1,6 @@
 <?php
 
-use dqdp\DBA\MySQL_PDO;
+use dqdp\DBA\driver\MySQL_PDO;
 use dqdp\SQL;
 
 class DBA_MySQL_PDOTest extends DBATest

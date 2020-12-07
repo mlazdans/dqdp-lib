@@ -50,17 +50,15 @@ CREATE TABLE fs (
 
 namespace dqdp\FS;
 
+use dqdp\FS\FSTable;
 use dqdp\SQL\Select;
 use dqdp\SQL\Statement;
 
-class Entity extends \dqdp\Entity {
-	// protected $hash_f = 'SHA1';
-	protected $Gen;
+class Entity extends \dqdp\DBA\Entity {
 
 	function __construct(){
-		$this->Table = 'fs';
-		$this->PK = 'fs_id';
-		$this->Gen = 'FS';
+		$this->Table = new FSTable;
+		parent::__construct();
 	}
 
 	// function set_trans(DBA $dba){
@@ -84,17 +82,17 @@ class Entity extends \dqdp\Entity {
 			new Select(
 				"fs_id, fs_fsid, fs_uid, fs_depth, fs_type, fs_name, fs_ext, fs_fullname, fs_fullpath,".
 				"fs_size, fs_mime, fs_entered, fs_updated"
-			))->From($this->Table);
+			))->From($this->tableName);
 	}
 
-	function set_filters(Statement $sql, $DATA = null): Statement {
-		$DATA = eoe($DATA);
+	function set_filters(Statement $sql, ?iterable $F = null): Statement {
+		$F = eoe($F);
 
 		$filters = [
 			'fs_fsid', 'fs_uid', 'fs_depth', 'fs_type', 'fs_name', 'fs_ext', 'fs_fullname', 'fs_fullpath',
 			'fs_contents', 'fs_mime', 'fs_entered', 'fs_updated'
 		];
-		$this->set_null_filters($sql, $DATA, $filters);
+		$this->set_null_filters($sql, $F, $filters);
 
 		// if($DATA->exists('fs_fullpath_hash')){
 		// 	$sql->Where(["fs_fullpath_hash = $this->hash_f(?)", $DATA->fs_fullpath_hash]);
@@ -102,27 +100,20 @@ class Entity extends \dqdp\Entity {
 
 		//sqlr($sql);
 
-		if($DATA->get_dir_max){
+		if($F->get_dir_max){
 			$sql
-			->Where(["fs_fullpath LIKE ?", $DATA->get_dir_max."%"])
+			->Where(["fs_fullpath LIKE ?", $F->get_dir_max."%"])
 			->ResetOrderBy()->OrderBy("fs_depth DESC")
 			;
 		}
 
-		if($DATA->get_contents){
+		if($F->get_contents){
 			$sql->Select("fs_contents");
 		}
 
 		//sqlr($sql);
 
-		return parent::set_filters($sql, $DATA);
-	}
-
-	function fields(): array {
-		return [
-			'fs_fsid', 'fs_uid', 'fs_depth', 'fs_type', 'fs_name', 'fs_ext', 'fs_fullname', 'fs_fullpath',
-			'fs_contents', 'fs_size', 'fs_mime', 'fs_entered', 'fs_updated'
-		];
+		return parent::set_filters($sql, $F);
 	}
 
 	// function save($DATA){
