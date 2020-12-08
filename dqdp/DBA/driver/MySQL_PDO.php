@@ -45,14 +45,22 @@ class MySQL_PDO extends AbstractDBA
 		return $this;
 	}
 
-	function execute(...$args){
+	private function __execute($f, ...$args){
 		$q = $this->query(...$args);
 		if($q && $q->columnCount()){
-			$data = $this->fetch_all($q);
+			$data = $this->$f($q);
 		}
 
 		# ja selekteejam datus, tad atgriezam tos, savaadaak querija rezultaatu
 		return isset($data) ? $data : $q;
+	}
+
+	function execute(...$args){
+		return $this->__execute("fetch_all", ...$args);
+	}
+
+	function execute_single(...$args){
+		return $this->__execute("fetch", ...$args);
 	}
 
 	function query(...$args){

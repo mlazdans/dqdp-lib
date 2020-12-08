@@ -6,9 +6,7 @@ namespace dqdp\DBA;
 
 abstract class AbstractDBA
 {
-	var $use_exceptions = true;
-
-	protected $execute_fetch_function = 'fetch_assoc';
+	protected $fetch_function = 'fetch_assoc';
 
 	abstract function connect();
 	abstract function connect_params(iterable $params);
@@ -17,6 +15,7 @@ abstract class AbstractDBA
 	abstract function fetch_assoc();
 	abstract function fetch_object();
 	abstract function execute();
+	abstract function execute_single();
 	abstract function trans();
 	abstract function commit(): bool;
 	abstract function rollback(): bool;
@@ -26,13 +25,13 @@ abstract class AbstractDBA
 	abstract function save(iterable $DATA, AbstractTable $Table);
 
 	function set_default_fetch_function($func): AbstractDBA {
-		$this->execute_fetch_function = $func;
+		$this->fetch_function = $func;
 
 		return $this;
 	}
 
 	function fetch(){
-		return $this->{$this->execute_fetch_function}(...func_get_args());
+		return $this->{$this->fetch_function}(...func_get_args());
 	}
 
 	function fetch_all(){
@@ -41,16 +40,6 @@ abstract class AbstractDBA
 		}
 
 		return $ret??[];
-	}
-
-	// TODO: fetch only one
-	function execute_single(){
-		$data = $this->execute(...func_get_args());
-		if(is_array($data) && isset($data[0])){
-			return $data[0];
-		}
-
-		return [];
 	}
 
 	protected function is_dqdp_statement($args): bool {

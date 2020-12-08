@@ -36,14 +36,22 @@ class IBase extends AbstractDBA
 		return $this;
 	}
 
-	function execute(...$args){
+	private function __execute($f, ...$args){
 		$q = $this->query(...$args);
 
 		if($q && is_resource($q)){
-			$data = $this->fetch_all($q);
+			$data = $this->$f($q);
 		}
 
 		return isset($data) ? $data : $q;
+	}
+
+	function execute(...$args){
+		return $this->__execute("fetch_all", ...$args);
+	}
+
+	function execute_single(...$args){
+		return $this->__execute("fetch", ...$args);
 	}
 
 	function query(...$args) {
