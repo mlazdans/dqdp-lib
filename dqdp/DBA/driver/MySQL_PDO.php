@@ -18,15 +18,6 @@ class MySQL_PDO extends AbstractDBA
 	protected $transactionCounter = 0;
 	protected $row_count;
 
-	protected function handle_err($e){
-		if($this->use_exceptions){
-			throw new DBAException($e);
-		} else {
-			trigger_error($e->getMessage());
-			return false;
-		}
-	}
-
 	function connect_params($params){
 		$host = $params['host'] ?? 'localhost';
 		$username = $params['username'] ?? '';
@@ -45,17 +36,13 @@ class MySQL_PDO extends AbstractDBA
 		if($charset)$dsn[]= "charset=$charset";
 		if($port)$dsn[]= "port=$port";
 
-		try {
-			$this->conn = new PDO("mysql:".join(";", $dsn), $username, $password);
-			//$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
-			$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-			$this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-			//$this->conn->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
+		$this->conn = new PDO("mysql:".join(";", $dsn), $username, $password);
+		//$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
+		$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		$this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+		//$this->conn->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
 
-			return $this;
-		} catch (Exception $e) {
-			return $this->handle_err($e);
-		}
+		return $this;
 	}
 
 	function execute(...$args){
@@ -71,27 +58,27 @@ class MySQL_PDO extends AbstractDBA
 	function query(...$args){
 		try {
 			if($this->is_dqdp_statement($args)){
-				if(($q = $this->prepare($args[0])) && $q->execute($args[0]->vars())){
-					return $q;
+				if($q = $this->prepare($args[0])){
+					$q->execute($args[0]->vars());
 				}
 			} elseif($args[0] instanceof PDOStatement) {
 				$q = $args[0];
-				if($q->execute($args[1])){
-					return $q;
-				}
+				$q->execute($args[1]);
 			} elseif(count($args) == 2) {
-				if(($q = $this->prepare($args[0])) && $q->execute($args[1])){
-					return $q;
+				if($q = $this->prepare($args[0])){
+					$q->execute($args[1]);
 				}
+			} else {
+				$q = $this->conn->query(...$args);
 			}
 
-			return $q = $this->conn->query(...$args);
-		} catch (Exception $e) {
-			return $this->handle_err($e);
-		} finally {
-			if(isset($q)){
-				$this->row_count = $q->rowCount();
+			if($q){
+				return $q;
 			}
+
+			throw new DBAException("Invalid query: $q->queryString");
+		} finally {
+			$this->row_count = $q->rowCount();
 		}
 	}
 
@@ -185,9 +172,10 @@ class MySQL_PDO extends AbstractDBA
 			}
 		}
 
-		$sql = (new Insert)->Into($Table->getName())
-			->Values($sql_fields)
-			->Update();
+		$sql = (new Insert)
+		->Into($Table->getName())
+		->Values($sql_fields)
+		->Update();
 
 		if($this->query($sql)){
 			if(is_array($PK)){

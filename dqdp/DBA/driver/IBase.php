@@ -143,7 +143,8 @@ class IBase extends AbstractDBA
 		// 	$PARAMS = eoe($PARAMS);
 		// }
 
-		$sql = (new Select)->From('SEC$USERS')
+		$sql = (new Select)
+		->From('SEC$USERS')
 		->Select('SEC$USER_NAME, SEC$FIRST_NAME, SEC$MIDDLE_NAME,SEC$LAST_NAME')
 		->Select('SEC$DESCRIPTION, SEC$PLUGIN')
 		->Select('IIF(SEC$ACTIVE, 1, 0) AS IS_ACTIVE')
@@ -328,9 +329,10 @@ class IBase extends AbstractDBA
 			}
 		}
 
-		$sql = (new Insert)->Into($Table->getName())
-			->Values($sql_fields)
-			->Update();
+		$sql = (new Insert)
+		->Into($Table->getName())
+		->Values($sql_fields)
+		->Update();
 
 		$PK_fields_str = is_array($PK) ? join(",", $PK) : $PK;
 		$sql->after("values", "matching", "MATCHING ($PK_fields_str)")
