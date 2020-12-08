@@ -1231,13 +1231,13 @@ function csv_col_count($file){
 	return $col_count;
 }
 
-function __csv_load($file, $map, $ret_type = 'array'){
+function __csv_load($file, $map, $ret_type = 'array', $delim = ';'){
 	if(($f = fopen($file, "r")) === false){
 		return false;
 	}
 
 	$ret = [];
-	while (($line = fgetcsv($f, 2000, ';')) !== false){
+	while (($line = fgetcsv($f, 2000, $delim)) !== false){
 		$rl = [];
 		foreach($map as $k=>$v){
 			$rl[$v] = ltrim(trim($line[$k]??null), "'");
@@ -1250,12 +1250,12 @@ function __csv_load($file, $map, $ret_type = 'array'){
 	return $ret;
 }
 
-function csv_load($file, $map){
-	return __csv_load($file, $map, 'array');
+function csv_load($file, $map, $delim = ';'){
+	return __csv_load($file, $map, 'array', $delim);
 }
 
-function csv_load_object($file, $map){
-	return __csv_load($file, $map, 'object');
+function csv_load_object($file, $map, $delim = ';'){
+	return __csv_load($file, $map, 'object', $delim);
 }
 
 function csv_find_key($map, $field){
