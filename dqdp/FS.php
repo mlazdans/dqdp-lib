@@ -174,6 +174,7 @@ class FS implements DBA\TransactionInterface {
 		foreach($parts as $i=>$p){
 			$fs_fullpath .= "$p/";
 			$exists = eo(ktolower($this->get_by_fullpath($fs_fullpath)));
+
 			if(!is_empty($exists)){
 				$fs_fsid = $exists->fs_id;
 				if($exists->fs_type == 0){ // fail, file
@@ -189,6 +190,7 @@ class FS implements DBA\TransactionInterface {
 					'fs_fullname'=>$p,
 					'fs_fullpath'=>$this->path($fs_fullpath),
 				];
+
 				if(!($fs_fsid = $this->Ent->save($params))){
 					return false;
 				}
