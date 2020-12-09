@@ -324,7 +324,9 @@ class IBase extends AbstractDBA
 		$sql_fields = (array)merge_only($Table->getFields(), $DATA);
 
 		$PK = $Table->getPK();
-		if(!is_array($PK)){
+		if(is_array($PK)){
+		} else {
+			$PK = strtoupper($PK);
 			$PK_val = get_prop($DATA, $PK);
 			if(is_null($PK_val)){
 				if($Gen = $Table->getGen()){
@@ -343,8 +345,10 @@ class IBase extends AbstractDBA
 		->Update();
 
 		$PK_fields_str = is_array($PK) ? join(",", $PK) : $PK;
-		$sql->after("values", "matching", "MATCHING ($PK_fields_str)")
-			->after("values", "returning", "RETURNING $PK_fields_str");
+
+		$sql
+		->after("values", "matching", "MATCHING ($PK_fields_str)")
+		->after("values", "returning", "RETURNING $PK_fields_str");
 
 		if($q = $this->query($sql)){
 			$retPK = $this->fetch($q);
