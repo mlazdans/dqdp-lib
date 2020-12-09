@@ -59,6 +59,7 @@ class Settings implements EntityInterface
 	function get($ID, $params = null){
 		$params = eoe($params);
 		$params->SET_KEY = $ID;
+
 		return $this->fetch($this->search($params));
 	}
 
@@ -68,6 +69,7 @@ class Settings implements EntityInterface
 		while($r = $this->fetch($q)){
 			$ret = merge($ret, $r);
 		}
+
 		return $ret;
 	}
 
@@ -84,7 +86,7 @@ class Settings implements EntityInterface
 		return $this->Ent->search($PARAMS);
 	}
 
-	function save(iterable $DATA){
+	function save(iterable $_){
 		$DATA = eoe($this->DATA);
 
 		$ret = true;
@@ -118,6 +120,7 @@ class Settings implements EntityInterface
 
 	function set_trans(AbstractDBA $dba) {
 		$this->Ent->set_trans($dba);
+
 		return $this;
 	}
 
@@ -128,16 +131,19 @@ class Settings implements EntityInterface
 	# Settings f-ns
 	function set_struct(array $struct){
 		$this->DB_STRUCT = $struct;
+
 		return $this;
 	}
 
 	function unset($k){
 		unset($this->DATA[$k]);
+
 		return $this;
 	}
 
 	function reset(){
 		$this->DATA = [];
+
 		return $this;
 	}
 
@@ -150,11 +156,13 @@ class Settings implements EntityInterface
 		} else {
 			$this->DATA[$k] = $v;
 		}
+
 		return $this;
 	}
 
 	function set_array($new_data){
 		$this->DATA = array_merge($this->DATA, $new_data);
+
 		return $this;
 	}
 
