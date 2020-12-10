@@ -59,7 +59,7 @@ class Paginator
 		for($pi = 1; $pi<=$this->max_pages; $pi++){
 			$ret[] = $this->url($pi);
 		}
-		return join(($ret??[]), ' ');
+		return join(' ', ($ret??[]));
 	}
 
 	function paginator(){
