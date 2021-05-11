@@ -80,6 +80,4 @@ class Database
 	function getCon(){
 		return $this->getConnection();
 	}
-
 }
-
