@@ -36,7 +36,7 @@ class Field
 	const SUBTYPE_EXTERNAL_FILE_DESCRIPTION   = 8;
 	const SUBTYPE_DEBUG_INFORMATION           = 9;
 
-	static $QuotableTypes = array(
+	static $QuotableTypes = [
 		Field::TYPE_TEXT,
 		Field::TYPE_VARYING,
 		Field::TYPE_CSTRING,
@@ -44,9 +44,9 @@ class Field
 		Field::TYPE_DATE,
 		Field::TYPE_TIME,
 		Field::TYPE_TIMESTAMP, # NOTE: test database dialects
-		);
+	];
 
-	static $TypeNames = array(
+	static $TypeNames = [
 		Field::TYPE_SHORT            => 'SMALLINT',
 		Field::TYPE_LONG             => 'INTEGER',
 		Field::TYPE_QUAD             => 'QUAD',
@@ -61,9 +61,9 @@ class Field
 		Field::TYPE_CSTRING          => 'CSTRING',
 		Field::TYPE_BLOB_ID          => 'BLOB_ID',
 		Field::TYPE_BLOB             => 'BLOB',
-	);
+	];
 
-	static $SubtypeNames = array(
+	static $SubtypeNames = [
 		Field::SUBTYPE_BINARY                     => 'BINARY',
 		Field::SUBTYPE_TEXT                       => 'TEXT',
 		Field::SUBTYPE_BLR                        => 'BLR',
@@ -74,12 +74,12 @@ class Field
 		Field::SUBTYPE_TRANSACTION_DESCRIPTION    => 'TRANSACTION_DESCRIPTION',
 		Field::SUBTYPE_EXTERNAL_FILE_DESCRIPTION  => 'EXTERNAL_FILE_DESCRIPTION',
 		Field::SUBTYPE_DEBUG_INFORMATION          => 'DEBUG_INFORMATION',
-		);
+	];
 
-	static $IntSubtypeNames = array(
+	static $IntSubtypeNames = [
 		Field::SUBTYPE_INT_NUMERIC   => 'NUMERIC',
 		Field::SUBTYPE_INT_DECIMAL   => 'DECIMAL',
-		);
+	];
 
 	static function nameByType($type){
 		return (isset(Field::$TypeNames[$type]) ? Field::$TypeNames[$type] : false);
@@ -96,12 +96,15 @@ class Field
 	# Numeric types when scale know but precision not
 	static function precisionByType($type){
 		$FIELD_PRECISION = false;
+
 		if($type == Field::TYPE_SHORT) {
 			$FIELD_PRECISION = 4;
 		}
+
 		if($type == Field::TYPE_LONG) {
 			$FIELD_PRECISION = 9;
 		}
+
 		if($type == Field::TYPE_DOUBLE) {
 			$FIELD_PRECISION = 15;
 		}

@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace dqdp\FireBird;
 
+use dqdp\SQL\Select;
+
 class Fun extends FirebirdObject
 {
 	const TYPE_VALUE      = 0;
@@ -17,16 +19,11 @@ class Fun extends FirebirdObject
 	}
 
 	function loadMetadata(){
-		$sql_add = array();
-		$sql_add[] = 'RDB$SYSTEM_FLAG = 0';
-		$sql_add[] = sprintf('RDB$FUNCTION_NAME = \'%s\'', $this->name);
-
-		$sql = '
-		SELECT
-			*
-		FROM
-			RDB$FUNCTIONS
-		'.($sql_add ? " WHERE ".join(" AND ", $sql_add) : "");
+		$sql = (new Select())
+		->From('RDB$FUNCTIONS')
+		->Where('RDB$SYSTEM_FLAG = 0')
+		->Where(['RDB$FUNCTION_NAME = ?', $this->name])
+		;
 
 		return parent::loadMetadataBySQL($sql);
 	}
@@ -43,10 +40,7 @@ class Fun extends FirebirdObject
 		$ddl = array();
 		$MT = $this->getMetadata();
 
-		$ddl[] = sprintf(
-			'DECLARE EXTERNAL FUNCTION "%s"',
-			$this
-			);
+		$ddl[] = sprintf('DECLARE EXTERNAL FUNCTION "%s"', $this);
 
 		$in_args = array();
 		$out_arg = false;
@@ -78,4 +72,3 @@ class Fun extends FirebirdObject
 		return join("\n", $ddl);
 	}
 }
-

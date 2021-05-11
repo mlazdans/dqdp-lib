@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace dqdp\FireBird;
 
+use dqdp\SQL\Select;
+
 class IndexSegment extends FirebirdObject
 {
 	protected $index;
@@ -16,16 +18,11 @@ class IndexSegment extends FirebirdObject
 	}
 
 	function loadMetadata(){
-		$sql_add = array();
-		$sql_add[] = sprintf('RDB$INDEX_NAME = \'%s\'', $this->index->name);
-		$sql_add[] = sprintf('RDB$FIELD_NAME = \'%s\'', $this->name);
-
-		$sql = '
-		SELECT
-			*
-		FROM
-			RDB$INDEX_SEGMENTS
-		'.($sql_add ? " WHERE ".join(" AND ", $sql_add) : "");
+		$sql = (new Select())
+		->From('RDB$INDEX_SEGMENTS')
+		->Where(['RDB$INDEX_NAME = ?', $this->index->name])
+		->Where(['RDB$FIELD_NAME = ?', $this->name])
+		;
 
 		return parent::loadMetadataBySQL($sql);
 	}

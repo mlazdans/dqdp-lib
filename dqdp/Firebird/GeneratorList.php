@@ -6,25 +6,12 @@ namespace dqdp\FireBird;
 
 class GeneratorList extends ObjectList
 {
-	function __construct(Database $db){
-		parent::__construct($db);
-	}
-
 	function get(){
 		if(is_array($this->list)){
 			return $this->list;
 		}
 
-		$sql = '
-		SELECT
-			RDB$GENERATOR_NAME AS NAME
-		FROM
-			RDB$GENERATORS
-		WHERE
-			RDB$SYSTEM_FLAG = 0
-		ORDER BY
-			RDB$GENERATOR_NAME
-		';
+		$sql = 'SELECT RDB$GENERATOR_NAME AS NAME FROM RDB$GENERATORS WHERE RDB$SYSTEM_FLAG = 0 ORDER BY RDB$GENERATOR_NAME';
 
 		$this->list = array();
 		$conn = $this->getDb()->getConnection();

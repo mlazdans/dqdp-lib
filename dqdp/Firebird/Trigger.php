@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace dqdp\FireBird;
 
+use dqdp\SQL\Select;
+
 class Trigger extends FirebirdObject
 {
 	const TYPE_PRE_STORE            = 1;
@@ -24,13 +26,11 @@ class Trigger extends FirebirdObject
 	}
 
 	function activate(){
-		$sql = "ALTER TRIGGER $this ACTIVE";
-		return $this->getDb()->getConnection()->Query($sql);
+		return $this->getDb()->getConnection()->Query("ALTER TRIGGER $this ACTIVE");
 	}
 
 	function deactivate(){
-		$sql = "ALTER TRIGGER $this INACTIVE";
-		return $this->getDb()->getConnection()->Query($sql);
+		return $this->getDb()->getConnection()->Query("ALTER TRIGGER $this INACTIVE");
 	}
 
 	function enable(){
@@ -46,16 +46,11 @@ class Trigger extends FirebirdObject
 			return $metadata;
 		}
 
-		$sql_add = array();
-		$sql_add[] = 'RDB$SYSTEM_FLAG = 0';
-		$sql_add[] = sprintf('RDB$TRIGGER_NAME = \'%s\'', $this->name);
-
-		$sql = '
-		SELECT
-			*
-		FROM
-			RDB$TRIGGERS
-		'.($sql_add ? " WHERE ".join(" AND ", $sql_add) : "");
+		$sql = (new Select())
+		->From('RDB$TRIGGERS')
+		->Where('RDB$SYSTEM_FLAG = 0')
+		->Where(['RDB$TRIGGER_NAME = ?', $this->name])
+		;
 
 		return parent::loadMetadataBySQL($sql);
 	}

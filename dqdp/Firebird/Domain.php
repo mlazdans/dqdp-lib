@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace dqdp\FireBird;
 
+use dqdp\SQL\Select;
+
 class Domain extends FirebirdObject
 {
 	function __construct(Database $db, $name){
@@ -12,18 +14,12 @@ class Domain extends FirebirdObject
 	}
 
 	function loadMetadata(){
-		$sql_add = array();
-		$sql_add[] = 'f.RDB$SYSTEM_FLAG = 0';
-		$sql_add[] = sprintf('f.RDB$FIELD_NAME = \'%s\'', $this->name);
-
-		$sql = '
-		SELECT
-			f.*,
-			c.RDB$COLLATION_NAME
-		FROM
-			RDB$FIELDS f
-		LEFT JOIN RDB$COLLATIONS c ON (c.RDB$COLLATION_ID = f.RDB$COLLATION_ID AND c.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID)
-		'.($sql_add ? " WHERE ".join(" AND ", $sql_add) : "");
+		$sql = (new Select())
+		->From('RDB$FIELDS f')
+		->LeftJoin('RDB$COLLATIONS c', '(c.RDB$COLLATION_ID = f.RDB$COLLATION_ID AND c.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID)')
+		->Where('f.RDB$SYSTEM_FLAG = 0')
+		->Where(['f.RDB$FIELD_NAME = ?', $this->name])
+		;
 
 		return parent::loadMetadataBySQL($sql);
 	}

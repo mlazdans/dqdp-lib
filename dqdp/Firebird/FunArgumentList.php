@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace dqdp\FireBird;
 
+use dqdp\SQL\Select;
+
 class FunArgumentList extends ObjectList
 {
 	protected $func;
@@ -18,17 +20,11 @@ class FunArgumentList extends ObjectList
 			return $this->list;
 		}
 
-		# Argument $name is realy an integer - ARGUMENT_POSITION
-		$sql = '
-		SELECT
-			RDB$ARGUMENT_POSITION AS NAME
-		FROM
-			RDB$FUNCTION_ARGUMENTS
-		WHERE
-			RDB$FUNCTION_NAME = \''.$this->func.'\'
-		ORDER BY
-			RDB$ARGUMENT_POSITION
-		';
+		$sql = (new Select('RDB$ARGUMENT_POSITION AS NAME'))
+		->From('RDB$FUNCTION_ARGUMENTS')
+		->Where(['RDB$FUNCTION_NAME = ?', $this->func])
+		->OrderBy('RDB$ARGUMENT_POSITION')
+		;
 
 		$this->list = array();
 		$conn = $this->getDb()->getConnection();

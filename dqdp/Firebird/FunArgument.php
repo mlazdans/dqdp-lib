@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace dqdp\FireBird;
 
+use dqdp\SQL\Select;
+
 class FunArgument extends FirebirdObject
 {
 	const MECHANISM_VALUE                = 0;
@@ -23,17 +25,11 @@ class FunArgument extends FirebirdObject
 	}
 
 	function loadMetadata(){
-		$sql_add = array();
-		//$sql_add[] = 'RDB$SYSTEM_FLAG = 0';
-		$sql_add[] = sprintf('RDB$FUNCTION_NAME = \'%s\'', $this->func->name);
-		$sql_add[] = sprintf('RDB$ARGUMENT_POSITION = %d', $this->name);
-
-		$sql = '
-		SELECT
-			*
-		FROM
-			RDB$FUNCTION_ARGUMENTS
-		'.($sql_add ? " WHERE ".join(" AND ", $sql_add) : "");
+		$sql = (new Select())
+		->From('RDB$FUNCTION_ARGUMENTS')
+		->Where(['RDB$FUNCTION_NAME = ?', $this->func->name])
+		->Where(['RDB$ARGUMENT_POSITION = ?', $this->name])
+		;
 
 		return parent::loadMetadataBySQL($sql);
 	}

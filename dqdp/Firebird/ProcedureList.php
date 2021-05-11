@@ -6,25 +6,12 @@ namespace dqdp\FireBird;
 
 class ProcedureList extends ObjectList
 {
-	function __construct(Database $db){
-		parent::__construct($db);
-	}
-
 	function get(){
 		if(is_array($this->list)){
 			return $this->list;
 		}
 
-		$sql = '
-		SELECT
-			RDB$PROCEDURE_NAME AS NAME
-		FROM
-			RDB$PROCEDURES
-		WHERE
-			RDB$SYSTEM_FLAG = 0
-		ORDER BY
-			RDB$PROCEDURE_NAME
-		';
+		$sql = 'SELECT RDB$PROCEDURE_NAME AS NAME FROM RDB$PROCEDURES WHERE RDB$SYSTEM_FLAG = 0 ORDER BY RDB$PROCEDURE_NAME';
 
 		$this->list = array();
 		$conn = $this->getDb()->getConnection();

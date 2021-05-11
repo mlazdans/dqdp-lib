@@ -4,12 +4,15 @@ declare(strict_types = 1);
 
 namespace dqdp\FireBird;
 
+use dqdp\SQL\Select;
+
 class Procedure extends FirebirdObject
 {
 	const TYPE_LEGACY          = 0;
 	const TYPE_SELECTABLE      = 1;
 	const TYPE_EXECUTABLE      = 2;
 
+	# TODO: need caching??
 	protected $parameters;
 
 	function __construct(Database $db, $name){
@@ -18,16 +21,11 @@ class Procedure extends FirebirdObject
 	}
 
 	function loadMetadata(){
-		$sql_add = array();
-		$sql_add[] = 'RDB$SYSTEM_FLAG = 0';
-		$sql_add[] = sprintf('RDB$PROCEDURE_NAME = \'%s\'', $this->name);
-
-		$sql = '
-		SELECT
-			*
-		FROM
-			RDB$PROCEDURES
-		'.($sql_add ? " WHERE ".join(" AND ", $sql_add) : "");
+		$sql = (new Select())
+		->From('RDB$PROCEDURES')
+		->Where('RDB$SYSTEM_FLAG = 0')
+		->Where(['RDB$PROCEDURE_NAME = ?', $this->name])
+		;
 
 		return parent::loadMetadataBySQL($sql);
 	}

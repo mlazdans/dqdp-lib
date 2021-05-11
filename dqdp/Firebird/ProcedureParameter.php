@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace dqdp\FireBird;
 
+use dqdp\SQL\Select;
+
 class ProcedureParameter extends FirebirdObject
 {
 	const TYPE_INPUT                = 0;
@@ -18,19 +20,13 @@ class ProcedureParameter extends FirebirdObject
 	}
 
 	function loadMetadata(){
-		$sql_add = array();
-		$sql_add[] = 'pp.RDB$SYSTEM_FLAG = 0';
-		$sql_add[] = sprintf('pp.RDB$PROCEDURE_NAME = \'%s\'', $this->proc->name);
-		$sql_add[] = sprintf('pp.RDB$PARAMETER_NAME = \'%s\'', $this->name);
-
-		$sql = '
-		SELECT
-			f.*,
-			pp.*
-		FROM
-			RDB$PROCEDURE_PARAMETERS pp
-		LEFT JOIN RDB$FIELDS f ON f.RDB$FIELD_NAME = pp.RDB$FIELD_SOURCE
-		'.($sql_add ? " WHERE ".join(" AND ", $sql_add) : "");
+		$sql = (new Select('f.*, pp.*'))
+		->From('RDB$PROCEDURE_PARAMETERS pp')
+		->LeftJoin('RDB$FIELDS f', 'f.RDB$FIELD_NAME = pp.RDB$FIELD_SOURCE')
+		->Where('pp.RDB$SYSTEM_FLAG = 0')
+		->Where(['pp.RDB$PROCEDURE_NAME = ?', $this->proc->name])
+		->Where(['pp.RDB$PARAMETER_NAME = ?', $this->name])
+		;
 
 		return parent::loadMetadataBySQL($sql);
 	}

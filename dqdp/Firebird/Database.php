@@ -60,9 +60,7 @@ class Database
 
 	function getActiveIndexes(){
 		$List = new IndexList($this);
-		return $List->get(array(
-			'active'=>true,
-			));
+		return $List->get(['active'=>true]);
 	}
 
 	function getFunctions(){

@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace dqdp\FireBird;
 
+use dqdp\SQL\Select;
+
 class IndexSegmentList extends ObjectList
 {
 	protected $index;
@@ -18,16 +20,11 @@ class IndexSegmentList extends ObjectList
 			return $this->list;
 		}
 
-		$sql = '
-		SELECT
-			RDB$FIELD_NAME AS NAME
-		FROM
-			RDB$INDEX_SEGMENTS
-		WHERE
-			RDB$INDEX_NAME = \''.$this->index.'\'
-		ORDER BY
-			RDB$FIELD_POSITION
-		';
+		$sql = (new Select('RDB$FIELD_NAME AS NAME'))
+		->From('RDB$INDEX_SEGMENTS')
+		->Where(['RDB$INDEX_NAME = ?', $this->index])
+		->OrderBy('RDB$FIELD_POSITION')
+		;
 
 		$this->list = array();
 		$conn = $this->getDb()->getConnection();

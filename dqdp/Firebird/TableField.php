@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace dqdp\FireBird;
 
+use dqdp\SQL\Select;
+
 class TableField extends FirebirdObject
 {
 	protected $table;
@@ -15,16 +17,14 @@ class TableField extends FirebirdObject
 	}
 
 	function loadMetadata(){
-		$sql_add = array();
-		$sql_add[] = 'f.RDB$SYSTEM_FLAG = 0';
-		$sql_add[] = sprintf('rf.RDB$FIELD_NAME = \'%s\'', $this->name);
-		$sql_add[] = sprintf('RDB$RELATION_NAME = \'%s\'', $this->table);
-
-		$sql = 'SELECT rf.*, f.*, c.RDB$COLLATION_NAME
-		FROM RDB$FIELDS f
-		JOIN RDB$RELATION_FIELDS rf ON rf.RDB$FIELD_SOURCE = f.RDB$FIELD_NAME
-		LEFT JOIN RDB$COLLATIONS c ON (c.RDB$COLLATION_ID = rf.RDB$COLLATION_ID AND c.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID)
-		'.($sql_add ? " WHERE ".join(" AND ", $sql_add) : "");
+		$sql = (new Select('rf.*, f.*, c.RDB$COLLATION_NAME'))
+		->From('RDB$FIELDS f')
+		->Join('RDB$RELATION_FIELDS rf', 'rf.RDB$FIELD_SOURCE = f.RDB$FIELD_NAME')
+		->LeftJoin('RDB$COLLATIONS c', '(c.RDB$COLLATION_ID = rf.RDB$COLLATION_ID AND c.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID)')
+		->Where('f.RDB$SYSTEM_FLAG = 0')
+		->Where(['RDB$RELATION_NAME = ?', $this->table])
+		->Where(['rf.RDB$FIELD_NAME = ?', $this->name])
+		;
 
 		return parent::loadMetadataBySQL($sql);
 	}

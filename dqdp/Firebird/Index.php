@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace dqdp\FireBird;
 
+use dqdp\SQL\Select;
+
 class Index extends FirebirdObject
 {
 	const TYPE_INDEX    = 0;
@@ -17,13 +19,11 @@ class Index extends FirebirdObject
 	}
 
 	function activate(){
-		$sql = "ALTER INDEX $this ACTIVE";
-		return $this->getDb()->getConnection()->Query($sql);
+		return $this->getDb()->getConnection()->Query("ALTER INDEX $this ACTIVE");
 	}
 
 	function deactivate(){
-		$sql = "ALTER INDEX $this INACTIVE";
-		return $this->getDb()->getConnection()->Query($sql);
+		return $this->getDb()->getConnection()->Query("ALTER INDEX $this INACTIVE");
 	}
 
 	function enable(){
@@ -35,18 +35,12 @@ class Index extends FirebirdObject
 	}
 
 	function loadMetadata(){
-		$sql_add = array();
-		$sql_add[] = 'RDB$SYSTEM_FLAG = 0';
-		$sql_add[] = sprintf('i.RDB$INDEX_NAME = \'%s\'', $this->name);
-
-		$sql = '
-		SELECT
-			i.*,
-			rc.*
-		FROM
-			RDB$INDICES i
-		LEFT JOIN RDB$RELATION_CONSTRAINTS rc ON rc.RDB$INDEX_NAME = i.RDB$INDEX_NAME
-		'.($sql_add ? " WHERE ".join(" AND ", $sql_add) : "");
+		$sql = (new Select('i.*, rc.*'))
+		->From('RDB$INDICES i')
+		->LeftJoin('RDB$RELATION_CONSTRAINTS rc', 'rc.RDB$INDEX_NAME = i.RDB$INDEX_NAME')
+		->Where('RDB$SYSTEM_FLAG = 0')
+		->Where(['i.RDB$INDEX_NAME = ?', $this->name])
+		;
 
 		return parent::loadMetadataBySQL($sql);
 	}

@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace dqdp\FireBird;
 
+use dqdp\SQL\Select;
 use stdClass;
 
 abstract class FirebirdObject
@@ -77,22 +78,19 @@ abstract class FirebirdObject
 		}
 
 		$this->dependencies = array();
-		$sql = sprintf('
-			SELECT
-				RDB$DEPENDED_ON_TYPE,
-				RDB$DEPENDED_ON_NAME
-			FROM
-				RDB$DEPENDENCIES
-			WHERE
-				RDB$DEPENDENT_TYPE = %d AND
-				RDB$DEPENDENT_NAME = \'%s\'
-			GROUP BY
-				RDB$DEPENDED_ON_TYPE,
-				RDB$DEPENDED_ON_NAME
-			',
-			$this->type,
-			addslashes($this->name)
-		);
+		$sql = (new Select('RDB$DEPENDED_ON_TYPE, RDB$DEPENDED_ON_NAME'))
+		->From('RDB$DEPENDENCIES')
+		->Where(['RDB$DEPENDENT_TYPE = ?', $this->type])
+		->Where(['RDB$DEPENDENT_NAME = ?', $this->name])
+		;
+		// $sql = sprintf('SELECT RDB$DEPENDED_ON_TYPE, RDB$DEPENDED_ON_NAME
+		// 	FROM RDB$DEPENDENCIES
+		// 	WHERE RDB$DEPENDENT_TYPE = %d AND RDB$DEPENDENT_NAME = \'%s\'
+		// 	GROUP BY RDB$DEPENDED_ON_TYPE, RDB$DEPENDED_ON_NAME',
+		// 	$this->type,
+		// 	addslashes($this->name)
+		// );
+
 		//print_r($sql);
 		//print "----------\n\n";
 
@@ -148,19 +146,24 @@ abstract class FirebirdObject
 			$name = $this->name;
 		}
 
-		$sql = sprintf('
-			SELECT
-				RDB$DEPENDENT_TYPE,
-				RDB$DEPENDENT_NAME
-			FROM
-				RDB$DEPENDENCIES
-			WHERE
-				RDB$DEPENDED_ON_NAME = \'%s\'
-			',
-			addslashes($name)
-		);
+		$sql = (new Select('RDB$DEPENDENT_TYPE, RDB$DEPENDENT_NAME'))
+		->From('RDB$DEPENDENCIES')
+		->Where(['RDB$DEPENDED_ON_NAME = ?', $name])
+		;
+
+		// $sql = sprintf('
+		// 	SELECT
+		// 		RDB$DEPENDENT_TYPE, RDB$DEPENDENT_NAME
+		// 	FROM
+		// 		RDB$DEPENDENCIES
+		// 	WHERE
+		// 		RDB$DEPENDED_ON_NAME = \'%s\'
+		// 	',
+		// 	addslashes($name)
+		// );
 		if($this->type == FirebirdObject::TYPE_FIELD){
-			$sql .= sprintf(' AND RDB$FIELD_NAME = \'%s\'', $this);
+			$sql->Where(['RDB$FIELD_NAME = ?', $this]);
+			// $sql .= sprintf(' AND RDB$FIELD_NAME = \'%s\'', $this);
 		}
 		print_r($sql);
 		print "\n----------\n\n";

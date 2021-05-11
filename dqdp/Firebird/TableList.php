@@ -6,10 +6,6 @@ namespace dqdp\FireBird;
 
 class TableList extends ObjectList
 {
-	function __construct(Database $db){
-		parent::__construct($db);
-	}
-
 	function get(){
 		if(is_array($this->list)){
 			return $this->list;

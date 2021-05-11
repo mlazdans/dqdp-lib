@@ -6,26 +6,14 @@ namespace dqdp\FireBird;
 
 class ViewList extends ObjectList
 {
-	function __construct(Database $db){
-		parent::__construct($db);
-	}
-
 	function get(){
 		if(is_array($this->list)){
 			return $this->list;
 		}
 
-		$sql = '
-		SELECT
-			RDB$RELATION_NAME AS NAME
-		FROM
-			RDB$RELATIONS
-		WHERE
-			RDB$SYSTEM_FLAG = 0 AND
-			RDB$RELATION_TYPE = '.Table::TYPE_VIEW.'
-		ORDER BY
-			RDB$RELATION_NAME
-		';
+		$sql = 'SELECT RDB$RELATION_NAME AS NAME FROM RDB$RELATIONS
+		WHERE RDB$SYSTEM_FLAG = 0 AND RDB$RELATION_TYPE = '.Table::TYPE_VIEW.'
+		ORDER BY RDB$RELATION_NAME';
 
 		$this->list = array();
 		$conn = $this->getDb()->getConnection();
@@ -38,4 +26,3 @@ class ViewList extends ObjectList
 	}
 
 }
-

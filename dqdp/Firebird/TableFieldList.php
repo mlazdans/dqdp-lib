@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace dqdp\FireBird;
 
+use dqdp\SQL\Select;
+
 class TableFieldList extends ObjectList
 {
 	protected $table;
@@ -14,17 +16,17 @@ class TableFieldList extends ObjectList
 	}
 
 	function get(){
+		# TODO: need caching?
 		if(is_array($this->list)){
 			return $this->list;
 		}
 
-		$sql_add = array();
-		$sql_add[] = 'RDB$SYSTEM_FLAG = 0';
-		$sql_add[] = sprintf('RDB$RELATION_NAME = \'%s\'', $this->table);
-
-		$sql = 'SELECT RDB$FIELD_NAME AS NAME FROM RDB$RELATION_FIELDS'.($sql_add ? " WHERE ".join(" AND ", $sql_add) : "").'
-		ORDER BY
-			RDB$FIELD_POSITION';
+		$sql = (new Select('RDB$FIELD_NAME AS NAME'))
+		->From('RDB$RELATION_FIELDS')
+		->Where('RDB$SYSTEM_FLAG = 0')
+		->Where(['RDB$RELATION_NAME = ?', $this->table])
+		->OrderBy('RDB$FIELD_POSITION')
+		;
 
 		$this->list = array();
 		$conn = $this->getDb()->getConnection();

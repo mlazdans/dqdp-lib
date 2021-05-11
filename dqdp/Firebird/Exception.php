@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace dqdp\FireBird;
 
+use dqdp\SQL\Select;
+
 class Exception extends FirebirdObject
 {
 	function __construct(Database $db, $name){
@@ -12,16 +14,11 @@ class Exception extends FirebirdObject
 	}
 
 	function loadMetadata(){
-		$sql_add = array();
-		$sql_add[] = 'RDB$SYSTEM_FLAG = 0';
-		$sql_add[] = sprintf('RDB$EXCEPTION_NAME = \'%s\'', $this->name);
-
-		$sql = '
-		SELECT
-			*
-		FROM
-			RDB$EXCEPTIONS
-		'.($sql_add ? " WHERE ".join(" AND ", $sql_add) : "");
+		$sql = (new Select())
+		->From('RDB$EXCEPTIONS')
+		->Where('RDB$SYSTEM_FLAG = 0')
+		->Where(['RDB$EXCEPTION_NAME = ?', $this->name])
+		;
 
 		return parent::loadMetadataBySQL($sql);
 	}

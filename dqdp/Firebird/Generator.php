@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace dqdp\FireBird;
 
+use dqdp\SQL\Select;
+
 class Generator extends FirebirdObject
 {
 	function __construct(Database $db, $name){
@@ -12,16 +14,11 @@ class Generator extends FirebirdObject
 	}
 
 	function loadMetadata(){
-		$sql_add = array();
-		$sql_add[] = 'g.RDB$SYSTEM_FLAG = 0';
-		$sql_add[] = sprintf('g.RDB$GENERATOR_NAME = \'%s\'', $this->name);
-
-		$sql = '
-		SELECT
-			g.*
-		FROM
-			RDB$GENERATORS g
-		'.($sql_add ? " WHERE ".join(" AND ", $sql_add) : "");
+		$sql = (new Select())
+		->From('RDB$GENERATORS')
+		->Where('RDB$SYSTEM_FLAG = 0')
+		->Where(['RDB$GENERATOR_NAME = ?', $this->name])
+		;
 
 		return parent::loadMetadataBySQL($sql);
 	}
@@ -31,12 +28,10 @@ class Generator extends FirebirdObject
 	}
 
 	function getValue(){
-		$sql = "SELECT GEN_ID($this, 0) AS GENERATOR_VALUE FROM RDB\$DATABASE";
 		$conn = $this->getDb()->getConnection();
-		$q = $conn->Query($sql);
+		$q = $conn->Query("SELECT GEN_ID($this, 0) AS GENERATOR_VALUE FROM RDB\$DATABASE");
 		$r = $conn->fetch_object($q);
 
 		return $r->GENERATOR_VALUE;
 	}
-
 }

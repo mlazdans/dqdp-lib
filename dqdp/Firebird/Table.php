@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace dqdp\FireBird;
 
+use dqdp\SQL\Select;
+
 class Table extends FirebirdObject
 {
 	const TYPE_TABLE                       = 0;
@@ -19,42 +21,37 @@ class Table extends FirebirdObject
 	}
 
 	function loadMetadata(){
-		$sql_add = array();
-		$sql_add[] = 'r.RDB$SYSTEM_FLAG = 0';
-		$sql_add[] = sprintf('r.RDB$RELATION_NAME = \'%s\'', $this->name);
-
-		/*LEFT JOIN RDB$VIEW_RELATIONS v ON v.RDB$VIEW_NAME = r.RDB$RELATION_NAME*/
-		$sql = 'SELECT r.* FROM RDB$RELATIONS AS r'.($sql_add ? " WHERE ".join(" AND ", $sql_add) : "");
+		$sql = (new Select())
+		->From('RDB$RELATIONS r')
+		->Where('r.RDB$SYSTEM_FLAG = 0')
+		->Where(['r.RDB$RELATION_NAME = ?', $this->name]);
 
 		return parent::loadMetadataBySQL($sql);
 	}
 
 	function getFields(){
-		$L = new TableFieldList($this);
-		return $L->get();
+		return (new TableFieldList($this))->get();
 	}
 
 	function getIndexes(){
-		$L = new IndexList($this->getDb());
-		return $L->get(array(
+		# TODO: params Database
+		return (new IndexList($this->getDb()))->get([
 			'RELATION_NAME'=>$this->name,
-			));
+		]);
 	}
 
 	function getPK(){
-		$L = new IndexList($this->getDb());
-		return $L->get(array(
+		return (new IndexList($this->getDb()))->get([
 			'RELATION_NAME'=>$this->name,
 			'CONSTRAINT_TYPE'=>Index::TYPE_PK,
-			));
+		]);
 	}
 
 	function getFK(){
-		$L = new IndexList($this->getDb());
-		return $L->get(array(
+		return (new IndexList($this->getDb()))->get([
 			'RELATION_NAME'=>$this->name,
 			'CONSTRAINT_TYPE'=>Index::TYPE_FK,
-			));
+		]);
 	}
 
 	function ddl(){

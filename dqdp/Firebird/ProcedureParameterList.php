@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace dqdp\FireBird;
 
+use dqdp\SQL\Select;
+
 class ProcedureParameterList extends ObjectList
 {
 	protected $proc;
@@ -19,16 +21,21 @@ class ProcedureParameterList extends ObjectList
 		}
 
 		# Argument $name is realy an integer - ARGUMENT_POSITION
-		$sql = '
-		SELECT
-			RDB$PARAMETER_NAME AS NAME
-		FROM
-			RDB$PROCEDURE_PARAMETERS
-		WHERE
-			RDB$PROCEDURE_NAME = \''.$this->proc.'\'
-		ORDER BY
-			RDB$PARAMETER_NUMBER
-		';
+		$sql = (new Select('RDB$PARAMETER_NAME AS NAME'))
+		->From('RDB$PROCEDURE_PARAMETERS')
+		->Where(['RDB$PROCEDURE_NAME = ?', $this->proc])
+		->OrderBy('RDB$PARAMETER_NUMBER')
+		;
+		// $sql = '
+		// SELECT
+		// 	RDB$PARAMETER_NAME AS NAME
+		// FROM
+		// 	RDB$PROCEDURE_PARAMETERS
+		// WHERE
+		// 	RDB$PROCEDURE_NAME = \''.$this->proc.'\'
+		// ORDER BY
+		// 	RDB$PARAMETER_NUMBER
+		// ';
 
 		$this->list = array();
 		$conn = $this->getDb()->getConnection();
