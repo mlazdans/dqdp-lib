@@ -1172,7 +1172,7 @@ function emailex($params){
 
 	if(!empty($params->Sender))$mail->Sender = $params->Sender;
 
-	$mail->Encoding = QueueMailer::ENCODING_QUOTED_PRINTABLE;
+	$mail->Encoding = PHPMailer::ENCODING_QUOTED_PRINTABLE;
 	$mail->CharSet = 'utf-8';
 	$mail->XMailer = " ";
 	//$mail->SMTPDebug = 2;
@@ -1987,4 +1987,45 @@ function getbyk($o, $k){
 	return flatten(__object_filter($o, function($item, $i) use ($k){
 		return $i === $k;
 	}));
+}
+
+// NxN
+function array_rotate_right($map, $times){
+	if(!($times = $times % 4)){
+		return $map;
+	}
+
+	// 1x (r,c)->(c,n-1-r)
+	// 2x (r,c)->(n-1-r,n-1-c)
+	// 3x (r,c)->(n-1-c,r)
+	$f = [
+		1=>function(&$ret, $n, $v, $r, $c){
+			$ret[$c][$n-1-$r] = $v;
+		},
+		2=>function(&$ret, $n, $v, $r, $c){
+			$ret[$n-1-$r][$n-1-$c] = $v;
+		},
+		3=>function(&$ret, $n, $v, $r, $c){
+			$ret[$n-1-$c][$r] = $v;
+		}
+	];
+
+	$n = count($map);
+
+	$ret = [];
+	for($r = 0; $r < $n; $r++){
+		for($c = 0; $c < $n; $c++){
+			$f[$times]($ret, $n, $map[$r][$c], $r, $c);
+		}
+	}
+
+	return $ret;
+}
+
+function array_rotate_left($map, $times){
+	if(!($times = $times % 4)){
+		return $map;
+	}
+
+	return array_rotate_right($map, 4 - $times);
 }
