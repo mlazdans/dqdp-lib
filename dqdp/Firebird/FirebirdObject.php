@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace dqdp\FireBird;
 
 use stdClass;
@@ -113,13 +115,13 @@ abstract class FirebirdObject
 		if($this->type == FirebirdObject::TYPE_TABLE){
 			if($FKs = $this->getFK()){
 				foreach($FKs as $fk){
-					$i = new IbaseIndex($this->getDb(), $fk->getMetadata()->FOREIGN_KEY);
-				//print "FK:start\n";
-				//print_r($i);
-				//print "FK:end\n\n\n\n";
+					$i = new Index($this->getDb(), $fk->getMetadata()->FOREIGN_KEY);
+					//print "FK:start\n";
+					//print_r($i);
+					//print "FK:end\n\n\n\n";
 
 					//print sprintf("Depend on FK (%s)\n", $i->getMetadata()->RELATION_NAME);
-					$this->dependencies[] = new IbaseTable($this->getDb(), $i->getMetadata()->RELATION_NAME);
+					$this->dependencies[] = new Table($this->getDb(), $i->getMetadata()->RELATION_NAME);
 					//$this->dependencies = array_merge($this->dependencies, $fk->getDependencies());
 					//$index = new IbaseIndex($this->db, $fk->getMetadata()->FOREIGN_KEY);
 					//print_r($fk->getMetadata());
@@ -235,7 +237,7 @@ abstract class FirebirdObject
 				if(in_array($k, self::$discardFields)){
 					continue;
 				}
-				$this->metadata->{FirebirdObject::rdbs2human($k)} = trim($v);
+				$this->metadata->{FirebirdObject::rdbs2human($k)} = $v;
 			}
 			$c++;
 		}
