@@ -8,7 +8,6 @@ use dqdp\DBA\AbstractDBA;
 use dqdp\DBA\AbstractTable;
 use dqdp\DBA\DBAException;
 use dqdp\SQL\Insert;
-use Exception;
 use PDO;
 use PDOStatement;
 
@@ -55,15 +54,17 @@ class MySQL_PDO extends AbstractDBA
 		return isset($data) ? $data : $q;
 	}
 
-	function execute(...$args){
-		return $this->__execute("fetch_all", ...$args);
+	function execute(){
+		return $this->__execute("fetch_all", ...func_get_args());
 	}
 
-	function execute_single(...$args){
-		return $this->__execute("fetch", ...$args);
+	function execute_single(){
+		return $this->__execute("fetch", ...func_get_args());
 	}
 
-	function query(...$args){
+	function query(){
+		$args = func_get_args();
+
 		try {
 			if($this->is_dqdp_statement($args)){
 				if($q = $this->prepare($args[0])){
@@ -90,14 +91,14 @@ class MySQL_PDO extends AbstractDBA
 		}
 	}
 
-	function fetch_assoc(...$args){
-		list($q) = $args;
+	function fetch_assoc(){
+		list($q) = func_get_args();
 
 		return $q->Fetch(PDO::FETCH_ASSOC);
 	}
 
-	function fetch_object(...$args){
-		list($q) = $args;
+	function fetch_object(){
+		list($q) = func_get_args();
 
 		return $q->Fetch(PDO::FETCH_OBJ);
 	}
@@ -156,7 +157,9 @@ class MySQL_PDO extends AbstractDBA
 		return true;
 	}
 
-	function prepare(...$args){
+	function prepare(){
+		$args = func_get_args();
+
 		if($this->is_dqdp_statement($args)){
 			return $this->conn->prepare((string)$args[0]);
 		} else {

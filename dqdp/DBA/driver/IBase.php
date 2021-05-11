@@ -30,8 +30,8 @@ class IBase extends AbstractDBA
 		return $this->connect($database, $username, $password, $charset, $buffers, $dialect, $role);
 	}
 
-	function connect(...$args){
-		$this->conn = ibase_connect(...$args);
+	function connect(){
+		$this->conn = ibase_connect(...func_get_args());
 
 		return $this;
 	}
@@ -46,15 +46,17 @@ class IBase extends AbstractDBA
 		return isset($data) ? $data : $q;
 	}
 
-	function execute(...$args){
-		return $this->__execute("fetch_all", ...$args);
+	function execute(){
+		return $this->__execute("fetch_all", ...func_get_args());
 	}
 
-	function execute_single(...$args){
-		return $this->__execute("fetch", ...$args);
+	function execute_single(){
+		return $this->__execute("fetch", ...func_get_args());
 	}
 
-	function query(...$args) {
+	function query() {
+		$args = func_get_args();
+
 		if($this->is_dqdp_statement($args)){
 			$q = ibase_query($this->tr??$this->conn, (string)$args[0], ...$args[0]->vars());
 		} elseif((count($args) == 2) && is_resource($args[0]) && is_array($args[1])) {
@@ -92,16 +94,17 @@ class IBase extends AbstractDBA
 		return $func(...$args);
 	}
 
-	function fetch_assoc(...$args){
-		return $this->__fetch('ibase_fetch_assoc', ...$args);
+	function fetch_assoc(){
+		return $this->__fetch('ibase_fetch_assoc', ...func_get_args());
 	}
 
-	function fetch_object(...$args){
-		return $this->__fetch('ibase_fetch_object', ...$args);
+	function fetch_object(){
+		return $this->__fetch('ibase_fetch_object', ...func_get_args());
 	}
 
-	function trans(...$args){
-		$tr = ibase_trans($this->conn, ...$args);
+	function trans(){
+		$tr = ibase_trans($this->conn, ...func_get_args());
+
 		$o = clone $this;
 		$o->tr = $tr;
 
@@ -130,7 +133,9 @@ class IBase extends AbstractDBA
 		return ibase_close($this->conn);
 	}
 
-	function prepare(...$args){
+	function prepare(){
+		$args = func_get_args();
+
 		if($this->is_dqdp_statement($args)){
 			return ibase_prepare($this->tr??$this->conn, (string)$args[0]);
 		}
@@ -280,6 +285,7 @@ class IBase extends AbstractDBA
 		return trim(get_prop($this->execute_single('SELECT CURRENT_ROLE AS RLE FROM RDB$DATABASE'), 'RLE'));
 	}
 
+	# TODO: remove and use Firebird lib!!!
 	# TODO: params
 	function get_generators(): array {
 		return trimmer($this->execute('SELECT RDB$GENERATOR_NAME AS NAME
