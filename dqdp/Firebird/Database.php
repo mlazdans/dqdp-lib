@@ -5,79 +5,133 @@ declare(strict_types = 1);
 namespace dqdp\FireBird;
 
 use dqdp\DBA\driver\IBase;
+use dqdp\SQL\Select;
 
-class Database
+class Database extends FirebirdObject
 {
 	private $conn;
+
+	function __construct(IBase $conn){
+		$this->connect($conn);
+		parent::__construct($this, '');
+	}
 
 	function connect(IBase $conn){
 		$this->conn = $conn;
 	}
 
-	function drop(){
+	function getTables(): array {
+		$sql = Relation::getSQL()
+		->Where(['RDB$RELATION_TYPE = ?', Relation::TYPE_PERSISTENT])
+		->OrderBy('RDB$RELATION_NAME')
+		;
+
+		foreach($this->getList($sql) as $r){
+			$list[] = new Relation($this->getDb(), $r->RELATION_NAME);
+		}
+
+		return $list??[];
 	}
 
-	function backup(){
+	function getViews(): array {
+		$sql = Relation::getSQL()
+		->Where(['RDB$RELATION_TYPE = ?', Relation::TYPE_VIEW])
+		->OrderBy('RDB$RELATION_NAME')
+		;
+
+		foreach($this->getList($sql) as $r){
+			$list[] = new Relation($this->getDb(), $r->RELATION_NAME);
+		}
+
+		return $list??[];
 	}
 
-	function restore(){
+	function getTriggers(): array {
+		$sql = Trigger::getSQL();
+		foreach($this->getList($sql) as $r){
+			$list[] = new Trigger($this->getDb(), $r->TRIGGER_NAME);
+		}
+
+		return $list??[];
 	}
 
-	function getTables() {
-		return (new TableList($this))->get();
-	}
-
-	function getViews(){
-		return (new ViewList($this))->get();
-	}
-
-	function getTriggers(){
-		return (new TriggerList($this))->get();
-	}
-
-	function getActiveTriggers(){
-		return (new TriggerList($this))->get(['active'=>true]);
-	}
+	// function getActiveTriggers(){
+	// 	return (new TriggerList($this))->get(['active'=>true]);
+	// }
 
 	function getProcedures(){
-		return (new ProcedureList($this))->get();
+		$sql = Procedure::getSQL();
+		foreach($this->getList($sql) as $r){
+			$list[] = new Procedure($this->getDb(), $r->PROCEDURE_NAME);
+		}
+
+		return $list??[];
 	}
 
-	function getGenerators(){
-		$List = new GeneratorList($this);
-		return $List->get();
+	function getGenerators(): array {
+		$sql = Generator::getSQL();
+		foreach($this->getList($sql) as $r){
+			$list[] = new Generator($this->getDb(), $r->GENERATOR_NAME);
+		}
+
+		return $list??[];
 	}
 
 	function getExceptions(){
-		$List = new ExceptionList($this);
-		return $List->get();
+		$sql = FireBirdException::getSQL();
+		foreach($this->getList($sql) as $r){
+			$list[] = new FireBirdException($this->getDb(), $r->EXCEPTION_NAME);
+		}
+
+		return $list??[];
 	}
 
 	function getIndexes(){
-		$List = new IndexList($this);
-		return $List->get();
+		$sql = Index::getSQL()->Where('rc.RDB$CONSTRAINT_TYPE IS NULL');
+		foreach($this->getList($sql) as $r){
+			$list[] = new Index($this->getDb(), $r->INDEX_NAME);
+		}
+
+		return $list??[];
 	}
 
-	function getActiveIndexes(){
-		$List = new IndexList($this);
-		return $List->get(['active'=>true]);
+	function getFKs(){
+		$sql = Index::getSQL()->Where('rc.RDB$CONSTRAINT_TYPE = \'FOREIGN KEY\'');
+		foreach($this->getList($sql) as $r){
+			$list[] = new Index($this->getDb(), $r->INDEX_NAME);
+		}
+
+		return $list??[];
 	}
 
-	function getFunctions(){
-		$List = new FunList($this);
-		return $List->get();
+	function getUDFs(){
+		$sql = UDF::getSQL();
+		foreach($this->getList($sql) as $r){
+			$list[] = new UDF($this->getDb(), $r->FUNCTION_NAME);
+		}
+
+		return $list??[];
 	}
 
 	function getDomains(){
-		$List = new DomainList($this);
-		return $List->get();
+		$sql = Domain::getSQL();
+		foreach($this->getList($sql) as $r){
+			$list[] = new Domain($this->getDb(), $r->FIELD_NAME);
+		}
+
+		return $list??[];
 	}
 
 	function getConnection(){
 		return $this->conn;
 	}
 
-	function getCon(){
-		return $this->getConnection();
+	static function getSQL(): Select {
+		return (new Select())->From('RDB$DATABASE');
+	}
+
+	function ddl(): string {
+		trigger_error("Not implemented yet");
+		return "";
 	}
 }

@@ -6,7 +6,7 @@ namespace dqdp\FireBird;
 
 use dqdp\SQL\Select;
 
-class Procedure extends FirebirdObject
+class Procedure extends FirebirdType
 {
 	const TYPE_LEGACY          = 0;
 	const TYPE_SELECTABLE      = 1;
@@ -15,15 +15,20 @@ class Procedure extends FirebirdObject
 	# TODO: need caching??
 	protected $parameters;
 
-	function __construct(Database $db, $name){
-		$this->type = FirebirdObject::TYPE_PROCEDURE;
-		parent::__construct($db, $name);
+	// function __construct(Database $db, $name){
+	// 	$this->type = FirebirdObject::TYPE_PROCEDURE;
+	// 	parent::__construct($db, $name);
+	// }
+
+	static function getSQL(): Select {
+		return (new Select())
+		->From('RDB$PROCEDURES')
+		->Where('RDB$SYSTEM_FLAG = 0')
+		->OrderBy('RDB$PROCEDURE_NAME');
 	}
 
 	function loadMetadata(){
-		$sql = (new Select())
-		->From('RDB$PROCEDURES')
-		->Where('RDB$SYSTEM_FLAG = 0')
+		$sql = $this->getSQL()
 		->Where(['RDB$PROCEDURE_NAME = ?', $this->name])
 		;
 
@@ -31,16 +36,20 @@ class Procedure extends FirebirdObject
 	}
 
 	function getParameters(){
-		if(empty($this->parameters)){
-			$a = new ProcedureParameterList($this);
-			$this->parameters = $a->get();
+		$sql = ProcedureParameter::getSQL()
+		->Where(['pp.RDB$PROCEDURE_NAME = ?', $this->name])
+		;
+
+		foreach($this->getList($sql) as $r){
+			$list[] = new ProcedureParameter($this, $r->PARAMETER_NAME);
 		}
-		return $this->parameters;
+
+		return $list??[];
 	}
 
-	function ddl(){
+	function ddl(): string {
 		$ddl = array();
-		$ddl[] = "SET TERM ^ ;";
+		// $ddl[] = "SET TERM ^ ;";
 
 		$MT = $this->getMetadata();
 
@@ -69,8 +78,8 @@ class Procedure extends FirebirdObject
 		}
 
 		$ddl[] = "AS";
-		$ddl[] = $MT->PROCEDURE_SOURCE."^";
-		$ddl[] = "SET TERM ; ^";
+		$ddl[] = $MT->PROCEDURE_SOURCE;
+		// $ddl[] = "SET TERM ; ^";
 
 		return join("\n", $ddl);
 	}

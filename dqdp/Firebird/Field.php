@@ -4,8 +4,28 @@ declare(strict_types = 1);
 
 namespace dqdp\FireBird;
 
-class Field
+use dqdp\SQL\Select;
+
+class Field extends FirebirdType
 {
+	static function getSQL(): Select {
+		return (new Select())
+		->From('RDB$FIELDS')
+		->Where('RDB$SYSTEM_FLAG = 0');
+		;
+		// return (new Select('rf.*, f.*, c.RDB$COLLATION_NAME, cs.RDB$BYTES_PER_CHARACTER'))
+		// ->From('RDB$FIELDS f')
+		// ->LeftJoin('RDB$CHARACTER_SETS cs', 'cs.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID')
+		// ->LeftJoin('RDB$RELATION_FIELDS rf', 'rf.RDB$FIELD_SOURCE = f.RDB$FIELD_NAME')
+		// ->LeftJoin('RDB$COLLATIONS c', '(c.RDB$COLLATION_ID = rf.RDB$COLLATION_ID AND c.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID)')
+		// ->Where('f.RDB$SYSTEM_FLAG = 0');
+	}
+
+	// function __construct(Database $db, $name){
+	// 	$this->type = FirebirdObject::TYPE_FIELD;
+	// 	parent::__construct($db, $name);
+	// }
+
 	const TYPE_SHORT                          = 7;
 	const TYPE_LONG                           = 8;
 	const TYPE_QUAD                           = 9;
@@ -36,15 +56,15 @@ class Field
 	const SUBTYPE_EXTERNAL_FILE_DESCRIPTION   = 8;
 	const SUBTYPE_DEBUG_INFORMATION           = 9;
 
-	static $QuotableTypes = [
-		Field::TYPE_TEXT,
-		Field::TYPE_VARYING,
-		Field::TYPE_CSTRING,
-		Field::TYPE_BLOB,
-		Field::TYPE_DATE,
-		Field::TYPE_TIME,
-		Field::TYPE_TIMESTAMP, # NOTE: test database dialects
-	];
+	// static $QuotableTypes = [
+	// 	Field::TYPE_TEXT,
+	// 	Field::TYPE_VARYING,
+	// 	Field::TYPE_CSTRING,
+	// 	Field::TYPE_BLOB,
+	// 	Field::TYPE_DATE,
+	// 	Field::TYPE_TIME,
+	// 	Field::TYPE_TIMESTAMP, # NOTE: test database dialects
+	// ];
 
 	static $TypeNames = [
 		Field::TYPE_SHORT            => 'SMALLINT',
@@ -94,6 +114,7 @@ class Field
 	}
 
 	# Numeric types when scale know but precision not
+	# TODO: might change in FB 4.0
 	static function precisionByType($type){
 		$FIELD_PRECISION = false;
 
@@ -112,15 +133,12 @@ class Field
 		return $FIELD_PRECISION;
 	}
 
-	static function isQuotable($type) {
-		return in_array($type, Field::$QuotableTypes);
-	}
+	// static function isQuotable($type) {
+	// 	return in_array($type, Field::$QuotableTypes);
+	// }
 
-	# $field object should contain all information from RDB$FIELDS
-	# TODO: computed fields
-	static function ddl($field){
-		$ddl = '';
-		$MT = $field;
+	function ddl(): string {
+		$MT = $this->metadata;
 		$FT = $MT->FIELD_TYPE;
 
 		# Default
@@ -129,15 +147,23 @@ class Field
 		//[COMPUTED_SOURCE] => (CAST(CURRENCY_SELL_PRICE_PVN / (1 + PVN_RATE) AS MONEY4))
 
 		# Computed
-		if(!empty($field->COMPUTED_SOURCE)){
-			$ddl = "COMPUTED BY $field->COMPUTED_SOURCE";
+		if(!empty($MT->COMPUTED_SOURCE)){
+			$ddl = "COMPUTED BY $MT->COMPUTED_SOURCE";
 		# Domain
-		} elseif(!empty($field->FIELD_SOURCE) && substr($field->FIELD_SOURCE, 0, 4) != 'RDB$'){
-			$ddl = $field->FIELD_SOURCE;
+		} elseif(!empty($MT->FIELD_SOURCE) && substr($MT->FIELD_SOURCE, 0, 4) != 'RDB$'){
+			$ddl = $MT->FIELD_SOURCE;
 		# VARCHAR/TEXT
-		} elseif(in_array($FT, array(Field::TYPE_TEXT, Field::TYPE_VARYING, Field::TYPE_CSTRING))){
-			$ddl = sprintf("%s(%d)", Field::nameByType($FT), $MT->CHARACTER_LENGTH);
-		} elseif(in_array($FT, array(Field::TYPE_SHORT, Field::TYPE_LONG, Field::TYPE_QUAD))){
+		} elseif(in_array($FT, [Field::TYPE_TEXT, Field::TYPE_VARYING, Field::TYPE_CSTRING])){
+			if($MT->CHARACTER_LENGTH){
+				$ddl = sprintf("%s(%d)", Field::nameByType($FT), $MT->CHARACTER_LENGTH);
+			} elseif($MT->FIELD_LENGTH && $MT->BYTES_PER_CHARACTER){
+				$ddl = sprintf("%s(%d)", Field::nameByType($FT), $MT->FIELD_LENGTH / $MT->BYTES_PER_CHARACTER);
+			} else {
+				trigger_error("FIELD_LENGTH");
+				$ddl = sprintf("%s(%d)", Field::nameByType($FT), $MT->FIELD_LENGTH);
+			}
+			//
+		} elseif(in_array($FT, [Field::TYPE_SHORT, Field::TYPE_LONG, Field::TYPE_QUAD])){
 			if($MT->FIELD_PRECISION){
 				if($MT->FIELD_SUB_TYPE){
 					$ddl = sprintf(
@@ -161,22 +187,49 @@ class Field
 		# changes in (future) Firebird versions
 		# (int | subtype_name). Perhaps configurable?
 		if($FT == Field::TYPE_BLOB){
-			$ddl .= sprintf(" SUB_TYPE %d", $MT->FIELD_SUB_TYPE);
-			//$ddl .= Field::nameBySubtype($MT->FIELD_SUB_TYPE);
+			$ddl .= " SUB_TYPE";
+			if(in_array($MT->FIELD_SUB_TYPE, [Field::SUBTYPE_BINARY, Field::SUBTYPE_TEXT])){
+				$ddl .= " ".Field::$SubtypeNames[$MT->FIELD_SUB_TYPE];
+			} else {
+				$ddl .= sprintf(" %d", $MT->FIELD_SUB_TYPE);
+			}
+			// $ddl .= sprintf(" SUB_TYPE %d", $MT->FIELD_SUB_TYPE);
+			// $ddl .= Field::nameBySubtype($MT->FIELD_SUB_TYPE);
 		}
 
 		if($MT->DEFAULT_SOURCE){
-			$ddl .= " ".$MT->DEFAULT_SOURCE;
+			$ddl .= " $MT->DEFAULT_SOURCE";
 		}
 
 		if($MT->NULL_FLAG){
 			$ddl .= " NOT NULL";
 		}
 
-		if(!empty($field->COLLATION_NAME)){
-			$ddl .= " COLLATE $field->COLLATION_NAME";
+		if(!empty($MT->COLLATION_NAME)){
+			# TODO: test CHARACTER_SET_NAME | COLLATION_NAME
+			if($this->getDb()->metadata->CHARACTER_SET_NAME != $MT->COLLATION_NAME){
+				$ddl .= " COLLATE ".trim($MT->COLLATION_NAME);
+			}
 		}
 
 		return $ddl;
 	}
+
+	// static function getSQL(){
+	// 	return (new Select('rf.*, f.*, c.RDB$COLLATION_NAME, cs.RDB$BYTES_PER_CHARACTER'))
+	// 	->From('RDB$FIELDS f')
+	// 	->Join('RDB$RELATION_FIELDS rf', 'rf.RDB$FIELD_SOURCE = f.RDB$FIELD_NAME')
+	// 	->LeftJoin('RDB$COLLATIONS c', '(c.RDB$COLLATION_ID = rf.RDB$COLLATION_ID AND c.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID)')
+	// 	->LeftJoin('RDB$CHARACTER_SETS cs', 'cs.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID')
+	// 	->Where('f.RDB$SYSTEM_FLAG = 0');
+	// }
+
+	// function loadMetadata(){
+	// 	$sql = $this->getSQL()
+	// 	->Where(['RDB$RELATION_NAME = ?', $this->table])
+	// 	->Where(['rf.RDB$FIELD_NAME = ?', $this->name])
+	// 	;
+
+	// 	return parent::loadMetadataBySQL($sql);
+	// }
 }

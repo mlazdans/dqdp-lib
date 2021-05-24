@@ -8,22 +8,24 @@ use dqdp\SQL\Select;
 
 class Generator extends FirebirdObject
 {
-	function __construct(Database $db, $name){
-		$this->type = FirebirdObject::TYPE_GENERATOR;
-		parent::__construct($db, $name);
+	// function __construct(Database $db, $name){
+	// 	$this->type = FirebirdObject::TYPE_GENERATOR;
+	// 	parent::__construct($db, $name);
+	// }
+
+	static function getSQL(): Select {
+		return (new Select())
+		->From('RDB$GENERATORS')
+		->Where('RDB$SYSTEM_FLAG = 0');
 	}
 
 	function loadMetadata(){
-		$sql = (new Select())
-		->From('RDB$GENERATORS')
-		->Where('RDB$SYSTEM_FLAG = 0')
-		->Where(['RDB$GENERATOR_NAME = ?', $this->name])
-		;
+		$sql = $this->getSQL()->Where(['RDB$GENERATOR_NAME = ?', $this->name]);
 
 		return parent::loadMetadataBySQL($sql);
 	}
 
-	function ddl(){
+	function ddl(): string {
 		return "CREATE GENERATOR $this";
 	}
 

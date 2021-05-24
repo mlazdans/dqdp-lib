@@ -9,202 +9,230 @@ use stdClass;
 
 abstract class FirebirdObject
 {
-	const TYPE_TABLE                  = 0;
-	const TYPE_VIEW                   = 1;
-	const TYPE_TRIGGER                = 2;
-	const TYPE_COMPUTED_FIELD         = 3;
-	const TYPE_VALIDATION             = 4;
-	const TYPE_PROCEDURE              = 5;
-	const TYPE_EXPRESSION_INDEX       = 6;
-	const TYPE_EXCEPTION              = 7;
-	const TYPE_USER                   = 8;
-	const TYPE_FIELD                  = 9;
-	const TYPE_INDEX                  = 10;
-	const TYPE_USER_GROUP             = 12;
-	const TYPE_ROLE                   = 13;
-	const TYPE_GENERATOR              = 14;
-	const TYPE_FUNCTION               = 15;
-	const TYPE_BLOB_FILTER            = 16;
-	const TYPE_COLLATION              = 17;
+	const RESERVERD_WORDS = [
+		'ADD', 'ADMIN', 'ALL', 'ALTER', 'AND', 'ANY', 'AS', 'AT', 'AVG', 'BEGIN', 'BETWEEN', 'BIGINT', 'BIT_LENGTH',
+		'BLOB', 'BOOLEAN', 'BOTH', 'BY', 'CASE', 'CAST', 'CHAR', 'CHARACTER', 'CHARACTER_LENGTH', 'CHAR_LENGTH',
+		'CHECK', 'CLOSE', 'COLLATE', 'COLUMN', 'COMMIT', 'CONNECT', 'CONSTRAINT', 'CORR', 'COUNT', 'COVAR_POP',
+		'COVAR_SAMP', 'CREATE', 'CROSS', 'CURRENT', 'CURRENT_CONNECTION', 'CURRENT_DATE', 'CURRENT_ROLE', 'CURRENT_TIME',
+		'CURRENT_TIMESTAMP', 'CURRENT_TRANSACTION', 'CURRENT_USER', 'CURSOR', 'DATE', 'DAY', 'DEC', 'DECIMAL',
+		'DECLARE', 'DEFAULT', 'DELETE', 'DELETING', 'DETERMINISTIC', 'DISCONNECT', 'DISTINCT', 'DOUBLE', 'DROP',
+		'ELSE', 'END', 'ESCAPE', 'EXECUTE', 'EXISTS', 'EXTERNAL', 'EXTRACT', 'FALSE', 'FETCH', 'FILTER', 'FLOAT', 'FOR',
+		'FOREIGN', 'FROM', 'FULL', 'FUNCTION', 'GDSCODE', 'GLOBAL', 'GRANT', 'GROUP', 'HAVING', 'HOUR', 'IN', 'INDEX', 'INNER',
+		'INSENSITIVE', 'INSERT', 'INSERTING', 'INT', 'INTEGER', 'INTO', 'IS', 'JOIN', 'LEADING', 'LEFT', 'LIKE', 'LONG', 'LOWER',
+		'MAX', 'MERGE', 'MIN', 'MINUTE', 'MONTH', 'NATIONAL', 'NATURAL', 'NCHAR', 'NO', 'NOT', 'NULL', 'NUMERIC', 'OCTET_LENGTH',
+		'OF', 'OFFSET', 'ON', 'ONLY', 'OPEN', 'OR', 'ORDER', 'OUTER', 'OVER', 'PARAMETER', 'PLAN', 'POSITION', 'POST_EVENT',
+		'PRECISION', 'PRIMARY', 'PROCEDURE', 'RDB$DB_KEY', 'RDB$RECORD_VERSION', 'REAL', 'RECORD_VERSION', 'RECREATE', 'RECURSIVE',
+		'REFERENCES', 'REGR_AVGX', 'REGR_AVGY', 'REGR_COUNT', 'REGR_INTERCEPT', 'REGR_R2', 'REGR_SLOPE', 'REGR_SXX', 'REGR_SXY',
+		'REGR_SYY', 'RELEASE', 'RETURN', 'RETURNING_VALUES', 'RETURNS', 'REVOKE', 'RIGHT', 'ROLLBACK', 'ROW', 'ROWS', 'ROW_COUNT',
+		'SAVEPOINT', 'SCROLL', 'SECOND', 'SELECT', 'SENSITIVE', 'SET', 'SIMILAR', 'SMALLINT', 'SOME', 'SQLCODE', 'SQLSTATE', 'START',
+		'STDDEV_POP', 'STDDEV_SAMP', 'SUM', 'TABLE', 'THEN', 'TIME', 'TIMESTAMP', 'TO', 'TRAILING', 'TRIGGER', 'TRIM', 'TRUE', 'UNION',
+		'UNIQUE', 'UNKNOWN', 'UPDATE', 'UPDATING', 'UPPER', 'USER', 'USING', 'VALUE', 'VALUES', 'VARCHAR', 'VARIABLE', 'VARYING', 'VAR_POP',
+		'VAR_SAMP', 'VIEW', 'WHEN', 'WHERE', 'WHILE', 'WITH', 'YEAR'
+	];
+	// const TYPE_DATABASE               = -1;
+	// const TYPE_TABLE                  = 0;
+	// const TYPE_VIEW                   = 1;
+	// const TYPE_TRIGGER                = 2;
+	// const TYPE_COMPUTED_FIELD         = 3;
+	// const TYPE_VALIDATION             = 4;
+	// const TYPE_PROCEDURE              = 5;
+	// const TYPE_EXPRESSION_INDEX       = 6;
+	// const TYPE_EXCEPTION              = 7;
+	// const TYPE_USER                   = 8;
+	// const TYPE_FIELD                  = 9;
+	// const TYPE_INDEX                  = 10;
+	// const TYPE_USER_GROUP             = 12;
+	// const TYPE_ROLE                   = 13;
+	// const TYPE_GENERATOR              = 14;
+	// const TYPE_FUNCTION               = 15;
+	// const TYPE_BLOB_FILTER            = 16;
+	// const TYPE_COLLATION              = 17;
+	// const TYPE_PACKAGE                = 18;
+	// const TYPE_PACKAGE_BODY           = 19;
 
-	// Custom types
-	const TYPE_FUNCTION_ARGUMENT      = 10001;
-	const TYPE_PROCEDURE_PARAMETER    = 10002;
-	const TYPE_DOMAIN                 = 10003;
-	const TYPE_INDEX_SEGMENT          = 10004;
+	// // Custom types
+	// const TYPE_FUNCTION_ARGUMENT      = 10001;
+	// const TYPE_PROCEDURE_PARAMETER    = 10002;
+	// const TYPE_DOMAIN                 = 10003;
+	// const TYPE_INDEX_SEGMENT          = 10004;
 
-	protected $type;
+	// protected $type;
 	protected $name;
-	protected $dependencies;
-	protected $dependents;
+	// protected $dependencies;
+	// protected $dependents;
 	protected $db;
 	protected $metadata;
 
-	private static $discardFields = array(
-		'RDB$RUNTIME',
-		'RDB$COMPUTED_BLR',
-		);
+	private static $discardFields = ['RDB$RUNTIME', 'RDB$COMPUTED_BLR'];
 
-	abstract function loadMetadata();
+	abstract static function getSQL(): Select;
+	abstract function ddl(): string;
+	//abstract function loadMetadata();
 
-	function __construct(Database $db, $name){
-		if($this->type === null){
-			trigger_error("Type not set", E_USER_WARNING);
-		}
-
-		$this->db = $db;
-		$this->name = trim($name);
-		# TODO: switch
-		$this->loadMetadata();
-		//$this->getDependencies();
+	function loadMetadata(){
+		return $this->loadMetadataBySQL($this->getSQL());
 	}
 
-	function isNameQuotable() {
-		$a = preg_match_all("/^[a-z][a-z0-9\$_]*$/i", $this->name, $m);
-		return !($a > 0);
+	function __construct(Database $db, $name){
+		# TODO: exception
+		// if($this->type === null){
+		// 	trigger_error("Type not set", E_USER_WARNING);
+		// }
+
+		$this->db = $db;
+		$this->name = $name;
+
+		# TODO: switch
+		$this->loadMetadata();
+	}
+
+	static function isNameQuotable($name) {
+		$uname = strtoupper($name);
+
+		return ($uname !== $name) || in_array($uname, FirebirdObject::RESERVERD_WORDS) || !preg_match("/^[A-Z][A-Z0-9\$_]*$/", $uname);
 	}
 
 	function __toString(){
-		if($this->isNameQuotable()){
+		if($this->isNameQuotable($this->name)){
 			return "\"$this->name\"";
 		} else {
 			return $this->name;
 		}
 	}
 
-	function getDependencies(){
-		if($this->dependencies !== null){
-			return $this->dependencies;
-		}
+	// function getDependencies(){
+	// 	if($this->dependencies !== null){
+	// 		return $this->dependencies;
+	// 	}
 
-		$this->dependencies = array();
-		$sql = (new Select('RDB$DEPENDED_ON_TYPE, RDB$DEPENDED_ON_NAME'))
-		->From('RDB$DEPENDENCIES')
-		->Where(['RDB$DEPENDENT_TYPE = ?', $this->type])
-		->Where(['RDB$DEPENDENT_NAME = ?', $this->name])
-		;
-		// $sql = sprintf('SELECT RDB$DEPENDED_ON_TYPE, RDB$DEPENDED_ON_NAME
-		// 	FROM RDB$DEPENDENCIES
-		// 	WHERE RDB$DEPENDENT_TYPE = %d AND RDB$DEPENDENT_NAME = \'%s\'
-		// 	GROUP BY RDB$DEPENDED_ON_TYPE, RDB$DEPENDED_ON_NAME',
-		// 	$this->type,
-		// 	addslashes($this->name)
-		// );
+	// 	$this->dependencies = array();
+	// 	$sql = (new Select('RDB$DEPENDED_ON_TYPE, RDB$DEPENDED_ON_NAME'))
+	// 	->From('RDB$DEPENDENCIES')
+	// 	->Where(['RDB$DEPENDENT_TYPE = ?', $this->type])
+	// 	->Where(['RDB$DEPENDENT_NAME = ?', $this->name])
+	// 	;
+	// 	// $sql = sprintf('SELECT RDB$DEPENDED_ON_TYPE, RDB$DEPENDED_ON_NAME
+	// 	// 	FROM RDB$DEPENDENCIES
+	// 	// 	WHERE RDB$DEPENDENT_TYPE = %d AND RDB$DEPENDENT_NAME = \'%s\'
+	// 	// 	GROUP BY RDB$DEPENDED_ON_TYPE, RDB$DEPENDED_ON_NAME',
+	// 	// 	$this->type,
+	// 	// 	addslashes($this->name)
+	// 	// );
 
-		//print_r($sql);
-		//print "----------\n\n";
+	// 	//print_r($sql);
+	// 	//print "----------\n\n";
 
-		$conn = $this->getDb()->getConnection();
-		$q = $conn->Query($sql);
-		while($r = $conn->fetch_object($q)){
-			$type = (int)$r->{'RDB$DEPENDED_ON_TYPE'};
-			$name = trim($r->{'RDB$DEPENDED_ON_NAME'});
-			if($type == FirebirdObject::TYPE_COLLATION){
-				continue;
-			}
+	// 	$conn = $this->getDb()->getConnection();
+	// 	$q = $conn->Query($sql);
+	// 	while($r = $conn->fetch_object($q)){
+	// 		$type = (int)$r->{'RDB$DEPENDED_ON_TYPE'};
+	// 		$name = trim($r->{'RDB$DEPENDED_ON_NAME'});
+	// 		if($type == FirebirdObject::TYPE_COLLATION){
+	// 			continue;
+	// 		}
 
-			print "$this depends on ($name, $type)\n";
-			$o = FirebirdObject::create($this->getDb(), $name, $type);
-			$o->getDependencies();
-			$this->dependencies[] = $o;
-		}
+	// 		print "$this depends on ($name, $type)\n";
+	// 		$o = FirebirdObject::create($this->getDb(), $name, $type);
+	// 		$o->getDependencies();
+	// 		$this->dependencies[] = $o;
+	// 	}
 
-		# Table foreign keys
-		if($this->type == FirebirdObject::TYPE_TABLE){
-			if($FKs = $this->getFK()){
-				foreach($FKs as $fk){
-					$i = new Index($this->getDb(), $fk->getMetadata()->FOREIGN_KEY);
-					//print "FK:start\n";
-					//print_r($i);
-					//print "FK:end\n\n\n\n";
+	// 	# Table foreign keys
+	// 	if($this->type == FirebirdObject::TYPE_TABLE){
+	// 		if($FKs = $this->getFK()){
+	// 			foreach($FKs as $fk){
+	// 				$i = new Index($this->getDb(), $fk->getMetadata()->FOREIGN_KEY);
+	// 				//print "FK:start\n";
+	// 				//print_r($i);
+	// 				//print "FK:end\n\n\n\n";
 
-					//print sprintf("Depend on FK (%s)\n", $i->getMetadata()->RELATION_NAME);
-					$this->dependencies[] = new Table($this->getDb(), $i->getMetadata()->RELATION_NAME);
-					//$this->dependencies = array_merge($this->dependencies, $fk->getDependencies());
-					//$index = new IbaseIndex($this->db, $fk->getMetadata()->FOREIGN_KEY);
-					//print_r($fk->getMetadata());
-					//printf("\t%s->%s\n", $fk, $index->getMetadata()->RELATION_NAME);
+	// 				//print sprintf("Depend on FK (%s)\n", $i->getMetadata()->RELATION_NAME);
+	// 				$this->dependencies[] = new Table($this->getDb(), $i->getMetadata()->RELATION_NAME);
+	// 				//$this->dependencies = array_merge($this->dependencies, $fk->getDependencies());
+	// 				//$index = new IbaseIndex($this->db, $fk->getMetadata()->FOREIGN_KEY);
+	// 				//print_r($fk->getMetadata());
+	// 				//printf("\t%s->%s\n", $fk, $index->getMetadata()->RELATION_NAME);
 
-					//$o = $this->db->getObjectList()->get($index->getMetadata()->RELATION_NAME, FirebirdObject::TYPE_INDEX);
-					//$this->dependencies[] = $o;
-				}
-			}
-		}
+	// 				//$o = $this->db->getObjectList()->get($index->getMetadata()->RELATION_NAME, FirebirdObject::TYPE_INDEX);
+	// 				//$this->dependencies[] = $o;
+	// 			}
+	// 		}
+	// 	}
 
-		return $this->dependencies;
-	}
+	// 	return $this->dependencies;
+	// }
 
-	function getDependents(){
-		if($this->dependents !== null){
-			return $this->dependents;
-		}
+	// function getDependents(){
+	// 	if($this->dependents !== null){
+	// 		return $this->dependents;
+	// 	}
 
-		$this->dependents = array();
-		if($this->type == FirebirdObject::TYPE_FIELD){
-			$name = $this->getTable();
-		} else {
-			$name = $this->name;
-		}
+	// 	$this->dependents = array();
+	// 	if($this->type == FirebirdObject::TYPE_FIELD){
+	// 		$name = $this->getTable();
+	// 	} else {
+	// 		$name = $this->name;
+	// 	}
 
-		$sql = (new Select('RDB$DEPENDENT_TYPE, RDB$DEPENDENT_NAME'))
-		->From('RDB$DEPENDENCIES')
-		->Where(['RDB$DEPENDED_ON_NAME = ?', $name])
-		;
+	// 	$sql = (new Select('RDB$DEPENDENT_TYPE, RDB$DEPENDENT_NAME'))
+	// 	->From('RDB$DEPENDENCIES')
+	// 	->Where(['RDB$DEPENDED_ON_NAME = ?', $name])
+	// 	;
 
-		// $sql = sprintf('
-		// 	SELECT
-		// 		RDB$DEPENDENT_TYPE, RDB$DEPENDENT_NAME
-		// 	FROM
-		// 		RDB$DEPENDENCIES
-		// 	WHERE
-		// 		RDB$DEPENDED_ON_NAME = \'%s\'
-		// 	',
-		// 	addslashes($name)
-		// );
-		if($this->type == FirebirdObject::TYPE_FIELD){
-			$sql->Where(['RDB$FIELD_NAME = ?', $this]);
-			// $sql .= sprintf(' AND RDB$FIELD_NAME = \'%s\'', $this);
-		}
-		print_r($sql);
-		print "\n----------\n\n";
+	// 	// $sql = sprintf('
+	// 	// 	SELECT
+	// 	// 		RDB$DEPENDENT_TYPE, RDB$DEPENDENT_NAME
+	// 	// 	FROM
+	// 	// 		RDB$DEPENDENCIES
+	// 	// 	WHERE
+	// 	// 		RDB$DEPENDED_ON_NAME = \'%s\'
+	// 	// 	',
+	// 	// 	addslashes($name)
+	// 	// );
+	// 	if($this->type == FirebirdObject::TYPE_FIELD){
+	// 		$sql->Where(['RDB$FIELD_NAME = ?', $this]);
+	// 		// $sql .= sprintf(' AND RDB$FIELD_NAME = \'%s\'', $this);
+	// 	}
+	// 	// print_r($sql);
+	// 	// print "\n----------\n\n";
 
-		$conn = $this->getDb()->getConnection();
-		$q = $conn->Query($sql);
-		while($r = $conn->fetch_object($q)){
-			$type = (int)$r->{'RDB$DEPENDENT_TYPE'};
-			$name = trim($r->{'RDB$DEPENDENT_NAME'});
-			if($type == FirebirdObject::TYPE_COLLATION){
-				continue;
-			}
+	// 	$conn = $this->getDb()->getConnection();
+	// 	$q = $conn->Query($sql);
+	// 	while($r = $conn->fetch_object($q)){
+	// 		$type = (int)$r->{'RDB$DEPENDENT_TYPE'};
+	// 		$name = trim($r->{'RDB$DEPENDENT_NAME'});
+	// 		if($type == FirebirdObject::TYPE_COLLATION){
+	// 			continue;
+	// 		}
 
-			print "$this is dependent of ($name, $type)\n";
-			$o = FirebirdObject::create($this->getDb(), $name, $type);
-			$o->getDependents();
-			$this->dependencies[] = $o;
-		}
+	// 		print "$this is dependent of ($name, $type)\n";
+	// 		$o = FirebirdObject::create($this->getDb(), $name, $type);
+	// 		$o->getDependents();
+	// 		$this->dependencies[] = $o;
+	// 	}
 
-		# Table foreign keys
-		/*
-		if($this->type == FirebirdObject::TYPE_TABLE){
-			if($FKs = $this->getFK()){
-				foreach($FKs as $fk){
-					$i = new IbaseIndex($this->getDb(), $fk->getMetadata()->FOREIGN_KEY);
-					//print sprintf("Depend on FK (%s)\n", $i->getMetadata()->RELATION_NAME);
-					$this->dependencies[] = new IbaseTable($this->getDb(), $i->getMetadata()->RELATION_NAME);
-					//$this->dependencies = array_merge($this->dependencies, $fk->getDependencies());
-					//$index = new IbaseIndex($this->db, $fk->getMetadata()->FOREIGN_KEY);
-					//print_r($fk->getMetadata());
-					//printf("\t%s->%s\n", $fk, $index->getMetadata()->RELATION_NAME);
+	// 	# Table foreign keys
+	// 	/*
+	// 	if($this->type == FirebirdObject::TYPE_TABLE){
+	// 		if($FKs = $this->getFK()){
+	// 			foreach($FKs as $fk){
+	// 				$i = new IbaseIndex($this->getDb(), $fk->getMetadata()->FOREIGN_KEY);
+	// 				//print sprintf("Depend on FK (%s)\n", $i->getMetadata()->RELATION_NAME);
+	// 				$this->dependencies[] = new IbaseTable($this->getDb(), $i->getMetadata()->RELATION_NAME);
+	// 				//$this->dependencies = array_merge($this->dependencies, $fk->getDependencies());
+	// 				//$index = new IbaseIndex($this->db, $fk->getMetadata()->FOREIGN_KEY);
+	// 				//print_r($fk->getMetadata());
+	// 				//printf("\t%s->%s\n", $fk, $index->getMetadata()->RELATION_NAME);
 
-					//$o = $this->db->getObjectList()->get($index->getMetadata()->RELATION_NAME, FirebirdObject::TYPE_INDEX);
-					//$this->dependencies[] = $o;
-				}
-			}
-		}
-		*/
+	// 				//$o = $this->db->getObjectList()->get($index->getMetadata()->RELATION_NAME, FirebirdObject::TYPE_INDEX);
+	// 				//$this->dependencies[] = $o;
+	// 			}
+	// 		}
+	// 	}
+	// 	*/
 
-		return $this->dependents;
-	}
+	// 	return $this->dependents;
+	// }
 
 	function getMetadata(){
 		return $this->metadata;
@@ -216,6 +244,15 @@ abstract class FirebirdObject
 
 	function getDb(){
 		return $this->db;
+	}
+
+	protected function getList($sql){
+		$conn = $this->getDb()->getConnection();
+		$q = $conn->Query($sql);
+		while($r = $conn->fetch_assoc($q))
+			$list[] = FirebirdObject::process_rdb($r);
+
+		return $list??[];
 	}
 
 	protected function loadMetadataBySQL($sql){
@@ -234,59 +271,77 @@ abstract class FirebirdObject
 				trigger_error("More than one row for metadata\n$sql\nTrace:\n$trace\n", E_USER_ERROR);
 				break;
 			}
-			$this->metadata = new stdClass;
-			foreach($r as $k=>$v){
-				# Skip RUNTIME binary field
-				if(in_array($k, self::$discardFields)){
-					continue;
-				}
-				$this->metadata->{FirebirdObject::rdbs2human($k)} = $v;
-			}
+
+			$this->metadata = FirebirdObject::process_rdb($r);
+			// foreach($r as $k=>$v){
+			// 	# Skip RUNTIME binary field
+			// 	if(in_array($k, self::$discardFields)){
+			// 		continue;
+			// 	}
+
+			// 	if(is_string($v)){
+			// 		$v = trim($v);
+			// 	}
+
+			// 	$this->metadata->{FirebirdObject::rdbs2human($k)} = $v;
+			// }
 			$c++;
 		}
 
 		return $this->metadata;
 	}
 
-	static function create($db, $name, $type){
-		switch($type)
-		{
-			case FirebirdObject::TYPE_DOMAIN:
-				$class = "IbaseDomain";
-				break;
-			case FirebirdObject::TYPE_EXCEPTION:
-				$class = "IbaseException";
-				break;
-			case FirebirdObject::TYPE_FUNCTION:
-				$class = "IbaseFunction";
-				break;
-			# TODO: FunctionArgument?
-			case FirebirdObject::TYPE_GENERATOR:
-				$class = "IbaseGenerator";
-				break;
-			case FirebirdObject::TYPE_INDEX:
-				$class = "IbaseIndex";
-				break;
-			# TODO: IndexSegment?
-			case FirebirdObject::TYPE_PROCEDURE:
-				$class = "IbaseProcedure";
-				break;
-			# TODO: ProcedureParameter?
-			case FirebirdObject::TYPE_TABLE:
-				$class = "IbaseTable";
-				break;
-			# TODO: TableField?
-			case FirebirdObject::TYPE_TRIGGER:
-				$class = "IbaseTrigger";
-				break;
-			case FirebirdObject::TYPE_VIEW:
-				$class = "IbaseView";
-				break;
-			default:
-				trigger_error("Unsupported FirebirdObject type=$type for name=$name", E_USER_ERROR);
-				break;
+	protected static function process_rdb(Array $data){
+		$o = new stdClass;
+		foreach($data as $k=>$v){
+			# Skip RUNTIME binary field
+			if(in_array($k, self::$discardFields)){
+				continue;
+			}
+
+			if(is_string($v)){
+				$v = trim($v);
+			}
+
+			$o->{FirebirdObject::rdbs2human($k)} = $v;
 		}
 
-		return new $class($db, $name);
+		return $o;
 	}
+
+	// static function create($db, $name, $type){
+	// 	if($type == FirebirdObject::TYPE_TABLE)
+	// 		$class = "dqdp\FireBird\Table";
+	// 	elseif($type == FirebirdObject::TYPE_VIEW)
+	// 		$class = "dqdp\FireBird\View";
+	// 	elseif($type == FirebirdObject::TYPE_TRIGGER)
+	// 		$class = "dqdp\FireBird\Trigger";
+	// 	elseif($type == FirebirdObject::TYPE_DOMAIN)
+	// 		$class = "dqdp\FireBird\Domain";
+	// 	elseif($type == FirebirdObject::TYPE_COMPUTED_FIELD)
+	// 		$class = "dqdp\FireBird\Field";
+	// 	// elseif($type == FirebirdObject::TYPE_VALIDATION)
+	// 	elseif($type == FirebirdObject::TYPE_PROCEDURE)
+	// 		$class = "dqdp\FireBird\Procedure";
+	// 	// elseif($type == FirebirdObject::TYPE_EXPRESSION_INDEX)
+	// 	elseif($type == FirebirdObject::TYPE_EXCEPTION)
+	// 		$class = "dqdp\FireBird\Exception";
+	// 	// elseif($type == FirebirdObject::TYPE_USER)
+	// 	// elseif($type == FirebirdObject::TYPE_FIELD)
+	// 	elseif($type == FirebirdObject::TYPE_INDEX)
+	// 		$class = "dqdp\FireBird\Index";
+	// 	// elseif($type == FirebirdObject::TYPE_USER_GROUP)
+	// 	// elseif($type == FirebirdObject::TYPE_ROLE)
+	// 	elseif($type == FirebirdObject::TYPE_GENERATOR)
+	// 		$class = "dqdp\FireBird\Generator";
+	// 	elseif($type == FirebirdObject::TYPE_FUNCTION)
+	// 		$class = "dqdp\FireBird\Function";
+	// 	// elseif($type == FirebirdObject::TYPE_BLOB_FILTER)
+	// 	// elseif($type == FirebirdObject::TYPE_COLLATION)
+	// 	else
+	// 		# TODO: exception
+	// 		trigger_error("Unsupported FirebirdObject type=$type for name=$name", E_USER_ERROR);
+
+	// 	return new $class($db, $name);
+	// }
 }
