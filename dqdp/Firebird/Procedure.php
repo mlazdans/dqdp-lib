@@ -12,13 +12,7 @@ class Procedure extends FirebirdType
 	const TYPE_SELECTABLE      = 1;
 	const TYPE_EXECUTABLE      = 2;
 
-	# TODO: need caching??
 	protected $parameters;
-
-	// function __construct(Database $db, $name){
-	// 	$this->type = FirebirdObject::TYPE_PROCEDURE;
-	// 	parent::__construct($db, $name);
-	// }
 
 	static function getSQL(): Select {
 		return (new Select())
@@ -83,5 +77,4 @@ class Procedure extends FirebirdType
 
 		return join("\n", $ddl);
 	}
-
 }

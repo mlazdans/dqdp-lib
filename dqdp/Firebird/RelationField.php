@@ -20,21 +20,10 @@ class RelationField extends Field
 		->Where('f.RDB$SYSTEM_FLAG = 0');
 	}
 
-	// function ddl(): string {
-	// 	return "bla";
-	// }
-
 	function __construct(Relation $relation, $name){
-		// $this->type = FirebirdObject::TYPE_FIELD;
 		$this->relation = $relation;
 		parent::__construct($relation->getDb(), $name);
 	}
-
-	// static function getSQL(): Select {
-	// 	return parent::getSQL()
-	// 	->Select("rf.*")
-	// 	->Join('RDB$RELATION_FIELDS rf', 'rf.RDB$FIELD_SOURCE = f.RDB$FIELD_NAME');
-	// }
 
 	function loadMetadata(){
 		$sql = $this->getSQL()
@@ -52,13 +41,4 @@ class RelationField extends Field
 	function ddl(): string {
 		return "$this ".parent::ddl();
 	}
-
-	// function isQuotable(){
-	// 	return Field::isQuotable((int)$this->getMetadata()->FIELD_TYPE);
-	// }
-
-	// function ddl(): string {
-	// 	return "$this ".Field::ddl($this->getMetadata());
-	// }
-
 }

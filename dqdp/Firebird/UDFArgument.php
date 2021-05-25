@@ -17,9 +17,7 @@ class UDFArgument extends Field
 
 	protected $UDF;
 
-	# Argument $name is realy an integer - ARGUMENT_POSITION
 	function __construct(UDF $UDF, $name){
-		//$this->type = FirebirdObject::TYPE_FUNCTION_ARGUMENT;
 		$this->UDF = $UDF;
 		parent::__construct($UDF->getDb(), $name);
 	}
@@ -46,40 +44,13 @@ class UDFArgument extends Field
 
 		$MT = $this->getMetadata();
 		$FMT = $this->UDF->getMetadata();
-		/*
-		$FT = $MT->FIELD_TYPE;
-		if(in_array($FT, array(IbaseField::TYPE_TEXT, IbaseField::TYPE_VARYING, IbaseField::TYPE_CSTRING))){
-			# TODO: CHARACTER SET
-			$ddl = sprintf("%s(%d)", IbaseField::nameByType($FT), $MT->FIELD_LENGTH);
-		} elseif(in_array($FT, array(IbaseField::TYPE_SHORT, IbaseField::TYPE_LONG, IbaseField::TYPE_QUAD))){
-			if($MT->FIELD_PRECISION){
-				if($MT->FIELD_SUB_TYPE){
-					$ddl = sprintf(
-						"%s(%d, %d)",
-						IbaseField::nameByIntSubtype($MT->FIELD_SUB_TYPE),
-						$MT->FIELD_PRECISION,
-						-$MT->FIELD_SCALE
-						);
-				} else {
-				}
-			} else {
-				$ddl = sprintf("%s", IbaseField::nameByType($FT));
-			}
-		} else {
-			$ddl = sprintf("%s", IbaseField::nameByType($FT));
-		}
-		*/
-		// printr($MT);
-		// print parent::ddl();
-		// die;
-		//$ddl = (new Field($this->getDb(), $MT))::ddl();
 		$ddl = parent::ddl();
 
 		$paramType = "";
 		if($MT->MECHANISM == UDFArgument::MECHANISM_VALUE){
 			$paramType = " BY VALUE";
 		} elseif($MT->MECHANISM == UDFArgument::MECHANISM_REFERENCE){
-		// 	$paramType = " BY REFERENCE";
+			// $paramType = " BY REFERENCE";
 		} elseif($MT->MECHANISM == UDFArgument::MECHANISM_DESCRIPTOR){
 			$paramType = " BY DESCRIPTOR";
 		} elseif($MT->MECHANISM == UDFArgument::MECHANISM_ARRAY_DESCRIPTOR){

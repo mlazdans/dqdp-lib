@@ -15,11 +15,6 @@ class Relation extends FirebirdType
 	const TYPE_GLOBAL_TEMPORARY_PRESERVE   = 4;
 	const TYPE_GLOBAL_TEMPORARY_DELETE     = 5;
 
-	// function __construct(Database $db, $name){
-	// 	$this->type = FirebirdType::RELATION;
-	// 	parent::__construct($db, $name);
-	// }
-
 	static function getSQL(): Select {
 		return (new Select())
 		->From('RDB$RELATIONS')

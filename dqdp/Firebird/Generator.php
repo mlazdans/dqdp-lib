@@ -8,11 +8,6 @@ use dqdp\SQL\Select;
 
 class Generator extends FirebirdObject
 {
-	// function __construct(Database $db, $name){
-	// 	$this->type = FirebirdObject::TYPE_GENERATOR;
-	// 	parent::__construct($db, $name);
-	// }
-
 	static function getSQL(): Select {
 		return (new Select())
 		->From('RDB$GENERATORS')

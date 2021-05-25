@@ -26,11 +26,6 @@ class UDF extends FirebirdType
 
 	protected $arguments;
 
-	// function __construct(Database $db, $name){
-	// 	$this->type = FirebirdObject::TYPE_FUNCTION;
-	// 	parent::__construct($db, $name);
-	// }
-
 	static function getSQL(): Select {
 		return (new Select())
 		->From('RDB$FUNCTIONS')

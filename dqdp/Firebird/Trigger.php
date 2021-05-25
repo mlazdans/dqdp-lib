@@ -39,27 +39,6 @@ class Trigger extends FirebirdType
 	// const DB_TRIGGER_TRANS_ROLLBACK = 4;
 	// const DB_TRIGGER_MAX            = 5;
 
-	// function __construct(Database $db, $name){
-	// 	$this->type = FirebirdObject::TYPE_TRIGGER;
-	// 	parent::__construct($db, $name);
-	// }
-
-	// function activate(){
-	// 	return $this->getDb()->getConnection()->Query("ALTER TRIGGER $this ACTIVE");
-	// }
-
-	// function deactivate(){
-	// 	return $this->getDb()->getConnection()->Query("ALTER TRIGGER $this INACTIVE");
-	// }
-
-	// function enable(){
-	// 	return $this->activate();
-	// }
-
-	// function disable(){
-	// 	return $this->deactivate();
-	// }
-
 	static function getSQL(): Select {
 		return (new Select())
 		->From('RDB$TRIGGERS')
@@ -75,11 +54,7 @@ class Trigger extends FirebirdType
 	}
 
 	// Copied from FB source
-	function TRIGGER_ACTION_PREFIX($val){
-		return ($val + 1) & 1;
-	}
-
-	function TRIGGER_ACTION_SUFFIX($val, $slot){
+	private function TRIGGER_ACTION_SUFFIX($val, $slot){
 		return (($val + 1) >> ($slot * 2 - 1)) & 3;
 	}
 

@@ -13,18 +13,7 @@ class Field extends FirebirdType
 		->From('RDB$FIELDS')
 		->Where('RDB$SYSTEM_FLAG = 0');
 		;
-		// return (new Select('rf.*, f.*, c.RDB$COLLATION_NAME, cs.RDB$BYTES_PER_CHARACTER'))
-		// ->From('RDB$FIELDS f')
-		// ->LeftJoin('RDB$CHARACTER_SETS cs', 'cs.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID')
-		// ->LeftJoin('RDB$RELATION_FIELDS rf', 'rf.RDB$FIELD_SOURCE = f.RDB$FIELD_NAME')
-		// ->LeftJoin('RDB$COLLATIONS c', '(c.RDB$COLLATION_ID = rf.RDB$COLLATION_ID AND c.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID)')
-		// ->Where('f.RDB$SYSTEM_FLAG = 0');
 	}
-
-	// function __construct(Database $db, $name){
-	// 	$this->type = FirebirdObject::TYPE_FIELD;
-	// 	parent::__construct($db, $name);
-	// }
 
 	const TYPE_SHORT                          = 7;
 	const TYPE_LONG                           = 8;
@@ -214,22 +203,4 @@ class Field extends FirebirdType
 
 		return $ddl;
 	}
-
-	// static function getSQL(){
-	// 	return (new Select('rf.*, f.*, c.RDB$COLLATION_NAME, cs.RDB$BYTES_PER_CHARACTER'))
-	// 	->From('RDB$FIELDS f')
-	// 	->Join('RDB$RELATION_FIELDS rf', 'rf.RDB$FIELD_SOURCE = f.RDB$FIELD_NAME')
-	// 	->LeftJoin('RDB$COLLATIONS c', '(c.RDB$COLLATION_ID = rf.RDB$COLLATION_ID AND c.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID)')
-	// 	->LeftJoin('RDB$CHARACTER_SETS cs', 'cs.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID')
-	// 	->Where('f.RDB$SYSTEM_FLAG = 0');
-	// }
-
-	// function loadMetadata(){
-	// 	$sql = $this->getSQL()
-	// 	->Where(['RDB$RELATION_NAME = ?', $this->table])
-	// 	->Where(['rf.RDB$FIELD_NAME = ?', $this->name])
-	// 	;
-
-	// 	return parent::loadMetadataBySQL($sql);
-	// }
 }

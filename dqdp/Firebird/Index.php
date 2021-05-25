@@ -24,27 +24,6 @@ class Index extends FirebirdType
 		->Where('i.RDB$SYSTEM_FLAG = 0');
 	}
 
-	// function __construct(Database $db, $name){
-	// 	$this->type = FirebirdObject::TYPE_INDEX;
-	// 	parent::__construct($db, $name);
-	// }
-
-	// function activate(){
-	// 	return $this->getDb()->getConnection()->Query("ALTER INDEX $this ACTIVE");
-	// }
-
-	// function deactivate(){
-	// 	return $this->getDb()->getConnection()->Query("ALTER INDEX $this INACTIVE");
-	// }
-
-	// function enable(){
-	// 	return $this->activate();
-	// }
-
-	// function disable(){
-	// 	return $this->deactivate();
-	// }
-
 	function loadMetadata(){
 		$sql = $this->getSQL()->Where(['i.RDB$INDEX_NAME = ?', $this->name]);
 		// $sql = (new Select('i.*, rc.*'))

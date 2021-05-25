@@ -29,32 +29,6 @@ abstract class FirebirdObject
 		'UNIQUE', 'UNKNOWN', 'UPDATE', 'UPDATING', 'UPPER', 'USER', 'USING', 'VALUE', 'VALUES', 'VARCHAR', 'VARIABLE', 'VARYING', 'VAR_POP',
 		'VAR_SAMP', 'VIEW', 'WHEN', 'WHERE', 'WHILE', 'WITH', 'YEAR'
 	];
-	// const TYPE_DATABASE               = -1;
-	// const TYPE_TABLE                  = 0;
-	// const TYPE_VIEW                   = 1;
-	// const TYPE_TRIGGER                = 2;
-	// const TYPE_COMPUTED_FIELD         = 3;
-	// const TYPE_VALIDATION             = 4;
-	// const TYPE_PROCEDURE              = 5;
-	// const TYPE_EXPRESSION_INDEX       = 6;
-	// const TYPE_EXCEPTION              = 7;
-	// const TYPE_USER                   = 8;
-	// const TYPE_FIELD                  = 9;
-	// const TYPE_INDEX                  = 10;
-	// const TYPE_USER_GROUP             = 12;
-	// const TYPE_ROLE                   = 13;
-	// const TYPE_GENERATOR              = 14;
-	// const TYPE_FUNCTION               = 15;
-	// const TYPE_BLOB_FILTER            = 16;
-	// const TYPE_COLLATION              = 17;
-	// const TYPE_PACKAGE                = 18;
-	// const TYPE_PACKAGE_BODY           = 19;
-
-	// // Custom types
-	// const TYPE_FUNCTION_ARGUMENT      = 10001;
-	// const TYPE_PROCEDURE_PARAMETER    = 10002;
-	// const TYPE_DOMAIN                 = 10003;
-	// const TYPE_INDEX_SEGMENT          = 10004;
 
 	// protected $type;
 	protected $name;
@@ -67,7 +41,6 @@ abstract class FirebirdObject
 
 	abstract static function getSQL(): Select;
 	abstract function ddl(): string;
-	//abstract function loadMetadata();
 
 	function loadMetadata(){
 		return $this->loadMetadataBySQL($this->getSQL());

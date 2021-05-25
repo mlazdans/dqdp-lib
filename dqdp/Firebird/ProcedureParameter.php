@@ -14,7 +14,6 @@ class ProcedureParameter extends Field
 	protected $proc;
 
 	function __construct(Procedure $proc, $name){
-		//$this->type = FirebirdObject::TYPE_PROCEDURE_PARAMETER;
 		$this->proc = $proc;
 		parent::__construct($proc->getDb(), $name);
 	}
