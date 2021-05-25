@@ -22,17 +22,13 @@ class Procedure extends FirebirdType
 	}
 
 	function loadMetadata(){
-		$sql = $this->getSQL()
-		->Where(['RDB$PROCEDURE_NAME = ?', $this->name])
-		;
+		$sql = $this->getSQL()->Where(['RDB$PROCEDURE_NAME = ?', $this->name]);
 
 		return parent::loadMetadataBySQL($sql);
 	}
 
 	function getParameters(){
-		$sql = ProcedureParameter::getSQL()
-		->Where(['pp.RDB$PROCEDURE_NAME = ?', $this->name])
-		;
+		$sql = ProcedureParameter::getSQL()->Where(['pp.RDB$PROCEDURE_NAME = ?', $this->name]);
 
 		foreach($this->getList($sql) as $r){
 			$list[] = new ProcedureParameter($this, $r->PARAMETER_NAME);

@@ -17,7 +17,8 @@ class RelationField extends Field
 		# TODO: check c join conditions
 		->LeftJoin('RDB$COLLATIONS c', '(c.RDB$COLLATION_ID = rf.RDB$COLLATION_ID AND c.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID)')
 		->LeftJoin('RDB$CHARACTER_SETS cs', 'cs.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID')
-		->Where('f.RDB$SYSTEM_FLAG = 0');
+		->Where('f.RDB$SYSTEM_FLAG = 0')
+		->OrderBy('RDB$FIELD_POSITION');
 	}
 
 	function __construct(Relation $relation, $name){

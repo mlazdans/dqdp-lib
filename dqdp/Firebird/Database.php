@@ -21,10 +21,7 @@ class Database extends FirebirdObject
 	}
 
 	function getTables(): array {
-		$sql = Relation::getSQL()
-		->Where(['RDB$RELATION_TYPE = ?', Relation::TYPE_PERSISTENT])
-		->OrderBy('RDB$RELATION_NAME')
-		;
+		$sql = Relation::getSQL()->Where(['RDB$RELATION_TYPE = ?', Relation::TYPE_PERSISTENT]);
 
 		foreach($this->getList($sql) as $r){
 			$list[] = new Relation($this->getDb(), $r->RELATION_NAME);
@@ -34,10 +31,7 @@ class Database extends FirebirdObject
 	}
 
 	function getViews(): array {
-		$sql = Relation::getSQL()
-		->Where(['RDB$RELATION_TYPE = ?', Relation::TYPE_VIEW])
-		->OrderBy('RDB$RELATION_NAME')
-		;
+		$sql = Relation::getSQL()->Where(['RDB$RELATION_TYPE = ?', Relation::TYPE_VIEW]);
 
 		foreach($this->getList($sql) as $r){
 			$list[] = new Relation($this->getDb(), $r->RELATION_NAME);

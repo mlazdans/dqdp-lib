@@ -18,18 +18,18 @@ class Relation extends FirebirdType
 	static function getSQL(): Select {
 		return (new Select())
 		->From('RDB$RELATIONS')
-		->Where('RDB$SYSTEM_FLAG = 0');
+		->Where('RDB$SYSTEM_FLAG = 0')
+		->OrderBy('RDB$RELATION_NAME');
 	}
 
 	function loadMetadata(){
 		$sql = $this->getSQL()->Where(['RDB$RELATION_NAME = ?', $this->name]);
+
 		return parent::loadMetadataBySQL($sql);
 	 }
 
 	function getFields(): array {
-		$sql = RelationField::getSQL()
-		->Where(['RDB$RELATION_NAME = ?', $this->name])
-		->OrderBy('RDB$FIELD_POSITION');
+		$sql = RelationField::getSQL()->Where(['RDB$RELATION_NAME = ?', $this->name]);
 
 		foreach($this->getList($sql) as $r){
 			$list[] = new RelationField($this, $r->FIELD_NAME);
