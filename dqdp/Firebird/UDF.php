@@ -73,7 +73,7 @@ class UDF extends FirebirdType
 		}
 
 		if($in_args){
-			$ddl[] = join(",", $in_args);
+			$ddl[] = join(", ", $in_args);
 		}
 
 		if($out_arg){

@@ -78,15 +78,15 @@ class UDFArgument extends Field
 
 		$paramType = "";
 		if($MD->MECHANISM == UDFArgument::MECHANISM_VALUE){
-			$paramType = "BY VALUE";
+			$paramType = " BY VALUE";
 		} elseif($MD->MECHANISM == UDFArgument::MECHANISM_REFERENCE){
 			// $paramType = " BY REFERENCE";
 		} elseif($MD->MECHANISM == UDFArgument::MECHANISM_DESCRIPTOR){
-			$paramType = "BY DESCRIPTOR";
+			$paramType = " BY DESCRIPTOR";
 		} elseif($MD->MECHANISM == UDFArgument::MECHANISM_ARRAY_DESCRIPTOR){
-			$paramType = "BY SCALAR_ARRAY";
+			$paramType = " BY SCALAR_ARRAY";
 		} elseif($MD->MECHANISM == UDFArgument::MECHANISM_NULL){
-			$paramType = "NULL";
+			$paramType = " NULL";
 		} else {
 			trigger_error("Unknown MECHANISM: $MD->MECHANISM");
 		}
@@ -96,14 +96,14 @@ class UDFArgument extends Field
 			if($UDFMD->RETURN_ARGUMENT){
 				$ddl = "RETURNS PARAMETER {$UDFMD->RETURN_ARGUMENT}";
 			} else {
-				$ddl = "RETURNS $ddl $paramType";
+				$ddl = "RETURNS $ddl$paramType";
 
 				if($MD->MECHANISM < 0){
 					$ddl .= " FREE_IT";
 				}
 			}
 		} else {
-			$ddl = "$ddl $paramType";
+			$ddl = "$ddl$paramType";
 			// $ddl = "{$ddl}{$paramType}";
 		}
 
