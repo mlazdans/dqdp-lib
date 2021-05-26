@@ -38,20 +38,20 @@ class Relation extends FirebirdType
 		return $list??[];
 	}
 
-	function getIndexes($params = []): array {
+	function getIndexes(): array {
 		$sql = Index::getSQL()->Where(['i.RDB$RELATION_NAME = ?', $this->name]);
 
-		if(isset($params['CONSTRAINT_TYPE'])){
-			if($params['CONSTRAINT_TYPE'] == Index::TYPE_FK){
-				$sql->Where('rc.RDB$CONSTRAINT_TYPE = \'FOREIGN KEY\'');
-			} elseif($params['CONSTRAINT_TYPE'] == Index::TYPE_PK){
-				$sql->Where('rc.RDB$CONSTRAINT_TYPE = \'PRIMARY KEY\'');
-			} elseif($params['CONSTRAINT_TYPE'] == Index::TYPE_UNIQUE){
-				$sql->Where('rc.RDB$CONSTRAINT_TYPE = \'UNIQUE\'');
-			} else {
-				$sql->Where('rc.RDB$CONSTRAINT_TYPE IS NULL');
-			}
-		}
+		// if(isset($params['CONSTRAINT_TYPE'])){
+		// 	if($params['CONSTRAINT_TYPE'] == Index::TYPE_FK){
+		// 		$sql->Where('rc.RDB$CONSTRAINT_TYPE = \'FOREIGN KEY\'');
+		// 	} elseif($params['CONSTRAINT_TYPE'] == Index::TYPE_PK){
+		// 		$sql->Where('rc.RDB$CONSTRAINT_TYPE = \'PRIMARY KEY\'');
+		// 	} elseif($params['CONSTRAINT_TYPE'] == Index::TYPE_UNIQUE){
+		// 		$sql->Where('rc.RDB$CONSTRAINT_TYPE = \'UNIQUE\'');
+		// 	} else {
+		// 		$sql->Where('rc.RDB$CONSTRAINT_TYPE IS NULL');
+		// 	}
+		// }
 
 		foreach($this->getList($sql) as $r){
 			$list[] = new Index($this->getDb(), $r->INDEX_NAME);
@@ -60,17 +60,29 @@ class Relation extends FirebirdType
 		return $list??[];
 	}
 
-	function getPK(): array {
-		return $this->getIndexes(['CONSTRAINT_TYPE'=>Index::TYPE_PK]);
-	}
+	// function getFKs(){
+	// 	$sql = RelationConstraintFK::getSQL()
+	// 	->Where(['rf.RDB$RELATION_NAME = ?', $this])
+	// 	;
 
-	function getFK(): array {
-		return $this->getIndexes(['CONSTRAINT_TYPE'=>Index::TYPE_FK]);
-	}
+	// 	foreach($this->getList($sql) as $r){
+	// 		$list[] = new RelationConstraintFK($this->getDb(), $r->INDEX_NAME);
+	// 	}
 
-	function getUnique(): array {
-		return $this->getIndexes(['CONSTRAINT_TYPE'=>Index::TYPE_UNIQUE]);
-	}
+	// 	return $list??[];
+	// }
+
+	// function getPK(): array {
+	// 	return $this->getIndexes(['CONSTRAINT_TYPE'=>Index::TYPE_PK]);
+	// }
+
+	// function getFK(): array {
+	// 	return $this->getIndexes(['CONSTRAINT_TYPE'=>Index::TYPE_FK]);
+	// }
+
+	// function getUnique(): array {
+	// 	return $this->getIndexes(['CONSTRAINT_TYPE'=>Index::TYPE_UNIQUE]);
+	// }
 
 	# TODO: view
 	function ddl(): string {

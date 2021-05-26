@@ -1,6 +1,7 @@
 <?php
 
 # TODO: RDB$VIEW_RELATIONS
+# TODO: ddl() ALTER, CREATE, etc
 
 declare(strict_types = 1);
 
@@ -83,7 +84,8 @@ class Database extends FirebirdObject
 	}
 
 	function getIndexes(){
-		$sql = Index::getSQL()->Where('rc.RDB$CONSTRAINT_TYPE IS NULL');
+		// $sql = Index::getSQL()->Where('rc.RDB$CONSTRAINT_TYPE IS NULL');
+		$sql = Index::getSQL();
 		foreach($this->getList($sql) as $r){
 			$list[] = new Index($this->getDb(), $r->INDEX_NAME);
 		}
@@ -92,9 +94,36 @@ class Database extends FirebirdObject
 	}
 
 	function getFKs(){
-		$sql = Index::getSQL()->Where('rc.RDB$CONSTRAINT_TYPE = \'FOREIGN KEY\'');
+		$sql = RelationConstraintFK::getSQL();
 		foreach($this->getList($sql) as $r){
-			$list[] = new Index($this->getDb(), $r->INDEX_NAME);
+			$list[] = new RelationConstraintFK($this->getDb(), $r->INDEX_NAME);
+		}
+
+		return $list??[];
+	}
+
+	function getPKs(){
+		$sql = RelationConstraintPK::getSQL();
+		foreach($this->getList($sql) as $r){
+			$list[] = new RelationConstraintPK($this->getDb(), $r->INDEX_NAME);
+		}
+
+		return $list??[];
+	}
+
+	function getUniqs(){
+		$sql = RelationConstraintUniq::getSQL();
+		foreach($this->getList($sql) as $r){
+			$list[] = new RelationConstraintUniq($this->getDb(), $r->INDEX_NAME);
+		}
+
+		return $list??[];
+	}
+
+	function getChecks(){
+		$sql = RelationConstraintCheck::getSQL();
+		foreach($this->getList($sql) as $r){
+			$list[] = new RelationConstraintCheck($this->getDb(), $r->CONSTRAINT_NAME);
 		}
 
 		return $list??[];
