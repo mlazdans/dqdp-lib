@@ -52,11 +52,15 @@ abstract class FirebirdObject
 		// 	trigger_error("Type not set", E_USER_WARNING);
 		// }
 
-		$this->db = $db;
 		$this->name = $name;
+		$this->setDb($db);
 
 		# TODO: switch
 		$this->loadMetadata();
+	}
+
+	function setDb(Database $db){
+		$this->db = $db;
 	}
 
 	static function isNameQuotable($name) {
