@@ -1,5 +1,7 @@
 <?php
 
+# TODO: RDB$VIEW_RELATIONS
+
 declare(strict_types = 1);
 
 namespace dqdp\FireBird;
