@@ -917,10 +917,13 @@ function format_debug($v, $depth = 0){
 			return "$item";
 		} elseif(is_array($item)) {
 			return "[ARRAY]";
+		} elseif(is_object($item) && method_exists($item , '__toString')) {
+			return "$item";
 		} else {
 			return "[BLOB]";
 		}
 	});
+
 	return $vars;
 }
 
