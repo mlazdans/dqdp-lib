@@ -224,7 +224,7 @@ abstract class Field extends FirebirdType
 		if(in_array($FT, [Field::TYPE_SHORT, Field::TYPE_LONG, Field::TYPE_QUAD, Field::TYPE_INT64])){
 			if($MT->FIELD_SUB_TYPE){
 				$datatype = sprintf(
-					"%s(%d,%d)",
+					"%s(%d, %d)",
 					Field::$IntSubtypeNames[$MT->FIELD_SUB_TYPE],
 					$MT->FIELD_PRECISION,
 					-$MT->FIELD_SCALE
