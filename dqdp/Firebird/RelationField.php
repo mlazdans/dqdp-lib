@@ -38,6 +38,7 @@ class RelationField extends Field
 		return $this->relation;
 	}
 
+	# TODO: col_constraint
 	function ddl(): string {
 		$DBMD = $this->getDb()->getMetadata();
 		$parts = $this->ddlParts();
