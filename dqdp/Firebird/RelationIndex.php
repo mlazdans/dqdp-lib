@@ -10,7 +10,7 @@ use dqdp\SQL\Select;
 //   INDEX indexname ON tablename
 //   {(col [, col …]) | COMPUTED BY (<expression>)}
 
-class Index extends FirebirdType
+class RelationIndex extends FirebirdType
 {
 	const TYPE_INDEX    = 0;
 	const TYPE_FK       = 1;
@@ -19,6 +19,13 @@ class Index extends FirebirdType
 
 	const INDEX_TYPE_ASC  = 0;
 	const INDEX_TYPE_DESC = 1;
+
+	protected $relation;
+
+	function __construct(Relation $relation, $name){
+		$this->relation = $relation;
+		parent::__construct($relation->getDb(), $name);
+	}
 
 	static function getSQL(): Select {
 		// return (new Select('i.*, rc.*, refc.*'))
@@ -78,6 +85,10 @@ class Index extends FirebirdType
 	// ALTER TABLE tablename ADD [CONSTRAINT constraint] {PRIMARY KEY | UNIQUE} ( col [, col …])
 	// ALTER TABLE tablename ADD [CONSTRAINT constraint] FOREIGN KEY ( col [, col …]) REFERENCES other_table [( other_col [, other_col …])] [ON DELETE {NO ACTION|CASCADE|SET DEFAULT|SET NULL}] [ON UPDATE {NO ACTION|CASCADE|SET DEFAULT|SET NULL}]
 
+	function getRelation(){
+		return $this->relation;
+	}
+
 	function ddl(): string {
 		$MD = $this->getMetadata();
 
@@ -110,7 +121,7 @@ class Index extends FirebirdType
 			$ddl[] = "UNIQUE";
 		}
 
-		if($MD->INDEX_TYPE == Index::INDEX_TYPE_DESC){
+		if($MD->INDEX_TYPE == RelationIndex::INDEX_TYPE_DESC){
 			$ddl[] = "DESCENDING";
 		}
 

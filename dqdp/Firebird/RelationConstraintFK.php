@@ -33,8 +33,7 @@ class RelationConstraintFK extends RelationConstraint
 
 		$ddl[] = "ALTER TABLE $MD->RELATION_NAME ADD";
 
-		# TODO: skip auto generated names
-		if($MD->CONSTRAINT_NAME){
+		if($MD->INDEX_NAME == $MD->CONSTRAINT_NAME){
 			$ddl[] = "CONSTRAINT $MD->CONSTRAINT_NAME";
 		}
 
@@ -46,7 +45,7 @@ class RelationConstraintFK extends RelationConstraint
 		}
 
 		# TODO: iekš getSQL()?
-		$fk = new RelationConstraintPK($this->getDb(), $MD->FOREIGN_KEY);
+		$fk = new RelationConstraintPK($this->getRelation(), $MD->FOREIGN_KEY);
 		$fkMD = $fk->getMetadata();
 
 		$ddl[] = "REFERENCES $fkMD->RELATION_NAME (".join(",", $fk->getSegments()).")";

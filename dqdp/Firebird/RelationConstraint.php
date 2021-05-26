@@ -6,7 +6,7 @@ namespace dqdp\FireBird;
 
 use dqdp\SQL\Select;
 
-abstract class RelationConstraint extends Index
+abstract class RelationConstraint extends RelationIndex
 {
 	static function getSQL(): Select {
 		// return (new Select('i.*, rc.*, refc.*'))

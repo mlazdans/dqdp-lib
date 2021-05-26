@@ -29,7 +29,7 @@ class RelationConstraintUniq extends RelationConstraint
 	function ddl(): string {
 		$MD = $this->getMetadata();
 
-		if($MD->CONSTRAINT_NAME){
+		if($MD->INDEX_NAME == $MD->CONSTRAINT_NAME){
 			$ddl[] = "CONSTRAINT $MD->CONSTRAINT_NAME";
 		}
 

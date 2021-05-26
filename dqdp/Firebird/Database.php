@@ -14,15 +14,22 @@ class Database extends FirebirdObject
 {
 	private $conn;
 
-	function __construct(IBase $conn){
+	function __construct(IBase $conn, string $name = "firebird_db"){
 		$this->connect($conn);
-		parent::__construct($this, '');
+		parent::__construct($this, $name);
+	}
+
+	function __toString(){
+		return $this->name;
 	}
 
 	function connect(IBase $conn){
 		$this->conn = $conn;
 	}
 
+	/**
+	 * @return Relation[]
+	 **/
 	function getTables(): array {
 		$sql = Relation::getSQL()->Where(['RDB$RELATION_TYPE = ?', Relation::TYPE_PERSISTENT]);
 
@@ -33,6 +40,9 @@ class Database extends FirebirdObject
 		return $list??[];
 	}
 
+	/**
+	 * @return Relation[]
+	 **/
 	function getViews(): array {
 		$sql = Relation::getSQL()->Where(['RDB$RELATION_TYPE = ?', Relation::TYPE_VIEW]);
 
@@ -43,6 +53,9 @@ class Database extends FirebirdObject
 		return $list??[];
 	}
 
+	/**
+	 * @return Trigger[]
+	 **/
 	function getTriggers(): array {
 		$sql = Trigger::getSQL();
 		foreach($this->getList($sql) as $r){
@@ -56,6 +69,9 @@ class Database extends FirebirdObject
 	// 	return (new TriggerList($this))->get(['active'=>true]);
 	// }
 
+	/**
+	 * @return Procedure[]
+	 **/
 	function getProcedures(){
 		$sql = Procedure::getSQL();
 		foreach($this->getList($sql) as $r){
@@ -65,6 +81,9 @@ class Database extends FirebirdObject
 		return $list??[];
 	}
 
+	/**
+	 * @return Generator[]
+	 **/
 	function getGenerators(): array {
 		$sql = Generator::getSQL();
 		foreach($this->getList($sql) as $r){
@@ -74,6 +93,9 @@ class Database extends FirebirdObject
 		return $list??[];
 	}
 
+	/**
+	 * @return FireBirdException[]
+	 **/
 	function getExceptions(){
 		$sql = FireBirdException::getSQL();
 		foreach($this->getList($sql) as $r){
@@ -83,52 +105,55 @@ class Database extends FirebirdObject
 		return $list??[];
 	}
 
-	function getIndexes(){
-		// $sql = Index::getSQL()->Where('rc.RDB$CONSTRAINT_TYPE IS NULL');
-		$sql = Index::getSQL();
-		foreach($this->getList($sql) as $r){
-			$list[] = new Index($this->getDb(), $r->INDEX_NAME);
-		}
+	// function getIndexes(){
+	// 	// $sql = Index::getSQL()->Where('rc.RDB$CONSTRAINT_TYPE IS NULL');
+	// 	$sql = Index::getSQL();
+	// 	foreach($this->getList($sql) as $r){
+	// 		$list[] = new Index($this->getDb(), $r->INDEX_NAME);
+	// 	}
 
-		return $list??[];
-	}
+	// 	return $list??[];
+	// }
 
-	function getFKs(){
-		$sql = RelationConstraintFK::getSQL();
-		foreach($this->getList($sql) as $r){
-			$list[] = new RelationConstraintFK($this->getDb(), $r->INDEX_NAME);
-		}
+	// function getFKs(){
+	// 	$sql = RelationConstraintFK::getSQL();
+	// 	foreach($this->getList($sql) as $r){
+	// 		$list[] = new RelationConstraintFK($this->getDb(), $r->INDEX_NAME);
+	// 	}
 
-		return $list??[];
-	}
+	// 	return $list??[];
+	// }
 
-	function getPKs(){
-		$sql = RelationConstraintPK::getSQL();
-		foreach($this->getList($sql) as $r){
-			$list[] = new RelationConstraintPK($this->getDb(), $r->INDEX_NAME);
-		}
+	// function getPKs(){
+	// 	$sql = RelationConstraintPK::getSQL();
+	// 	foreach($this->getList($sql) as $r){
+	// 		$list[] = new RelationConstraintPK($this->getDb(), $r->INDEX_NAME);
+	// 	}
 
-		return $list??[];
-	}
+	// 	return $list??[];
+	// }
 
-	function getUniqs(){
-		$sql = RelationConstraintUniq::getSQL();
-		foreach($this->getList($sql) as $r){
-			$list[] = new RelationConstraintUniq($this->getDb(), $r->INDEX_NAME);
-		}
+	// function getUniqs(){
+	// 	$sql = RelationConstraintUniq::getSQL();
+	// 	foreach($this->getList($sql) as $r){
+	// 		$list[] = new RelationConstraintUniq($this->getDb(), $r->INDEX_NAME);
+	// 	}
 
-		return $list??[];
-	}
+	// 	return $list??[];
+	// }
 
-	function getChecks(){
-		$sql = RelationConstraintCheck::getSQL();
-		foreach($this->getList($sql) as $r){
-			$list[] = new RelationConstraintCheck($this->getDb(), $r->CONSTRAINT_NAME);
-		}
+	// function getChecks(){
+	// 	$sql = RelationConstraintCheck::getSQL();
+	// 	foreach($this->getList($sql) as $r){
+	// 		$list[] = new RelationConstraintCheck($this->getDb(), $r->CONSTRAINT_NAME);
+	// 	}
 
-		return $list??[];
-	}
+	// 	return $list??[];
+	// }
 
+	/**
+	 * @return UDF[]
+	 **/
 	function getUDFs(){
 		$sql = UDF::getSQL();
 		foreach($this->getList($sql) as $r){
@@ -138,6 +163,9 @@ class Database extends FirebirdObject
 		return $list??[];
 	}
 
+	/**
+	 * @return Domain[]
+	 **/
 	function getDomains(){
 		$sql = Domain::getSQL();
 		foreach($this->getList($sql) as $r){
@@ -147,7 +175,7 @@ class Database extends FirebirdObject
 		return $list??[];
 	}
 
-	function getConnection(){
+	function getConnection(): IBase {
 		return $this->conn;
 	}
 
