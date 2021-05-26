@@ -63,10 +63,6 @@ class RelationField extends Field
 				}
 			}
 
-			// if(isset($parts['charset'])){
-			// 	$ddl[] = "CHARACTER SET $parts[charset]";
-			// }
-
 			if(isset($parts['default'])){
 				$ddl[] = $parts['default'];
 			}
@@ -80,10 +76,6 @@ class RelationField extends Field
 			if($collate){
 				$ddl[] = $collate;
 			}
-
-			// if(isset($parts['collation_name'])){
-			// 	$ddl[] = "COLLATE $parts[collation_name]";
-			// }
 		}
 
 		if($parts['col_def'] == 'computed_col_def'){
