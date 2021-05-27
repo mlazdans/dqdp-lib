@@ -23,7 +23,8 @@ class Domain extends Field
 		->LeftJoin('RDB$COLLATIONS c', '(c.RDB$COLLATION_ID = f.RDB$COLLATION_ID AND c.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID)')
 		->Where('f.RDB$SYSTEM_FLAG = 0')
 		->Where('f.RDB$FIELD_NAME NOT LIKE \'RDB$%\'')
-		->OrderBy('f.RDB$FIELD_NAME');
+		// ->OrderBy('f.RDB$FIELD_NAME')
+		;
 	}
 
 	function loadMetadata(){
@@ -32,11 +33,25 @@ class Domain extends Field
 		return parent::loadMetadataBySQL($sql);
 	}
 
-	function ddl(): string {
+	function ddlParts(): array {
+		$PARTS = parent::ddlParts();
 		$MD = $this->getMetadata();
-		$parts = $this->ddlParts();
 
-		$ddl = ["CREATE DOMAIN $this AS"];
+		if($MD->VALIDATION_SOURCE){
+			$PARTS['dom_condition'] = $MD->VALIDATION_SOURCE;
+		}
+
+		return $PARTS;
+	}
+
+	function ddl($parts = null): string {
+		if(is_null($parts)){
+			$parts = $this->ddlParts();
+		}
+
+		// $ddl = ["CREATE DOMAIN $this AS"];
+		$ddl = ["$parts[colname] AS"];
+
 		if(isset($parts['domainname'])){
 			$ddl[] = $parts['domainname'];
 		} else {
@@ -55,8 +70,8 @@ class Domain extends Field
 			$ddl[] = "NOT NULL";
 		}
 
-		if($MD->VALIDATION_SOURCE){
-			$ddl[] = $MD->VALIDATION_SOURCE;
+		if(isset($parts['dom_condition'])){
+			$ddl[] = $parts['dom_condition'];
 		}
 
 		if(isset($parts['collation_name'])){

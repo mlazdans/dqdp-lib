@@ -6,13 +6,24 @@ namespace dqdp\FireBird;
 
 use dqdp\SQL\Select;
 
+// CREATE EXCEPTION exception_name '<message>'
+
+// <message> ::= <message-part> [<message-part> ...]
+
+// <message-part> ::=
+//     <text>
+//   | @<slot>
+
+// <slot> ::= one of 1..9
+
 class FireBirdException extends FirebirdType
 {
 	static function getSQL(): Select {
 		return (new Select())
 		->From('RDB$EXCEPTIONS')
 		->Where('RDB$SYSTEM_FLAG = 0')
-		->OrderBy('RDB$EXCEPTION_NAME');
+		// ->OrderBy('RDB$EXCEPTION_NAME')
+		;
 	}
 
 	function loadMetadata(){
@@ -21,8 +32,20 @@ class FireBirdException extends FirebirdType
 		return parent::loadMetadataBySQL($sql);
 	}
 
-	function ddl(): string {
+	function ddlParts(): array {
 		$MD = $this->getMetadata();
-		return sprintf("CREATE EXCEPTION %s '%s'", $this, $MD->MESSAGE);
+		return [
+			'exception_name'=>"$this",
+			'message'=>$MD->MESSAGE
+		];
+	}
+
+	function ddl($PARTS = null): string {
+		if(is_null($PARTS)){
+			$PARTS = $this->ddlParts();
+		}
+
+		# TODO: need qouting?
+		return "CREATE EXCEPTION $PARTS[exception_name] '$PARTS[message]'";
 	}
 }

@@ -63,7 +63,11 @@ class UDFArgument extends Field
 		return parent::loadMetadataBySQL($sql);
 	}
 
-	function ddl(): string {
+	function ddl($PARTS = null): string {
+		if(is_null($PARTS)){
+			$PARTS = $this->ddlParts();
+		}
+
 		$ddl = '';
 
 		$MD = $this->getMetadata();

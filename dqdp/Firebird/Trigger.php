@@ -58,7 +58,16 @@ class Trigger extends FirebirdType
 		return (($val + 1) >> ($slot * 2 - 1)) & 3;
 	}
 
-	function ddl(): string {
+	function ddlParts(): array {
+		trigger_error("Not implemented yet");
+		return [];
+	}
+
+	function ddl($PARTS = null): string {
+		// if(is_null($PARTS)){
+		// 	$PARTS = $this->ddlParts();
+		// }
+
 		$MD = $this->getMetadata();
 		$ddl = ["CREATE OR ALTER TRIGGER $this FOR $MD->RELATION_NAME ".($MD->TRIGGER_INACTIVE ? "INACTIVE" : "ACTIVE")];
 

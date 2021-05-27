@@ -42,10 +42,7 @@ class UDF extends FirebirdType
 	}
 
 	function getArguments(): array {
-		$sql = UDFArgument::getSQL()
-		->Where(['fa.RDB$FUNCTION_NAME = ?', $this->name])
-		;
-
+		$sql = UDFArgument::getSQL()->Where(['fa.RDB$FUNCTION_NAME = ?', $this->name]);
 		foreach($this->getList($sql) as $r){
 			$list[] = new UDFArgument($this, $r->ARGUMENT_POSITION);
 		}
@@ -53,34 +50,53 @@ class UDF extends FirebirdType
 		return $list??[];
 	}
 
-	function ddl(): string {
-		$ddl = array();
-		$MT = $this->getMetadata();
+	function ddlParts(): array {
+		$MD = $this->getMetadata();
 
-		$ddl[] = sprintf('DECLARE EXTERNAL FUNCTION "%s"', $this);
+		$PARTS['funcname'] = "$this";
+		$PARTS['entry_point'] = $MD->ENTRYPOINT;
+		$PARTS['library_name'] = $MD->MODULE_NAME;
 
-		$in_args = array();
-		$out_arg = false;
 		$args = $this->getArguments();
 		foreach($args as $arg){
-			$AMT = $arg->getMetadata();
+			$AMD = $arg->getMetadata();
 			# Returning argument
-			if($AMT->ARGUMENT_POSITION == $MT->RETURN_ARGUMENT){
+			if($AMD->ARGUMENT_POSITION == $MD->RETURN_ARGUMENT){
 				$out_arg = $arg->ddl();
 			} else {
 				$in_args[] = $arg->ddl();
 			}
 		}
 
-		if($in_args){
-			$ddl[] = join(", ", $in_args);
+		if(isset($in_args)){
+			$PARTS['arg_type_decl'] = $in_args;
 		}
 
-		if($out_arg){
-			$ddl[] = $out_arg;
+		if(isset($out_arg)){
+			$PARTS['returns'] = $out_arg;
 		}
 
-		$ddl[] = sprintf("ENTRY_POINT '%s'\nMODULE_NAME '%s'", $MT->ENTRYPOINT, $MT->MODULE_NAME);
+		return $PARTS;
+	}
+
+	function ddl($PARTS = null): string {
+		if(is_null($PARTS)){
+			$PARTS = $this->ddlParts();
+		}
+
+		// $ddl[] = sprintf('DECLARE EXTERNAL FUNCTION "%s"', $this);
+		$ddl = [$PARTS['funcname']];
+
+		if(isset($PARTS['arg_type_decl'])){
+			$ddl[] = join(", ", $PARTS['arg_type_decl']);
+		}
+
+		if($PARTS['returns']){
+			$ddl[] = $PARTS['returns'];
+		}
+
+		$ddl[] = "ENTRY_POINT '$PARTS[entry_point]'";
+		$ddl[] = "MODULE_NAME '$PARTS[library_name]'";
 
 		return join("\n", $ddl);
 	}

@@ -33,14 +33,28 @@ class RelationConstraintCheck extends RelationConstraint
 		return parent::loadMetadataBySQL($sql);
 	}
 
-	function ddl(): string {
+	function ddlParts(): array {
 		$MD = $this->getMetadata();
 
-		if($MD->CONSTRAINT_NAME){
-			$ddl[] = "CONSTRAINT $MD->CONSTRAINT_NAME";
+		$PARTS = parent::ddlParts();
+		$PARTS['constr_type'] = 'CHECK';
+		$PARTS['check_condition'] = $MD->TRIGGER_SOURCE;
+
+		return $PARTS;
+	}
+
+	function ddl($PARTS = null): string {
+		if(is_null($PARTS)){
+			$PARTS = $this->ddlParts();
 		}
 
-		$ddl[] = $MD->TRIGGER_SOURCE;
+		$PARTS = $this->ddlParts();
+
+		if(isset($PARTS['constr_name'])){
+			$ddl[] = "CONSTRAINT $PARTS[constr_name]";
+		}
+
+		$ddl[] = $PARTS['check_condition'];
 
 		return join(" ", $ddl);
 	}

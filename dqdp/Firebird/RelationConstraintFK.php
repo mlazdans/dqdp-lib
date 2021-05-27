@@ -21,41 +21,67 @@ class RelationConstraintFK extends RelationConstraint
 	static function getSQL(): Select {
 		return parent::getSQL()
 		->Select('i.*, refc.*')
+		// ->Select('foi.RDB$RELATION_NAME AS OTHER_NAME')
 		->Join('RDB$INDICES i', 'rc.RDB$INDEX_NAME = i.RDB$INDEX_NAME')
 		->LeftJoin('RDB$REF_CONSTRAINTS refc', 'refc.RDB$CONSTRAINT_NAME = rc.RDB$CONSTRAINT_NAME')
+		// ->LeftJoin('RDB$INDICES foi', 'foi.RDB$INDEX_NAME = i.RDB$FOREIGN_KEY')
 		->Where('i.RDB$SYSTEM_FLAG = 0')
 		->Where('rc.RDB$CONSTRAINT_TYPE = \'FOREIGN KEY\'')
 		;
 	}
 
-	function ddl(): string {
+	function ddlParts(): array {
 		$MD = $this->getMetadata();
+		$PARTS = parent::ddlParts();
 
-		$ddl[] = "ALTER TABLE $MD->RELATION_NAME ADD";
-
-		if($MD->INDEX_NAME == $MD->CONSTRAINT_NAME){
-			$ddl[] = "CONSTRAINT $MD->CONSTRAINT_NAME";
-		}
-
-		$ddl[] = 'FOREIGN KEY';
+		$PARTS['constr_type'] = 'FOREIGN KEY';
 
 		if($MD->SEGMENT_COUNT){
-			$segments = $this->getSegments();
-			$ddl[] = "(".join(",", $segments).")";
+			$PARTS['col_list'] = $this->getSegments();
 		}
 
-		# TODO: iekš getSQL()?
-		$fk = new RelationConstraintPK($this->getRelation(), $MD->FOREIGN_KEY);
+		$fk = new Index($this->getDb(), $MD->FOREIGN_KEY);
 		$fkMD = $fk->getMetadata();
 
-		$ddl[] = "REFERENCES $fkMD->RELATION_NAME (".join(",", $fk->getSegments()).")";
-
-		if($MD->UPDATE_RULE !== 'RESTRICT'){
-			$ddl[] = "ON UPDATE $MD->UPDATE_RULE";
+		// $PARTS['other_table'] = $fkMD->RELATION_NAME;
+		$PARTS['other_table'] = new Relation($this->getDb(), $fkMD->RELATION_NAME);
+		if($fkMD->SEGMENT_COUNT){
+			$PARTS['other_table_col_list'] = $fk->getSegments();
 		}
 
-		if($MD->DELETE_RULE !== 'RESTRICT'){
-			$ddl[] = "ON DELETE $MD->DELETE_RULE";
+		$PARTS['update_rule'] = $MD->UPDATE_RULE;
+		$PARTS['delete_rule'] = $MD->DELETE_RULE;
+
+		return $PARTS;
+	}
+
+	function ddl($PARTS = null): string {
+		if(is_null($PARTS)){
+			$PARTS = $this->ddlParts();
+		}
+
+		if(isset($PARTS['constr_name'])){
+			$ddl[] = "CONSTRAINT $PARTS[constr_name]";
+		}
+
+		$ddl[] = $PARTS['constr_type'];
+
+		if(isset($PARTS['col_list'])){
+			$ddl[] = "(".join(",", $PARTS['col_list']).")";
+		}
+
+		$ddl[] = sprintf("REFERENCES %s", $PARTS['other_table']);
+
+		if(isset($PARTS['other_table_col_list'])){
+			$ddl[] = "(".join(",", $PARTS['other_table_col_list']).")";
+		}
+
+		if($PARTS['update_rule'] !== 'RESTRICT'){
+			$ddl[] = "ON UPDATE $PARTS[update_rule]";
+		}
+
+		if($PARTS['delete_rule'] !== 'RESTRICT'){
+			$ddl[] = "ON DELETE $PARTS[delete_rule]";
 		}
 
 		return join(" ", $ddl);

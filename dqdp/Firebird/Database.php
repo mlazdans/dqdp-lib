@@ -183,7 +183,16 @@ class Database extends FirebirdObject
 		return (new Select())->From('RDB$DATABASE');
 	}
 
-	function ddl(): string {
+	function ddlParts(): array {
+		trigger_error("Not implemented yet");
+		return [];
+	}
+
+	function ddl($PARTS = null): string {
+		if(is_null($PARTS)){
+			$PARTS = $this->ddlParts();
+		}
+
 		trigger_error("Not implemented yet");
 		return "";
 	}

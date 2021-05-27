@@ -40,7 +40,8 @@ abstract class FirebirdObject
 	private static $discardFields = ['RDB$RUNTIME', 'RDB$COMPUTED_BLR'];
 
 	abstract static function getSQL(): Select;
-	abstract function ddl(): string;
+	abstract function ddlParts(): array;
+	abstract function ddl($PARTS = null): string;
 
 	function loadMetadata(){
 		return $this->loadMetadataBySQL($this->getSQL());

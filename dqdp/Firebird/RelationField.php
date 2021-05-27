@@ -39,9 +39,12 @@ class RelationField extends Field
 	}
 
 	# TODO: col_constraint
-	function ddl(): string {
+	function ddl($parts = null): string {
+		if(is_null($parts)){
+			$parts = $this->ddlParts();
+		}
+
 		$DBMD = $this->getDb()->getMetadata();
-		$parts = $this->ddlParts();
 
 		$ddl = ["$this"];
 		if(isset($parts['domainname'])){

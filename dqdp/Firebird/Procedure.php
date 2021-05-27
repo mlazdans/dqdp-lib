@@ -6,6 +6,34 @@ namespace dqdp\FireBird;
 
 use dqdp\SQL\Select;
 
+// CREATE PROCEDURE procname [ ( [ <in_params> ] ) ]
+//   [RETURNS (<out_params>)]
+//   <module-body>
+
+// <module-body> ::=
+//   !! See Syntax of Module Body !!
+
+// <in_params> ::= <inparam> [, <inparam> ...]
+
+// <inparam> ::= <param_decl> [{= | DEFAULT} <value>]
+
+// <out_params> ::= <outparam> [, <outparam> ...]
+
+// <outparam> ::= <param_decl>
+
+// <value> ::= {<literal> | NULL | <context_var>}
+
+// <param_decl> ::= paramname <domain_or_non_array_type> [NOT NULL]
+//   [COLLATE collation]
+
+// <type> ::=
+//     <datatype>
+//   | [TYPE OF] domain
+//   | TYPE OF COLUMN rel.col
+
+// <domain_or_non_array_type> ::=
+//   !! See Scalar Data Types Syntax !!
+
 class Procedure extends FirebirdType
 {
 	const TYPE_LEGACY          = 0;
@@ -37,9 +65,17 @@ class Procedure extends FirebirdType
 		return $list??[];
 	}
 
-	function ddl(): string {
-		$ddl = array();
-		// $ddl[] = "SET TERM ^ ;";
+	function ddlParts(): array {
+		trigger_error("Not implemented yet");
+		return [];
+	}
+
+	function ddl($PARTS = null): string {
+		// if(is_null($PARTS)){
+		// 	$PARTS = $this->ddlParts();
+		// }
+
+		$ddl = [];
 
 		$MT = $this->getMetadata();
 
@@ -69,7 +105,6 @@ class Procedure extends FirebirdType
 
 		$ddl[] = "AS";
 		$ddl[] = $MT->PROCEDURE_SOURCE;
-		// $ddl[] = "SET TERM ; ^";
 
 		return join("\n", $ddl);
 	}

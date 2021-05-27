@@ -45,7 +45,8 @@ class Relation extends FirebirdType
 	 * @return RelationIndex[]
 	 **/
 	function getIndexes(): array {
-		$sql = RelationIndex::getSQL();
+		$sql = RelationIndex::getSQL()->Where(['i.RDB$RELATION_NAME = ?', $this]);
+
 		foreach($this->getList($sql) as $r){
 			$list[] = new RelationIndex($this, $r->INDEX_NAME);
 		}
@@ -57,7 +58,7 @@ class Relation extends FirebirdType
 	 * @return RelationConstraintFK[]
 	 **/
 	function getFKs(): array {
-		$sql = RelationConstraintFK::getSQL();
+		$sql = RelationConstraintFK::getSQL()->Where(['i.RDB$RELATION_NAME = ?', $this]);
 		foreach($this->getList($sql) as $r){
 			$list[] = new RelationConstraintFK($this, $r->INDEX_NAME);
 		}
@@ -69,7 +70,7 @@ class Relation extends FirebirdType
 	 * @return RelationConstraintPK[]
 	 **/
 	function getPKs(): array {
-		$sql = RelationConstraintPK::getSQL();
+		$sql = RelationConstraintPK::getSQL()->Where(['i.RDB$RELATION_NAME = ?', $this]);
 		foreach($this->getList($sql) as $r){
 			$list[] = new RelationConstraintPK($this, $r->INDEX_NAME);
 		}
@@ -81,9 +82,9 @@ class Relation extends FirebirdType
 	 * @return RelationConstraintUniq[]
 	 **/
 	function getUniqs(): array {
-		$sql = RelationConstraintUniq::getSQL();
+		$sql = RelationConstraintUniq::getSQL()->Where(['i.RDB$RELATION_NAME = ?', $this]);
 		foreach($this->getList($sql) as $r){
-			$list[] = new RelationConstraintUniq($this, $r->INDEX_NAME);
+			$list[] = new RelationConstraintUniq($this, $r->CONSTRAINT_NAME);
 		}
 
 		return $list??[];
@@ -93,7 +94,7 @@ class Relation extends FirebirdType
 	 * @return RelationConstraintCheck[]
 	 **/
 	function getChecks(): array {
-		$sql = RelationConstraintCheck::getSQL();
+		$sql = RelationConstraintCheck::getSQL()->Where(['rc.RDB$CONSTRAINT_NAME = ?', $this]);
 		foreach($this->getList($sql) as $r){
 			$list[] = new RelationConstraintCheck($this, $r->CONSTRAINT_NAME);
 		}
@@ -101,8 +102,17 @@ class Relation extends FirebirdType
 		return $list??[];
 	}
 
+	function ddlParts(): array {
+		trigger_error("Not implemented yet");
+		return [];
+	}
+
 	# TODO: view
-	function ddl(): string {
+	function ddl($PARTS = null): string {
+		if(is_null($PARTS)){
+			$PARTS = $this->ddlParts();
+		}
+
 		$MD = $this->getMetadata();
 
 		$ddl = [];

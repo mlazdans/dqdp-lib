@@ -26,18 +26,32 @@ class RelationConstraintUniq extends RelationConstraint
 		->Where('rc.RDB$CONSTRAINT_TYPE = \'UNIQUE\'');
 	}
 
-	function ddl(): string {
+	function ddlParts(): array {
 		$MD = $this->getMetadata();
 
-		if($MD->INDEX_NAME == $MD->CONSTRAINT_NAME){
-			$ddl[] = "CONSTRAINT $MD->CONSTRAINT_NAME";
-		}
-
-		$ddl[] = 'UNIQUE';
+		$PARTS = parent::ddlParts();
+		$PARTS['constr_type'] = 'UNIQUE';
 
 		if($MD->SEGMENT_COUNT){
-			$segments = $this->getSegments();
-			$ddl[] = "(".join(",", $segments).")";
+			$PARTS['col_list'] = $this->getSegments();
+		}
+
+		return $PARTS;
+	}
+
+	function ddl($PARTS = null): string {
+		if(is_null($PARTS)){
+			$PARTS = $this->ddlParts();
+		}
+
+		if(isset($PARTS['constr_name'])){
+			$ddl[] = "CONSTRAINT $PARTS[constr_name]";
+		}
+
+		$ddl[] = $PARTS['constr_type'];
+
+		if(isset($PARTS['col_list'])){
+			$ddl[] = "(".join(",", $PARTS['col_list']).")";
 		}
 
 		return join(" ", $ddl);

@@ -67,7 +67,11 @@ class ProcedureParameter extends Field
 	}
 
 	//, param2 VARCHAR(101) CHARACTER SET win1257 COLLATE WIN1257_LV
-	function ddl(): string {
+	function ddl($PARTS = null): string {
+		if(is_null($PARTS)){
+			$PARTS = $this->ddlParts();
+		}
+
 		$DBMD = $this->getDb()->getMetadata();
 		$parts = $this->ddlParts();
 
