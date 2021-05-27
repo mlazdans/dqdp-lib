@@ -6,23 +6,35 @@ namespace dqdp\FireBird;
 
 use dqdp\SQL\Select;
 
+// <tconstraint> ::=
+//   [CONSTRAINT constr_name]
+//     { PRIMARY KEY (<col_list>) [<using_index>]
+//     | UNIQUE      (<col_list>) [<using_index>]
+//     | FOREIGN KEY (<col_list>)
+//         REFERENCES other_table [(<col_list>)] [<using_index>]
+//         [ON DELETE {NO ACTION | CASCADE | SET DEFAULT | SET NULL}]
+//         [ON UPDATE {NO ACTION | CASCADE | SET DEFAULT | SET NULL}]
+//     | CHECK (<check_condition>) }
+
 abstract class RelationConstraint extends RelationIndex
 {
 	static function getSQL(): Select {
-		// return (new Select('i.*, rc.*, refc.*'))
-		return (new Select('rc.*'))
-		->From('RDB$RELATION_CONSTRAINTS rc')
-		// ->Join('RDB$INDICES i', 'rc.RDB$INDEX_NAME = i.RDB$INDEX_NAME')
-		// ->Where('i.RDB$SYSTEM_FLAG = 0')
-		;
+		return (new Select('rc.*'))->From('RDB$RELATION_CONSTRAINTS rc');
 	}
 
-	function loadMetadata(){
-		$sql = $this->getSQL()
-		// ->Where(['rf.RDB$RELATION_NAME = ?', $this->relation])
-		->Where(['rc.RDB$INDEX_NAME = ?', $this->name]);
-		;
+	function getDefinedName(){
+		$MD = $this->getMetadata();
 
-		return parent::loadMetadataBySQL($sql);
+		return ($MD->INDEX_NAME == $MD->CONSTRAINT_NAME ? $MD->CONSTRAINT_NAME : '');
+	}
+
+	function ddlParts(): array {
+		$MD = $this->getMetadata();
+
+		if($MD->INDEX_NAME == $MD->CONSTRAINT_NAME){
+			$PARTS['constr_name'] = $MD->CONSTRAINT_NAME;
+		}
+
+		return $PARTS??[];
 	}
 }
