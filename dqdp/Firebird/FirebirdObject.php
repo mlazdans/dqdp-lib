@@ -217,7 +217,9 @@ abstract class FirebirdObject
 	}
 
 	static function rdbs2human($r){
-		return str_replace('RDB$', '', trim($r));
+		$r = str_replace('RDB$', '', trim($r));
+		$r = str_replace('MON$', '', $r);
+		return $r;
 	}
 
 	function getDb(){
