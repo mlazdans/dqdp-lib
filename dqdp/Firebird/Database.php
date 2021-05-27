@@ -180,7 +180,10 @@ class Database extends FirebirdObject
 	}
 
 	static function getSQL(): Select {
-		return (new Select())->From('RDB$DATABASE');
+		return (new Select())
+		->From('MON$DATABASE')
+		->Join('RDB$DATABASE', 'TRUE')
+		;
 	}
 
 	function ddlParts(): array {
