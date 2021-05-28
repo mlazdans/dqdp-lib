@@ -8,13 +8,13 @@ use dqdp\SQL\Select;
 
 class Index extends FirebirdType
 {
-	const TYPE_INDEX    = 0;
-	const TYPE_FK       = 1;
-	const TYPE_PK       = 2;
-	const TYPE_UNIQUE   = 3;
+	const TYPE_ASC   = 0;
+	const TYPE_DESC  = 1;
 
-	const INDEX_TYPE_ASC  = 0;
-	const INDEX_TYPE_DESC = 1;
+	// const TYPE_INDEX    = 0;
+	// const TYPE_FK       = 1;
+	// const TYPE_PK       = 2;
+	// const TYPE_UNIQUE   = 3;
 
 	static function getSQL(): Select {
 		return (new Select('i.*'))
@@ -42,12 +42,34 @@ class Index extends FirebirdType
 	}
 
 	function ddlParts(): array {
-		trigger_error("Do not call directly. Use RelationIndex");
-		return [];
+		$MD = $this->getMetadata();
+
+		$PARTS['indexname'] = $MD->INDEX_NAME;
+		$PARTS['tablename'] = $MD->RELATION_NAME;
+
+		if($MD->UNIQUE_FLAG){
+			$PARTS['unique'] = "UNIQUE";
+		}
+
+		if($MD->INDEX_TYPE == RelationIndex::TYPE_DESC){
+			$PARTS['type'] = "DESCENDING";
+		} else {
+			$PARTS['type'] = "ASCENDING";
+		}
+
+		if($MD->SEGMENT_COUNT){
+			$PARTS['col_list'] = $this->getSegments();
+		} else {
+			$PARTS['expression'] = $MD->EXPRESSION_SOURCE;
+		}
+
+		$PARTS['active'] = $MD->INDEX_INACTIVE ? "INACTIVE" : "ACTIVE";
+
+		return $PARTS;
 	}
 
 	function ddl($PARTS = null): string {
-		trigger_error("Do not call directly. Use RelationIndex");
+		trigger_error("Do not call directly.");
 		return "";
 	}
 }
