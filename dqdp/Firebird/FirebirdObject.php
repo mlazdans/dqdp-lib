@@ -37,7 +37,7 @@ abstract class FirebirdObject
 	protected $db;
 	protected $metadata;
 
-	private static $discardFields = ['RDB$RUNTIME', 'RDB$COMPUTED_BLR'];
+	private static $discardFields = ['RDB$RUNTIME', 'RDB$COMPUTED_BLR', 'RDB$TRIGGER_BLR', 'RDB$DEBUG_INFO'];
 
 	abstract static function getSQL(): Select;
 	abstract function getMetadataSQL(): Select;
