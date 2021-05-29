@@ -110,9 +110,18 @@ class Trigger extends FirebirdObject
 		return $this->getSQL()->Where(['triggers.RDB$TRIGGER_NAME = ?', $this->name]);
 	}
 
-	// Copied from FB source
+	# Copied from FB source
 	protected function TRIGGER_ACTION_SUFFIX($val, $slot){
 		return (($val + 1) >> ($slot * 2 - 1)) & 3;
+	}
+
+	# database_trigger | relation_trigger | ddl_trigger
+	static function getType($TRIGGER_TYPE){
+		if(($TRIGGER_TYPE & Trigger::TRIGGER_TYPE_MASK) == Trigger::TRIGGER_TYPE_DML){
+			return 'relation_trigger';
+		} elseif(($TRIGGER_TYPE & Trigger::TRIGGER_TYPE_MASK) == Trigger::TRIGGER_TYPE_DB){
+			return 'database_trigger';
+		}
 	}
 
 	function ddlParts(): array {
@@ -123,47 +132,8 @@ class Trigger extends FirebirdObject
 		$parts['active'] = $MD->TRIGGER_INACTIVE ? "INACTIVE" : "ACTIVE";
 		$parts['position'] = $MD->TRIGGER_SEQUENCE;
 		$parts['system_flag'] = $MD->SYSTEM_FLAG;
-
-		if(($MD->TRIGGER_TYPE & Trigger::TRIGGER_TYPE_MASK) == Trigger::TRIGGER_TYPE_DML){
-			$parts['type'] = 'relation_trigger';
-		} elseif(($MD->TRIGGER_TYPE & Trigger::TRIGGER_TYPE_MASK) == Trigger::TRIGGER_TYPE_DB){
-			$parts['type'] = 'database_trigger';
-		} else {
-			trigger_error("TRIGGER_TYPE = $MD->TRIGGER_TYPE not implemented", E_USER_ERROR);
-		}
-		// $parts['type'] = database_trigger | relation_trigger | ddl_trigger
+		$parts['type'] = Trigger::getType($MD->TRIGGER_TYPE);
 
 		return $parts;
 	}
-
-	// function ddl($PARTS = null): string {
-	// 	// if(is_null($PARTS)){
-	// 	// 	$PARTS = $this->ddlParts();
-	// 	// }
-
-	// 	$MD = $this->getMetadata();
-	// 	$ddl = ["CREATE OR ALTER TRIGGER $this FOR $MD->RELATION_NAME ".($MD->TRIGGER_INACTIVE ? "INACTIVE" : "ACTIVE")];
-
-	// 	if(($MD->TRIGGER_TYPE & Trigger::TRIGGER_TYPE_MASK) == Trigger::TRIGGER_TYPE_DML){
-	// 		$tddl = [];
-	// 		for($slot = 1; $slot <= 3; $slot++){
-	// 			$suff = $this->TRIGGER_ACTION_SUFFIX($MD->TRIGGER_TYPE, $slot);
-	// 			if($suff == 1)
-	// 				$tddl[] = "INSERT";
-	// 			elseif($suff == 2)
-	// 				$tddl[] = "UPDATE";
-	// 			elseif($suff == 3)
-	// 				$tddl[] = "DELETE";
-	// 		}
-
-	// 		$ddl[] = ($MD->TRIGGER_TYPE & 1 ? "BEFORE" : "AFTER")." ".join(" OR ", $tddl)." POSITION $MD->TRIGGER_SEQUENCE";
-	// 	} else {
-	// 		trigger_error("TRIGGER_TYPE = $MD->TRIGGER_TYPE not implemented");
-	// 	}
-
-	// 	$ddl[] = $MD->TRIGGER_SOURCE;
-
-	// 	return join("\n", $ddl);
-	// }
-
 }
