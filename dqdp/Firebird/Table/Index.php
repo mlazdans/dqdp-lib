@@ -28,9 +28,8 @@ class Index extends \dqdp\FireBird\Index implements DDL
 	}
 
 	function getMetadataSQL(): Select {
-		return $this->getSQL()
+		return parent::getMetadataSQL()
 		->Where(['indices.RDB$RELATION_NAME = ?', $this->getRelation()->name])
-		->Where(['indices.RDB$INDEX_NAME = ?', $this->name])
 		;
 	}
 
