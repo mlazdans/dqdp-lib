@@ -220,7 +220,10 @@ class Table extends Relation {
 			}
 		}
 
-		$ddl[] = "(".join(",\n\t", $fddl).")";
+		// $ddl[] = "(".join(",\n\t", $fddl).")";
+		$ddl[] = "(";
+		$ddl[] = "\t".join(",\n\t", $fddl);
+		$ddl[] = ")";
 
 		return join("\n", $ddl);
 	}

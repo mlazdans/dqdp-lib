@@ -17,7 +17,7 @@ class View extends Relation {
 		$MD = $this->getMetadata();
 
 		$parts['viewname'] = "$this";
-		$parts['full_column_list'] = join(", ", $this->getFields());
+		$parts['full_column_list'] = $this->getFields();
 		$parts['select_statement'] = $MD->VIEW_SOURCE;
 
 		return $parts;
@@ -29,7 +29,9 @@ class View extends Relation {
 		}
 
 		$ddl = [$parts['viewname']];
-		$ddl[] = "($parts[full_column_list]) AS";
+		$ddl[] = "(";
+		$ddl[] = "\t".join(",\n\t", $parts['full_column_list']);
+		$ddl[] = ") AS";
 		$ddl[] = $parts['select_statement'];
 
 		return join("\n", $ddl);
