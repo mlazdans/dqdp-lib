@@ -75,6 +75,10 @@ abstract class FirebirdObject
 		}
 	}
 
+	static function strquote(string $str): string {
+		return str_replace("'", "''", $str);
+	}
+
 	// function getDependencies(){
 	// 	if($this->dependencies !== null){
 	// 		return $this->dependencies;
@@ -209,6 +213,7 @@ abstract class FirebirdObject
 	// 	return $this->dependents;
 	// }
 
+	# TODO: configurable
 	function setMetadata($metadata){
 		$this->metadata = $metadata;
 
@@ -327,7 +332,6 @@ abstract class FirebirdObject
 	// 	// elseif($type == FirebirdObject::TYPE_BLOB_FILTER)
 	// 	// elseif($type == FirebirdObject::TYPE_COLLATION)
 	// 	else
-	// 		# TODO: exception
 	// 		trigger_error("Unsupported FirebirdObject type=$type for name=$name", E_USER_ERROR);
 
 	// 	return new $class($db, $name);

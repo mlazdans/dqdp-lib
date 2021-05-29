@@ -40,7 +40,6 @@ class FireBirdException extends FirebirdObject implements DDL
 			$PARTS = $this->ddlParts();
 		}
 
-		# TODO: need qouting?
-		return "CREATE EXCEPTION $PARTS[exception_name] '$PARTS[message]'";
+		return sprintf("CREATE EXCEPTION $PARTS[exception_name] '%s'", self::strquote($PARTS['message']));
 	}
 }
