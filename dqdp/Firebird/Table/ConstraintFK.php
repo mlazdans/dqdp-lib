@@ -2,8 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace dqdp\FireBird\Relation;
+namespace dqdp\FireBird\Table;
 
+use dqdp\FireBird\Table;
 use dqdp\SQL\Select;
 
 // <tconstraint> ::=
@@ -16,12 +17,11 @@ use dqdp\SQL\Select;
 //         [ON UPDATE {NO ACTION | CASCADE | SET DEFAULT | SET NULL}]
 //     | CHECK (<check_condition>) }
 
-class ConstraintFK extends Index
+class ConstraintFK extends ConstraintIndex
 {
 	static function getSQL(): Select {
-		return Index::getSQL()
+		return parent::getSQL()
 		->Select('indices.*, relation_constraints.*, ref_constraints.*')
-		->Join('RDB$RELATION_CONSTRAINTS AS relation_constraints', 'relation_constraints.RDB$INDEX_NAME = indices.RDB$INDEX_NAME')
 		->Join('RDB$REF_CONSTRAINTS ref_constraints', 'ref_constraints.RDB$CONSTRAINT_NAME = relation_constraints.RDB$CONSTRAINT_NAME')
 		->Where('relation_constraints.RDB$CONSTRAINT_TYPE = \'FOREIGN KEY\'');
 	}
@@ -31,14 +31,6 @@ class ConstraintFK extends Index
 		$PARTS = parent::ddlParts();
 
 		$PARTS['constr_type'] = 'FOREIGN KEY';
-
-		if($MD->SEGMENT_COUNT){
-			$PARTS['col_list'] = $this->getSegments();
-		}
-
-		if($MD->INDEX_NAME == $MD->CONSTRAINT_NAME){
-			$PARTS['constr_name'] = $MD->CONSTRAINT_NAME;
-		}
 
 		$fk = new \dqdp\FireBird\Index($this->getDb(), $MD->FOREIGN_KEY);
 		$fkMD = $fk->getMetadata();

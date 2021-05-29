@@ -2,9 +2,13 @@
 
 declare(strict_types = 1);
 
-namespace dqdp\FireBird\Relation;
+namespace dqdp\FireBird;
 
-use dqdp\FireBird\Relation;
+use dqdp\FireBird\Table\ConstraintCheck;
+use dqdp\FireBird\Table\ConstraintFK;
+use dqdp\FireBird\Table\ConstraintPK;
+use dqdp\FireBird\Table\ConstraintUniq;
+use dqdp\FireBird\Table\Index;
 
 // CREATE [GLOBAL TEMPORARY] TABLE tablename
 //   [EXTERNAL [FILE] 'filespec']
@@ -122,7 +126,7 @@ class Table extends Relation {
 	}
 
 	/**
-	 * @return RelationConstraintFK[]
+	 * @return ConstraintFK[]
 	 **/
 	function getFKs(): array {
 		$sql = ConstraintFK::getSQL()->Where(['indices.RDB$RELATION_NAME = ?', $this]);
@@ -135,7 +139,7 @@ class Table extends Relation {
 	}
 
 	/**
-	 * @return RelationConstraintPK[]
+	 * @return ConstraintPK[]
 	 **/
 	function getPKs(): array {
 		$sql = ConstraintPK::getSQL()->Where(['indices.RDB$RELATION_NAME = ?', $this]);

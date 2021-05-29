@@ -8,8 +8,6 @@ declare(strict_types = 1);
 namespace dqdp\FireBird;
 
 use dqdp\DBA\driver\IBase;
-use dqdp\FireBird\Relation\Table;
-use dqdp\FireBird\Relation\View;
 use dqdp\SQL\Select;
 
 class Database extends FirebirdObject

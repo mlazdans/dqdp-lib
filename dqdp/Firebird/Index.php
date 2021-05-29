@@ -11,11 +11,6 @@ class Index extends FirebirdObject
 	const TYPE_ASC   = 0;
 	const TYPE_DESC  = 1;
 
-	// const TYPE_INDEX    = 0;
-	// const TYPE_FK       = 1;
-	// const TYPE_PK       = 2;
-	// const TYPE_UNIQUE   = 3;
-
 	static function getSQL(): Select {
 		return (new Select())->From('RDB$INDICES AS indices')->Where('indices.RDB$SYSTEM_FLAG = 0');
 	}
@@ -44,7 +39,7 @@ class Index extends FirebirdObject
 			$PARTS['unique'] = "UNIQUE";
 		}
 
-		if($MD->INDEX_TYPE == RelationIndex::TYPE_DESC){
+		if($MD->INDEX_TYPE == Index::TYPE_DESC){
 			$PARTS['type'] = "DESCENDING";
 		} else {
 			$PARTS['type'] = "ASCENDING";

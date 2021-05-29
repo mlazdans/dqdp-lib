@@ -2,10 +2,11 @@
 
 declare(strict_types = 1);
 
-namespace dqdp\FireBird\Relation;
+namespace dqdp\FireBird\Table;
 
 use dqdp\FireBird\DDL;
 use dqdp\FireBird\FirebirdObject;
+use dqdp\FireBird\Table;
 use dqdp\SQL\Select;
 
 // <tconstraint> ::=
@@ -51,7 +52,6 @@ class ConstraintCheck extends FirebirdObject implements DDL
 		$MD = $this->getMetadata();
 
 		// $PARTS = parent::ddlParts();
-		$PARTS = [];
 		$PARTS['constr_type'] = 'CHECK';
 		$PARTS['check_condition'] = $MD->TRIGGER_SOURCE;
 		if($MD->INDEX_NAME == $MD->CONSTRAINT_NAME){

@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace dqdp\FireBird\Relation;
+namespace dqdp\FireBird;
 
 use dqdp\FireBird\Relation;
 

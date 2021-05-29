@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace dqdp\FireBird\Relation;
+namespace dqdp\FireBird\Table;
 
 use dqdp\SQL\Select;
 
@@ -16,25 +16,18 @@ use dqdp\SQL\Select;
 //         [ON UPDATE {NO ACTION | CASCADE | SET DEFAULT | SET NULL}]
 //     | CHECK (<check_condition>) }
 
-class ConstraintUniq extends Index
+class ConstraintPK extends ConstraintIndex
 {
 	static function getSQL(): Select {
-		return Index::getSQL()
+		return parent::getSQL()
 		->Select('relation_constraints.*, indices.*')
-		->Join('RDB$RELATION_CONSTRAINTS AS relation_constraints', 'relation_constraints.RDB$INDEX_NAME = indices.RDB$INDEX_NAME')
-		->Where('relation_constraints.RDB$CONSTRAINT_TYPE = \'UNIQUE\'')
+		->Where('relation_constraints.RDB$CONSTRAINT_TYPE = \'PRIMARY KEY\'')
 		;
 	}
 
 	function ddlParts(): array {
-		$MD = $this->getMetadata();
-
 		$PARTS = parent::ddlParts();
-		$PARTS['constr_type'] = 'UNIQUE';
-
-		if($MD->SEGMENT_COUNT){
-			$PARTS['col_list'] = $this->getSegments();
-		}
+		$PARTS['constr_type'] = 'PRIMARY KEY';
 
 		return $PARTS;
 	}
