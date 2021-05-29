@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace dqdp\FireBird;
+namespace dqdp\FireBird\Relation;
 
 use dqdp\SQL\Select;
 
@@ -16,7 +16,7 @@ use dqdp\SQL\Select;
 //         [ON UPDATE {NO ACTION | CASCADE | SET DEFAULT | SET NULL}]
 //     | CHECK (<check_condition>) }
 
-class RelationConstraintFK extends RelationIndex
+class ConstraintFK extends Index
 {
 	static function getSQL(): Select {
 		return Index::getSQL()
@@ -40,11 +40,11 @@ class RelationConstraintFK extends RelationIndex
 			$PARTS['constr_name'] = $MD->CONSTRAINT_NAME;
 		}
 
-		$fk = new Index($this->getDb(), $MD->FOREIGN_KEY);
+		$fk = new \dqdp\FireBird\Index($this->getDb(), $MD->FOREIGN_KEY);
 		$fkMD = $fk->getMetadata();
 
 		// $PARTS['other_table'] = $fkMD->RELATION_NAME;
-		$PARTS['other_table'] = new Relation($this->getDb(), $fkMD->RELATION_NAME);
+		$PARTS['other_table'] = new Table($this->getDb(), $fkMD->RELATION_NAME);
 		if($fkMD->SEGMENT_COUNT){
 			$PARTS['other_table_col_list'] = $fk->getSegments();
 		}

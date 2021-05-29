@@ -2,8 +2,10 @@
 
 declare(strict_types = 1);
 
-namespace dqdp\FireBird;
+namespace dqdp\FireBird\Relation;
 
+use dqdp\FireBird\DDL;
+use dqdp\FireBird\FirebirdObject;
 use dqdp\SQL\Select;
 
 // <tconstraint> ::=
@@ -16,18 +18,17 @@ use dqdp\SQL\Select;
 //         [ON UPDATE {NO ACTION | CASCADE | SET DEFAULT | SET NULL}]
 //     | CHECK (<check_condition>) }
 
-class RelationConstraintCheck extends FirebirdObject implements DDL
+class ConstraintCheck extends FirebirdObject implements DDL
 {
 	protected $relation;
 
-	function __construct(Relation $relation, $name){
+	function __construct(Table $relation, $name){
 		$this->relation = $relation;
 		parent::__construct($relation->getDb(), $name);
 	}
 
 	static function getSQL(): Select {
 		return (new Select())
-		// ->Select('cc.*, t.*')
 		->Select('relation_constraints.*, check_constraints.*, triggers.*')
 		->From('RDB$RELATION_CONSTRAINTS AS relation_constraints')
 		->Join('RDB$CHECK_CONSTRAINTS check_constraints', 'check_constraints.RDB$CONSTRAINT_NAME = relation_constraints.RDB$CONSTRAINT_NAME')

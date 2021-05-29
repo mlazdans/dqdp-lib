@@ -2,19 +2,21 @@
 
 declare(strict_types = 1);
 
-namespace dqdp\FireBird;
+namespace dqdp\FireBird\Relation;
 
+use dqdp\FireBird\DDL;
+use dqdp\FireBird\Relation;
 use dqdp\SQL\Select;
 
 // CREATE [UNIQUE] [ASC[ENDING] | DESC[ENDING]]
 //   INDEX indexname ON tablename
 //   {(col [, col …]) | COMPUTED BY (<expression>)}
 
-class RelationIndex extends Index implements DDL
+class Index extends \dqdp\FireBird\Index implements DDL
 {
 	protected $relation;
 
-	function __construct(Relation $relation, $name){
+	function __construct(Table $relation, $name){
 		$this->relation = $relation;
 		parent::__construct($relation->getDb(), $name);
 	}

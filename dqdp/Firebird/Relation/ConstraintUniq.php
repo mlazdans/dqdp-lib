@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace dqdp\FireBird;
+namespace dqdp\FireBird\Relation;
 
 use dqdp\SQL\Select;
 
@@ -16,7 +16,7 @@ use dqdp\SQL\Select;
 //         [ON UPDATE {NO ACTION | CASCADE | SET DEFAULT | SET NULL}]
 //     | CHECK (<check_condition>) }
 
-class RelationConstraintUniq extends RelationIndex
+class ConstraintUniq extends Index
 {
 	static function getSQL(): Select {
 		return Index::getSQL()
@@ -24,11 +24,6 @@ class RelationConstraintUniq extends RelationIndex
 		->Join('RDB$RELATION_CONSTRAINTS AS relation_constraints', 'relation_constraints.RDB$INDEX_NAME = indices.RDB$INDEX_NAME')
 		->Where('relation_constraints.RDB$CONSTRAINT_TYPE = \'UNIQUE\'')
 		;
-		// return Index::getSQL()
-		// ->Select('i.*')
-		// ->Join('RDB$INDICES i', 'rc.RDB$INDEX_NAME = i.RDB$INDEX_NAME')
-		// ->Where('i.RDB$SYSTEM_FLAG = 0')
-		// ->Where('rc.RDB$CONSTRAINT_TYPE = \'UNIQUE\'');
 	}
 
 	function ddlParts(): array {

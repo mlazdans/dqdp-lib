@@ -2,11 +2,13 @@
 
 declare(strict_types = 1);
 
-namespace dqdp\FireBird;
+namespace dqdp\FireBird\Relation;
 
+use dqdp\FireBird\DDL;
+use dqdp\FireBird\Relation;
 use dqdp\SQL\Select;
 
-class RelationField extends Field implements DDL
+class Field extends \dqdp\FireBird\Field implements DDL
 {
 	protected $relation;
 

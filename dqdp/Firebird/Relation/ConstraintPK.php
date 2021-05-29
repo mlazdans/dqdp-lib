@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace dqdp\FireBird;
+namespace dqdp\FireBird\Relation;
 
 use dqdp\SQL\Select;
 
@@ -16,7 +16,7 @@ use dqdp\SQL\Select;
 //         [ON UPDATE {NO ACTION | CASCADE | SET DEFAULT | SET NULL}]
 //     | CHECK (<check_condition>) }
 
-class RelationConstraintPK extends RelationIndex
+class ConstraintPK extends Index
 {
 	static function getSQL(): Select {
 		return Index::getSQL()

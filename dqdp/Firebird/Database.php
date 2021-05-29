@@ -8,6 +8,8 @@ declare(strict_types = 1);
 namespace dqdp\FireBird;
 
 use dqdp\DBA\driver\IBase;
+use dqdp\FireBird\Relation\Table;
+use dqdp\FireBird\Relation\View;
 use dqdp\SQL\Select;
 
 class Database extends FirebirdObject
@@ -39,13 +41,13 @@ class Database extends FirebirdObject
 	}
 
 	/**
-	 * @return Relation[]
+	 * @return Table[]
 	 **/
 	function getTables(): array {
 		$sql = Relation::getSQL()->Where(['RDB$RELATION_TYPE = ?', Relation\Type::PERSISTENT]);
 
 		foreach($this->getList($sql) as $r){
-			$list[] = (new Relation($this->getDb(), $r->RELATION_NAME))->setMetadata($r);
+			$list[] = (new Table($this->getDb(), $r->RELATION_NAME))->setMetadata($r);
 		}
 
 		return $list??[];
@@ -58,7 +60,7 @@ class Database extends FirebirdObject
 		$sql = Relation::getSQL()->Where(['RDB$RELATION_TYPE = ?', Relation\Type::VIEW]);
 
 		foreach($this->getList($sql) as $r){
-			$list[] = (new Relation($this->getDb(), $r->RELATION_NAME))->setMetadata($r);
+			$list[] = (new View($this->getDb(), $r->RELATION_NAME))->setMetadata($r);
 		}
 
 		return $list??[];
