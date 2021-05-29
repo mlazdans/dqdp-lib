@@ -14,24 +14,23 @@ use dqdp\FireBird\Relation;
 
 class View extends Relation {
 	function ddlParts(): array {
-		trigger_error("Not implemented yet");
-		return [];
-	}
-
-	function ddl($PARTS = null): string {
-		// if(is_null($PARTS)){
-		// 	$PARTS = $this->ddlParts();
-		// }
-
 		$MD = $this->getMetadata();
 
-		$ddl = [];
-		$fields = $this->getFields();
-		foreach($fields as $o){
-			$fddl[] = "$o";
+		$parts['viewname'] = "$this";
+		$parts['full_column_list'] = join(", ", $this->getFields());
+		$parts['select_statement'] = $MD->VIEW_SOURCE;
+
+		return $parts;
+	}
+
+	function ddl($parts = null): string {
+		if(is_null($parts)){
+			$parts = $this->ddlParts();
 		}
-		$ddl[] = "CREATE VIEW $this (".join(", ", $fddl).") AS";
-		$ddl[] = $MD->VIEW_SOURCE;
+
+		$ddl = [$parts['viewname']];
+		$ddl[] = "($parts[full_column_list]) AS";
+		$ddl[] = $parts['select_statement'];
 
 		return join("\n", $ddl);
 	}

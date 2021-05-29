@@ -6,6 +6,7 @@ namespace dqdp\FireBird;
 
 use dqdp\SQL\Select;
 
+# TODO: col_constraint
 // <col_def> ::=
 //     <regular_col_def>
 //   | <computed_col_def>
@@ -59,7 +60,7 @@ class Field extends FirebirdObject
 		->From('RDB$FIELDS AS fields')
 		->LeftJoin('RDB$CHARACTER_SETS AS character_sets', 'character_sets.RDB$CHARACTER_SET_ID = fields.RDB$CHARACTER_SET_ID')
 		->LeftJoin('RDB$COLLATIONS AS collations', '(collations.RDB$COLLATION_ID = fields.RDB$COLLATION_ID AND collations.RDB$CHARACTER_SET_ID = fields.RDB$CHARACTER_SET_ID)')
-		->Where('fields.RDB$SYSTEM_FLAG = 0')
+		// ->Where('fields.RDB$SYSTEM_FLAG = 0') // do not add this condition because reference to system table fields will fail
 		// ->OrderBy('f.RDB$FIELD_NAME')
 		;
 		// return (new Select())
