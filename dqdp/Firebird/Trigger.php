@@ -68,7 +68,7 @@ use dqdp\SQL\Select;
 //   | {CREATE | DROP} PACKAGE BODY
 //   | {CREATE | ALTER | DROP} MAPPING
 
-class Trigger extends FirebirdObject implements DDL
+class Trigger extends FirebirdObject
 {
 	const TYPE_PRE_STORE            = 1;
 	const TYPE_POST_STORE           = 2;
@@ -84,10 +84,10 @@ class Trigger extends FirebirdObject implements DDL
 
 	const TRIGGER_TYPE_SHIFT = 13;
 
-	const TRIGGER_TYPE_MASK  = 3 << Trigger::TRIGGER_TYPE_SHIFT;
 	const TRIGGER_TYPE_DML   = 0 << Trigger::TRIGGER_TYPE_SHIFT;
 	const TRIGGER_TYPE_DB    = 1 << Trigger::TRIGGER_TYPE_SHIFT;
 	const TRIGGER_TYPE_DDL   = 2 << Trigger::TRIGGER_TYPE_SHIFT;
+	const TRIGGER_TYPE_MASK  = 3 << Trigger::TRIGGER_TYPE_SHIFT;
 	// that's how database trigger action types are encoded
 	//    (TRIGGER_TYPE_DB | type)
 
@@ -102,7 +102,8 @@ class Trigger extends FirebirdObject implements DDL
 	// const DB_TRIGGER_MAX            = 5;
 
 	static function getSQL(): Select {
-		return (new Select())->From('RDB$TRIGGERS AS triggers')->Where('triggers.RDB$SYSTEM_FLAG = 0');
+		return (new Select())->From('RDB$TRIGGERS AS triggers');
+		// ->Where('triggers.RDB$SYSTEM_FLAG = 0')
 	}
 
 	function getMetadataSQL(): Select {
@@ -110,53 +111,59 @@ class Trigger extends FirebirdObject implements DDL
 	}
 
 	// Copied from FB source
-	private function TRIGGER_ACTION_SUFFIX($val, $slot){
+	protected function TRIGGER_ACTION_SUFFIX($val, $slot){
 		return (($val + 1) >> ($slot * 2 - 1)) & 3;
 	}
 
 	function ddlParts(): array {
-		trigger_error("Not implemented yet");
-		return [];
-	}
-
-	function ddl($PARTS = null): string {
-		// if(is_null($PARTS)){
-		// 	$PARTS = $this->ddlParts();
-		// }
-
 		$MD = $this->getMetadata();
-		$ddl = ["CREATE OR ALTER TRIGGER $this FOR $MD->RELATION_NAME ".($MD->TRIGGER_INACTIVE ? "INACTIVE" : "ACTIVE")];
+
+		$parts['trigname'] = "$this";
+		$parts['module_body'] = $MD->TRIGGER_SOURCE;
+		$parts['active'] = $MD->TRIGGER_INACTIVE ? "INACTIVE" : "ACTIVE";
+		$parts['position'] = $MD->TRIGGER_SEQUENCE;
+		$parts['system_flag'] = $MD->SYSTEM_FLAG;
 
 		if(($MD->TRIGGER_TYPE & Trigger::TRIGGER_TYPE_MASK) == Trigger::TRIGGER_TYPE_DML){
-			$tddl = [];
-			for($slot = 1; $slot <= 3; $slot++){
-				$suff = $this->TRIGGER_ACTION_SUFFIX($MD->TRIGGER_TYPE, $slot);
-				if($suff == 1)
-					$tddl[] = "INSERT";
-				elseif($suff == 2)
-					$tddl[] = "UPDATE";
-				elseif($suff == 3)
-					$tddl[] = "DELETE";
-			}
-
-			$ddl[] = ($MD->TRIGGER_TYPE & 1 ? "BEFORE" : "AFTER")." ".join(" OR ", $tddl)." POSITION $MD->TRIGGER_SEQUENCE";
+			$parts['type'] = 'relation_trigger';
+		} elseif(($MD->TRIGGER_TYPE & Trigger::TRIGGER_TYPE_MASK) == Trigger::TRIGGER_TYPE_DB){
+			$parts['type'] = 'database_trigger';
 		} else {
-			trigger_error("TRIGGER_TYPE = $MD->TRIGGER_TYPE not implemented");
+			trigger_error("TRIGGER_TYPE = $MD->TRIGGER_TYPE not implemented", E_USER_ERROR);
 		}
+		// $parts['type'] = database_trigger | relation_trigger | ddl_trigger
 
-		$ddl[] = $MD->TRIGGER_SOURCE;
-
-		return join("\n", $ddl);
+		return $parts;
 	}
 
-	// function isInActive(){
-	// 	$this->loadMetadata();
-	// 	if($metadata = $this->getMetadata()){
-	// 		return (bool)$metadata->TRIGGER_INACTIVE;
+	// function ddl($PARTS = null): string {
+	// 	// if(is_null($PARTS)){
+	// 	// 	$PARTS = $this->ddlParts();
+	// 	// }
+
+	// 	$MD = $this->getMetadata();
+	// 	$ddl = ["CREATE OR ALTER TRIGGER $this FOR $MD->RELATION_NAME ".($MD->TRIGGER_INACTIVE ? "INACTIVE" : "ACTIVE")];
+
+	// 	if(($MD->TRIGGER_TYPE & Trigger::TRIGGER_TYPE_MASK) == Trigger::TRIGGER_TYPE_DML){
+	// 		$tddl = [];
+	// 		for($slot = 1; $slot <= 3; $slot++){
+	// 			$suff = $this->TRIGGER_ACTION_SUFFIX($MD->TRIGGER_TYPE, $slot);
+	// 			if($suff == 1)
+	// 				$tddl[] = "INSERT";
+	// 			elseif($suff == 2)
+	// 				$tddl[] = "UPDATE";
+	// 			elseif($suff == 3)
+	// 				$tddl[] = "DELETE";
+	// 		}
+
+	// 		$ddl[] = ($MD->TRIGGER_TYPE & 1 ? "BEFORE" : "AFTER")." ".join(" OR ", $tddl)." POSITION $MD->TRIGGER_SEQUENCE";
+	// 	} else {
+	// 		trigger_error("TRIGGER_TYPE = $MD->TRIGGER_TYPE not implemented");
 	// 	}
+
+	// 	$ddl[] = $MD->TRIGGER_SOURCE;
+
+	// 	return join("\n", $ddl);
 	// }
 
-	// function isActive(){
-	// 	return !$this->isInActive();
-	// }
 }

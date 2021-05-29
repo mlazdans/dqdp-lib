@@ -65,13 +65,14 @@ class Database extends FirebirdObject
 	}
 
 	/**
-	 * @return Trigger[]
+	 * @return DBTrigger[]
 	 **/
+	# TODO: get all triggers
 	function getTriggers(): array {
-		$sql = Trigger::getSQL();
+		$sql = DBTrigger::getSQL();
 
 		foreach($this->getList($sql) as $r){
-			$list[] = (new Trigger($this->getDb(), $r->TRIGGER_NAME))->setMetadata($r);
+			$list[] = (new DBTrigger($this->getDb(), $r->TRIGGER_NAME))->setMetadata($r);
 		}
 
 		return $list??[];

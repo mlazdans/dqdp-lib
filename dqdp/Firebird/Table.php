@@ -177,6 +177,19 @@ class Table extends Relation {
 		return $list??[];
 	}
 
+	/**
+	 * @return RelationTrigger[]
+	 **/
+	function getTriggers(): array {
+		$sql = RelationTrigger::getSQL()->Where(['triggers.RDB$RELATION_NAME = ?', $this]);
+
+		foreach($this->getList($sql) as $r){
+			$list[] = (new RelationTrigger($this, $r->TRIGGER_NAME))->setMetadata($r);
+		}
+
+		return $list??[];
+	}
+
 	function ddlParts(): array {
 		$parts['tablename'] = "$this";
 		$parts['col_def'] = $this->getFields();
