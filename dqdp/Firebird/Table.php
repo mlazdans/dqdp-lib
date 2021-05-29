@@ -178,47 +178,49 @@ class Table extends Relation {
 	}
 
 	function ddlParts(): array {
-		trigger_error("Not implemented yet");
-		return [];
-	}
+		$parts['tablename'] = "$this";
+		$parts['col_def'] = $this->getFields();
 
-	# TODO: view
-	function ddl($PARTS = null): string {
-		// if(is_null($PARTS)){
-		// 	$PARTS = $this->ddlParts();
-		// }
-
-		$MD = $this->getMetadata();
-
-		$ddl = [];
-		$fields = $this->getFields();
-		if($MD->RELATION_TYPE == Relation\Type::PERSISTENT){
-			foreach($fields as $o){
-				$fddl[] = $o->ddl();
-			}
-			$ddl[] = "CREATE TABLE $this (".join(",\n\t", $fddl).")";
-		} elseif($MD->RELATION_TYPE == Relation\Type::VIEW){
-			foreach($fields as $o){
-				$fddl[] = "$o";
-			}
-			$ddl[] = "CREATE VIEW $this (".join(", ", $fddl).") AS";
-			$ddl[] = $MD->VIEW_SOURCE;
-		} else {
-			trigger_error("RELATION_TYPE: $MD->RELATION_TYPE not implemented");
+		if($constraint = $this->getPKs()){
+			$parts['pks'] = $constraint;
+		}
+		if($constraint = $this->getFKs()){
+			$parts['fks'] = $constraint;
+		}
+		if($constraint = $this->getUniqs()){
+			$parts['uniqs'] = $constraint;
+		}
+		if($constraint = $this->getChecks()){
+			$parts['checks'] = $constraint;
 		}
 
-		// $indexes = $this->getIndexes();
-		// foreach($indexes as $o){
-		// 	$fddl[] = $o->ddl();
-		// }
+		return $parts;
+	}
 
-		// foreach($this->getPK() as $o){
-		// 	$fddl[] = $o->ddl();
-		// }
+	function ddl($parts = null): string {
+		if(is_null($parts)){
+			$parts = $this->ddlParts();
+		}
 
-		// foreach($this->getUnique() as $o){
-		// 	$fddl[] = $o->ddl();
-		// }
+		$ddl = [$parts['tablename']];
+
+		# col_def
+		$col_defs = [$parts['col_def']];
+
+		# Add tconstraints
+		foreach(['pks', 'fks', 'uniqs', 'checks'] as $k){
+			if(isset($parts[$k])){
+				$col_defs[] = $parts[$k];
+			}
+		}
+
+		foreach($col_defs as $col_def_items){
+			foreach($col_def_items as $c){
+				$fddl[] = $c->ddl();
+			}
+		}
+
+		$ddl[] = "(".join(",\n\t", $fddl).")";
 
 		return join("\n", $ddl);
 	}
