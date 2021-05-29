@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace dqdp\FireBird;
 
+use dqdp\SQL\Select;
+
 // <col_def> ::=
 //     <regular_col_def>
 //   | <computed_col_def>
@@ -49,137 +51,32 @@ namespace dqdp\FireBird;
 // <using_index> ::= USING
 //   [ASC[ENDING] | DESC[ENDING]] INDEX indexname
 
-abstract class Field extends FirebirdType
+class Field extends FirebirdObject
 {
-	// static function getSQL(): Select {
-	// 	return (new Select('f.*, cs.*, c.*'))
-	// 	->From('RDB$FIELDS f')
-	// 	->LeftJoin('RDB$CHARACTER_SETS cs', 'cs.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID')
-	// 	->LeftJoin('RDB$COLLATIONS c', '(c.RDB$COLLATION_ID = f.RDB$COLLATION_ID AND c.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID)')
-	// 	->Where('f.RDB$SYSTEM_FLAG = 0')
-	// 	->OrderBy('f.RDB$FIELD_NAME')
-	// 	;
-	// 	// return (new Select())
-	// 	// ->From('RDB$FIELDS')
-	// 	// ->Where('RDB$SYSTEM_FLAG = 0')
-	// 	// ->OrderBy('RDB$FIELD_NAME')
-	// 	// ;
-	// }
-
-	const TYPE_SHORT                          = 7;
-	const TYPE_LONG                           = 8;
-	const TYPE_QUAD                           = 9;
-	const TYPE_FLOAT                          = 10;
-	const TYPE_DATE                           = 12;
-	const TYPE_TIME                           = 13;
-	const TYPE_TEXT                           = 14;
-	const TYPE_CHAR                           = 14; // Alias TYPE_TEXT
-	const TYPE_INT64                          = 16;
-	const TYPE_DOUBLE                         = 27;
-	const TYPE_TIMESTAMP                      = 35;
-	const TYPE_VARYING                        = 37;
-	const TYPE_CSTRING                        = 40;
-	const TYPE_BLOB_ID                        = 45;
-	const TYPE_BLOB                           = 261;
-
-	const SUBTYPE_INT_NUMERIC                 = 1;
-	const SUBTYPE_INT_DECIMAL                 = 2;
-
-	const SUBTYPE_BINARY                      = 0;
-	const SUBTYPE_TEXT                        = 1;
-	const SUBTYPE_BLR                         = 2;
-	const SUBTYPE_ACL                         = 3;
-	const SUBTYPE_RANGES                      = 4;
-	const SUBTYPE_SUMMARY                     = 5;
-	const SUBTYPE_FORMAT                      = 6;
-	const SUBTYPE_TRANSACTION_DESCRIPTION     = 7;
-	const SUBTYPE_EXTERNAL_FILE_DESCRIPTION   = 8;
-	const SUBTYPE_DEBUG_INFORMATION           = 9;
-
-	// static $QuotableTypes = [
-	// 	Field::TYPE_TEXT,
-	// 	Field::TYPE_VARYING,
-	// 	Field::TYPE_CSTRING,
-	// 	Field::TYPE_BLOB,
-	// 	Field::TYPE_DATE,
-	// 	Field::TYPE_TIME,
-	// 	Field::TYPE_TIMESTAMP, # NOTE: test database dialects
-	// ];
-
-	static $TypeNames = [
-		Field::TYPE_SHORT            => 'SMALLINT',
-		Field::TYPE_LONG             => 'INTEGER',
-		Field::TYPE_QUAD             => 'QUAD',
-		Field::TYPE_FLOAT            => 'FLOAT',
-		Field::TYPE_DATE             => 'DATE',
-		Field::TYPE_TIME             => 'TIME',
-		Field::TYPE_TEXT             => 'CHAR',
-		Field::TYPE_INT64            => 'BIGINT',
-		Field::TYPE_DOUBLE           => 'DOUBLE PRECISION',
-		Field::TYPE_TIMESTAMP        => 'TIMESTAMP',
-		Field::TYPE_VARYING          => 'VARCHAR',
-		Field::TYPE_CSTRING          => 'CSTRING',
-		Field::TYPE_BLOB_ID          => 'BLOB_ID',
-		Field::TYPE_BLOB             => 'BLOB',
-	];
-
-	static $SubtypeNames = [
-		Field::SUBTYPE_BINARY                     => 'BINARY',
-		Field::SUBTYPE_TEXT                       => 'TEXT',
-		Field::SUBTYPE_BLR                        => 'BLR',
-		Field::SUBTYPE_ACL                        => 'ACL',
-		Field::SUBTYPE_RANGES                     => 'RANGES',
-		Field::SUBTYPE_SUMMARY                    => 'SUMMARY',
-		Field::SUBTYPE_FORMAT                     => 'FORMAT',
-		Field::SUBTYPE_TRANSACTION_DESCRIPTION    => 'TRANSACTION_DESCRIPTION',
-		Field::SUBTYPE_EXTERNAL_FILE_DESCRIPTION  => 'EXTERNAL_FILE_DESCRIPTION',
-		Field::SUBTYPE_DEBUG_INFORMATION          => 'DEBUG_INFORMATION',
-	];
-
-	static $IntSubtypeNames = [
-		Field::SUBTYPE_INT_NUMERIC   => 'NUMERIC',
-		Field::SUBTYPE_INT_DECIMAL   => 'DECIMAL',
-	];
-
-	static function nameByType(int $type): string {
-		if(isset(Field::$TypeNames[$type])){
-			return Field::$TypeNames[$type];
-		} else {
-			trigger_error("Unknown type: $type");
-		}
-
-		return "";
+	static function getSQL(): Select {
+		// return (new Select('f.*, cs.*, c.*'))
+		return (new Select())
+		->From('RDB$FIELDS AS fields')
+		->LeftJoin('RDB$CHARACTER_SETS AS character_sets', 'character_sets.RDB$CHARACTER_SET_ID = fields.RDB$CHARACTER_SET_ID')
+		->LeftJoin('RDB$COLLATIONS AS collations', '(collations.RDB$COLLATION_ID = fields.RDB$COLLATION_ID AND collations.RDB$CHARACTER_SET_ID = fields.RDB$CHARACTER_SET_ID)')
+		->Where('fields.RDB$SYSTEM_FLAG = 0')
+		// ->OrderBy('f.RDB$FIELD_NAME')
+		;
+		// return (new Select())
+		// ->From('RDB$FIELDS')
+		// ->Where('RDB$SYSTEM_FLAG = 0')
+		// ->OrderBy('RDB$FIELD_NAME')
+		// ;
 	}
 
-	// static function nameByIntSubtype($type){
-	// 	return (isset(Field::$IntSubtypeNames[$type]) ? Field::$IntSubtypeNames[$type] : false);
-	// }
-
-	# Numeric types when scale know but precision not
-	# TODO: might change in FB 4.0
-	static function precisionByType($type){
-		$FIELD_PRECISION = false;
-
-		if($type == Field::TYPE_SHORT) {
-			$FIELD_PRECISION = 4;
-		}
-
-		if($type == Field::TYPE_LONG) {
-			$FIELD_PRECISION = 9;
-		}
-
-		if($type == Field::TYPE_DOUBLE) {
-			$FIELD_PRECISION = 15;
-		}
-
-		return $FIELD_PRECISION;
+	function getMetadataSQL(): Select {
+		return $this->getSQL()->Where(['fields.RDB$FIELD_NAME = ?', $this->name]);
 	}
 
 	// static function isQuotable($type) {
 	// 	return in_array($type, Field::$QuotableTypes);
 	// }
 
-	# TODO: identity_col_def
 	// protected function regular_col_def(){
 	// 	$MT = $this->getMetadata();
 	// 	$DBMT = $this->getDb()->getMetadata();
@@ -191,100 +88,37 @@ abstract class Field extends FirebirdType
 
 		$PARTS = ['colname'=>"$this"];
 
-		# Domain
-		if(!empty($MT->FIELD_SOURCE) && substr($MT->FIELD_SOURCE, 0, 4) != 'RDB$'){
-			$PARTS['domainname'] = $MT->FIELD_SOURCE;
-		}
+		// # Domain
+		// if(!empty($MT->FIELD_SOURCE) && substr($MT->FIELD_SOURCE, 0, 4) != 'RDB$'){
+		// 	$PARTS['domainname'] = $MT->FIELD_SOURCE;
+		// }
 
-		# Computed
-		if($MT->COMPUTED_SOURCE){
-			$col_def = 'computed_col_def';
-			$PARTS['expression'] = $MT->COMPUTED_SOURCE;
+		# TODO: identity_col_def
+		if(empty($MT->COMPUTED_SOURCE)){
+			$PARTS['col_def'] = 'regular_col_def';
 		} else {
-			$col_def = 'regular_col_def';
+			$PARTS['col_def'] = 'computed_col_def';
+			$PARTS['expression'] = $MT->COMPUTED_SOURCE;
 		}
 
-		$PARTS['col_def'] = $col_def;
-
-		$FT = $MT->FIELD_TYPE;
-		$datatype = Field::nameByType($FT);
-
-		# VARCHAR/TEXT
-		if(in_array($FT, [Field::TYPE_TEXT, Field::TYPE_VARYING, Field::TYPE_CSTRING])){
-			if($MT->CHARACTER_LENGTH){
-				$datatype = sprintf("%s(%d)", Field::nameByType($FT), $MT->CHARACTER_LENGTH);
-			} elseif($MT->FIELD_LENGTH && $MT->BYTES_PER_CHARACTER){
-				$datatype = sprintf("%s(%d)", Field::nameByType($FT), $MT->FIELD_LENGTH / $MT->BYTES_PER_CHARACTER);
-			} else {
-				trigger_error("FIELD_LENGTH");
-				$datatype = sprintf("%s(%d)", Field::nameByType($FT), $MT->FIELD_LENGTH);
-			}
-		}
-
-		if(in_array($FT, [Field::TYPE_SHORT, Field::TYPE_LONG, Field::TYPE_QUAD, Field::TYPE_INT64])){
-			if($MT->FIELD_SUB_TYPE){
-				$datatype = sprintf(
-					"%s(%d, %d)",
-					Field::$IntSubtypeNames[$MT->FIELD_SUB_TYPE],
-					$MT->FIELD_PRECISION,
-					-$MT->FIELD_SCALE
-				);
-			}
-		}
-
-		if($FT == Field::TYPE_BLOB){
-			$datatype .= " SUB_TYPE";
-			if(in_array($MT->FIELD_SUB_TYPE, [Field::SUBTYPE_BINARY, Field::SUBTYPE_TEXT])){
-				$datatype .= " ".Field::$SubtypeNames[$MT->FIELD_SUB_TYPE];
-			} else {
-				$datatype .= sprintf(" %d", $MT->FIELD_SUB_TYPE);
-			}
-
-			// $ddl .= sprintf(" SUB_TYPE %d", $MT->FIELD_SUB_TYPE);
-			// $ddl .= Field::nameBySubtype($MT->FIELD_SUB_TYPE);
-		}
-
-		if(!$datatype) {
-			trigger_error("Unknown type: $FT");
-			// if(($scale = abs($MT->FIELD_SCALE)) && ($pr = Field::precisionByType($FT))){
-			// 	$datatype = sprintf("NUMERIC(%d,%d)", $pr, $scale);
-			// } else {
-			// }
-		}
-
-		$PARTS['datatype'] = $datatype;
+		$PARTS['datatype'] = Field\Type::datatype($MT);
 
 		if($MT->DEFAULT_SOURCE){
 			$PARTS['default'] = $MT->DEFAULT_SOURCE;
 		}
 
-		if(in_array($FT, [Field::TYPE_TEXT, Field::TYPE_VARYING, Field::TYPE_CSTRING, Field::TYPE_BLOB])){
-			if($MT->COLLATION_NAME){
-				$PARTS['collation_name'] = $MT->COLLATION_NAME;
-			}
-
-			if($MT->CHARACTER_SET_NAME){
-				$PARTS['charset'] = $MT->CHARACTER_SET_NAME;
-			}
-
-			// $collate = "";
-			// if($MT->COLLATION_NAME){
-			// 	if($MT->CHARACTER_SET_NAME != $MT->COLLATION_NAME){
-			// 		$collate = " COLLATE $MT->COLLATION_NAME";
-			// 	}
-			// }
-
-			// if($collate || $MT->CHARACTER_SET_NAME){
-			// 	if($collate || ($DBMT->CHARACTER_SET_NAME != $MT->CHARACTER_SET_NAME)){
-			// 		$ddl .= " CHARACTER SET $MT->CHARACTER_SET_NAME";
-			// 	}
-			// }
+		if($MT->COLLATION_NAME){
+			$PARTS['collation_name'] = $MT->COLLATION_NAME;
 		}
 
-		# CHECK constraints via
-		# RDB$RELATION_CONSTRAINTS -> RDB$CHECK_CONSTRAINTS -> RDB$TRIGGERS ->
-		// if($MT->VALIDATION_SOURCE){
-		// 	$ddl .= " $MT->VALIDATION_SOURCE";
+		// if(in_array($FT, [Field\Type::TEXT, Field\Type::VARYING, Field\Type::CSTRING, Field\Type::BLOB])){
+		// 	if($MT->COLLATION_NAME){
+		// 		$PARTS['collation_name'] = $MT->COLLATION_NAME;
+		// 	}
+
+		// 	if($MT->CHARACTER_SET_NAME){
+		// 		$PARTS['charset'] = $MT->CHARACTER_SET_NAME;
+		// 	}
 		// }
 
 		if($MT->NULL_FLAG){

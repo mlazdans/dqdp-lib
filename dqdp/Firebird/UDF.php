@@ -19,7 +19,7 @@ use dqdp\SQL\Select;
 //   sqltype [{BY DESCRIPTOR} | NULL] |
 //   CSTRING(length) [NULL]
 
-class UDF extends FirebirdType
+class UDF extends FirebirdObject implements DDL
 {
 	const TYPE_VALUE      = 0;
 	const TYPE_BOOLEAN    = 1;
@@ -27,24 +27,22 @@ class UDF extends FirebirdType
 	protected $arguments;
 
 	static function getSQL(): Select {
-		return (new Select())
-		->From('RDB$FUNCTIONS')
-		->Where('RDB$SYSTEM_FLAG = 0')
-		->OrderBy('RDB$FUNCTION_NAME');
+		return (new Select())->From('RDB$FUNCTIONS AS functions')->Where('functions.RDB$SYSTEM_FLAG = 0');
+		// ->OrderBy('RDB$FUNCTION_NAME');
 	}
 
-	function loadMetadata(){
-		$sql = $this->getSQL()
-		->Where(['RDB$FUNCTION_NAME = ?', "$this"])
-		;
-
-		return parent::loadMetadataBySQL($sql);
+	function getMetadataSQL(): Select {
+		return $this->getSQL()->Where(['functions.RDB$FUNCTION_NAME = ?', $this->name]);
 	}
 
+	/**
+	 * @return UDFArgument[]
+	 **/
 	function getArguments(): array {
-		$sql = UDFArgument::getSQL()->Where(['fa.RDB$FUNCTION_NAME = ?', $this->name]);
+		$sql = UDFArgument::getSQL()->Where(['function_arguments.RDB$FUNCTION_NAME = ?', $this->name]);
+
 		foreach($this->getList($sql) as $r){
-			$list[] = new UDFArgument($this, $r->ARGUMENT_POSITION);
+			$list[] = (new UDFArgument($this, $r->ARGUMENT_POSITION))->setMetadata($r);
 		}
 
 		return $list??[];
@@ -91,7 +89,7 @@ class UDF extends FirebirdType
 			$ddl[] = join(", ", $PARTS['arg_type_decl']);
 		}
 
-		if($PARTS['returns']){
+		if(isset($PARTS['returns'])){
 			$ddl[] = $PARTS['returns'];
 		}
 

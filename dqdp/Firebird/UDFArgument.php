@@ -29,7 +29,7 @@ use dqdp\SQL\Select;
 //   { <udf_data_type> | PARAMETER param_num }
 //   [{ BY VALUE | BY DESCRIPTOR [FREE_IT] | FREE_IT }]
 
-class UDFArgument extends Field
+class UDFArgument extends FirebirdObject implements DDL
 {
 	const MECHANISM_VALUE                = 0;
 	const MECHANISM_REFERENCE            = 1;
@@ -42,43 +42,51 @@ class UDFArgument extends Field
 
 	function __construct(UDF $UDF, $name){
 		$this->UDF = $UDF;
-		parent::__construct($UDF->getDb(), "$name");
+		return parent::__construct($UDF->getDb(), "$name");
 	}
 
 	static function getSQL(): Select {
-		return (new Select('fa.*, c.*, cs.*, NULL AS COMPUTED_SOURCE'))
-		->From('RDB$FUNCTION_ARGUMENTS fa')
-		->LeftJoin('RDB$COLLATIONS c', '(c.RDB$COLLATION_ID = fa.RDB$COLLATION_ID AND c.RDB$CHARACTER_SET_ID = fa.RDB$CHARACTER_SET_ID)')
-		->LeftJoin('RDB$CHARACTER_SETS cs', 'cs.RDB$CHARACTER_SET_ID = fa.RDB$CHARACTER_SET_ID')
-		->OrderBy('fa.RDB$ARGUMENT_POSITION')
+		return (new Select('function_arguments.*, collations.*, character_sets.*'))
+		->From('RDB$FUNCTION_ARGUMENTS AS function_arguments')
+		->LeftJoin('RDB$COLLATIONS AS collations', '(collations.RDB$COLLATION_ID = function_arguments.RDB$COLLATION_ID AND collations.RDB$CHARACTER_SET_ID = function_arguments.RDB$CHARACTER_SET_ID)')
+		->LeftJoin('RDB$CHARACTER_SETS character_sets', 'character_sets.RDB$CHARACTER_SET_ID = function_arguments.RDB$CHARACTER_SET_ID')
+		->OrderBy('function_arguments.RDB$ARGUMENT_POSITION')
 		;
 	}
 
-	function loadMetadata(){
-		$sql = $this->getSQL()
-		->Where(['fa.RDB$FUNCTION_NAME = ?', $this->UDF->name])
-		->Where(['fa.RDB$ARGUMENT_POSITION = ?', $this->name])
+	function getMetadataSQL(): Select {
+		return $this->getSQL()
+		->Where(['function_arguments.RDB$FUNCTION_NAME = ?', $this->UDF->name])
+		->Where(['function_arguments.RDB$ARGUMENT_POSITION = ?', $this->name])
 		;
+	}
 
-		return parent::loadMetadataBySQL($sql);
+	function ddlParts(): array {
+		trigger_error("Not implemented yet");
+		return [];
 	}
 
 	function ddl($PARTS = null): string {
-		if(is_null($PARTS)){
-			$PARTS = $this->ddlParts();
-		}
+		// if(is_null($PARTS)){
+		// 	$PARTS = $this->ddlParts();
+		// }
 
 		$ddl = '';
 
 		$MD = $this->getMetadata();
 		$UDFMD = $this->UDF->getMetadata();
-		$parts = $this->ddlParts();
 
-		if(isset($parts['domainname'])){
-			$ddl = $parts['domainname'];
-		} else {
-			$ddl = $parts['datatype'];
-		}
+		# Lil hack
+		// $field = (new Field($this->getDb(), ""))->setMetadata($MD);
+		// printr($MD);
+		// $parts = $field->ddlParts();
+
+		$ddl = Field\Type::datatype($MD);
+		// if(isset($parts['domainname'])){
+		// 	$ddl = $parts['domainname'];
+		// } else {
+		// 	$ddl = $parts['datatype'];
+		// }
 
 		$paramType = "";
 		if($MD->MECHANISM == UDFArgument::MECHANISM_VALUE){

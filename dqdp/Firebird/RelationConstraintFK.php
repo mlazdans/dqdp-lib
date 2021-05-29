@@ -16,18 +16,14 @@ use dqdp\SQL\Select;
 //         [ON UPDATE {NO ACTION | CASCADE | SET DEFAULT | SET NULL}]
 //     | CHECK (<check_condition>) }
 
-class RelationConstraintFK extends RelationConstraint
+class RelationConstraintFK extends RelationIndex
 {
 	static function getSQL(): Select {
-		return parent::getSQL()
-		->Select('i.*, refc.*')
-		// ->Select('foi.RDB$RELATION_NAME AS OTHER_NAME')
-		->Join('RDB$INDICES i', 'rc.RDB$INDEX_NAME = i.RDB$INDEX_NAME')
-		->LeftJoin('RDB$REF_CONSTRAINTS refc', 'refc.RDB$CONSTRAINT_NAME = rc.RDB$CONSTRAINT_NAME')
-		// ->LeftJoin('RDB$INDICES foi', 'foi.RDB$INDEX_NAME = i.RDB$FOREIGN_KEY')
-		->Where('i.RDB$SYSTEM_FLAG = 0')
-		->Where('rc.RDB$CONSTRAINT_TYPE = \'FOREIGN KEY\'')
-		;
+		return Index::getSQL()
+		->Select('indices.*, relation_constraints.*, ref_constraints.*')
+		->Join('RDB$RELATION_CONSTRAINTS AS relation_constraints', 'relation_constraints.RDB$INDEX_NAME = indices.RDB$INDEX_NAME')
+		->Join('RDB$REF_CONSTRAINTS ref_constraints', 'ref_constraints.RDB$CONSTRAINT_NAME = relation_constraints.RDB$CONSTRAINT_NAME')
+		->Where('relation_constraints.RDB$CONSTRAINT_TYPE = \'FOREIGN KEY\'');
 	}
 
 	function ddlParts(): array {
@@ -38,6 +34,10 @@ class RelationConstraintFK extends RelationConstraint
 
 		if($MD->SEGMENT_COUNT){
 			$PARTS['col_list'] = $this->getSegments();
+		}
+
+		if($MD->INDEX_NAME == $MD->CONSTRAINT_NAME){
+			$PARTS['constr_name'] = $MD->CONSTRAINT_NAME;
 		}
 
 		$fk = new Index($this->getDb(), $MD->FOREIGN_KEY);

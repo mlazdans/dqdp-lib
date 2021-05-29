@@ -16,29 +16,46 @@ use dqdp\SQL\Select;
 //         [ON UPDATE {NO ACTION | CASCADE | SET DEFAULT | SET NULL}]
 //     | CHECK (<check_condition>) }
 
-class RelationConstraintCheck extends RelationConstraint
+class RelationConstraintCheck extends FirebirdObject implements DDL
 {
+	protected $relation;
+
+	function __construct(Relation $relation, $name){
+		$this->relation = $relation;
+		parent::__construct($relation->getDb(), $name);
+	}
+
 	static function getSQL(): Select {
-		return parent::getSQL()
-		->Select('cc.*, t.*')
-		->Join('RDB$CHECK_CONSTRAINTS cc', 'cc.RDB$CONSTRAINT_NAME = rc.RDB$CONSTRAINT_NAME')
-		->Join('RDB$TRIGGERS t', 't.RDB$TRIGGER_NAME = cc.RDB$TRIGGER_NAME AND T.RDB$TRIGGER_TYPE = 1')
-		->Where('rc.RDB$CONSTRAINT_TYPE = \'CHECK\'')
+		return (new Select())
+		// ->Select('cc.*, t.*')
+		->Select('relation_constraints.*, check_constraints.*, triggers.*')
+		->From('RDB$RELATION_CONSTRAINTS AS relation_constraints')
+		->Join('RDB$CHECK_CONSTRAINTS check_constraints', 'check_constraints.RDB$CONSTRAINT_NAME = relation_constraints.RDB$CONSTRAINT_NAME')
+		->Join('RDB$TRIGGERS triggers', 'triggers.RDB$TRIGGER_NAME = check_constraints.RDB$TRIGGER_NAME AND triggers.RDB$TRIGGER_TYPE = 1')
+		->Where('relation_constraints.RDB$CONSTRAINT_TYPE = \'CHECK\'')
 		;
 	}
 
-	function loadMetadata(){
-		$sql = $this->getSQL()->Where(['rc.RDB$CONSTRAINT_NAME = ?', $this->name]);
+	function getMetadataSQL(): Select {
+		return $this->getSQL()
+		->Where(['relation_constraints.RDB$RELATION_NAME = ?', $this->getRelation()->name])
+		->Where(['relation_constraints.RDB$CONSTRAINT_NAME = ?', $this->name]);
+	}
 
-		return parent::loadMetadataBySQL($sql);
+	function getRelation(){
+		return $this->relation;
 	}
 
 	function ddlParts(): array {
 		$MD = $this->getMetadata();
 
-		$PARTS = parent::ddlParts();
+		// $PARTS = parent::ddlParts();
+		$PARTS = [];
 		$PARTS['constr_type'] = 'CHECK';
 		$PARTS['check_condition'] = $MD->TRIGGER_SOURCE;
+		if($MD->INDEX_NAME == $MD->CONSTRAINT_NAME){
+			$PARTS['constr_name'] = $MD->CONSTRAINT_NAME;
+		}
 
 		return $PARTS;
 	}

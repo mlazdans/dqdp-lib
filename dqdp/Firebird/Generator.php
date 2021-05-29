@@ -10,18 +10,14 @@ use dqdp\SQL\Select;
 //   [START WITH start_value]
 //   [INCREMENT [BY] increment]
 
-class Generator extends FirebirdObject
+class Generator extends FirebirdObject implements DDL
 {
 	static function getSQL(): Select {
-		return (new Select())
-		->From('RDB$GENERATORS')
-		->Where('RDB$SYSTEM_FLAG = 0');
+		return (new Select())->From('RDB$GENERATORS AS generators')->Where('generators.RDB$SYSTEM_FLAG = 0');
 	}
 
-	function loadMetadata(){
-		$sql = $this->getSQL()->Where(['RDB$GENERATOR_NAME = ?', $this->name]);
-
-		return parent::loadMetadataBySQL($sql);
+	function getMetadataSQL(): Select {
+		return $this->getSQL()->Where(['generators.RDB$GENERATOR_NAME = ?', $this->name]);
 	}
 
 	function ddlParts(): array {

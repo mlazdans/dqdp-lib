@@ -6,7 +6,7 @@ namespace dqdp\FireBird;
 
 use dqdp\SQL\Select;
 
-class Index extends FirebirdType
+class Index extends FirebirdObject
 {
 	const TYPE_ASC   = 0;
 	const TYPE_DESC  = 1;
@@ -17,22 +17,15 @@ class Index extends FirebirdType
 	// const TYPE_UNIQUE   = 3;
 
 	static function getSQL(): Select {
-		return (new Select('i.*'))
-		->From('RDB$INDICES i')
-		->Where('i.RDB$SYSTEM_FLAG = 0');
+		return (new Select())->From('RDB$INDICES AS indices')->Where('indices.RDB$SYSTEM_FLAG = 0');
 	}
 
-	function loadMetadata(){
-		$sql = $this->getSQL()->Where(['i.RDB$INDEX_NAME = ?', $this->name]);
-
-		return parent::loadMetadataBySQL($sql);
+	function getMetadataSQL(): Select {
+		return $this->getSQL()->Where(['indices.RDB$INDEX_NAME = ?', $this->name]);
 	}
 
 	function getSegments(): array {
-		$sql = (new Select())->From('RDB$INDEX_SEGMENTS')
-		->Where(['RDB$INDEX_NAME = ?', $this->name])
-		->OrderBy('RDB$FIELD_POSITION')
-		;
+		$sql = (new Select())->From('RDB$INDEX_SEGMENTS')->Where(['RDB$INDEX_NAME = ?', $this->name])->OrderBy('RDB$FIELD_POSITION');
 
 		foreach($this->getList($sql) as $r){
 			$list[] = $r->FIELD_NAME;
@@ -66,10 +59,5 @@ class Index extends FirebirdType
 		$PARTS['active'] = $MD->INDEX_INACTIVE ? "INACTIVE" : "ACTIVE";
 
 		return $PARTS;
-	}
-
-	function ddl($PARTS = null): string {
-		trigger_error("Do not call directly.");
-		return "";
 	}
 }

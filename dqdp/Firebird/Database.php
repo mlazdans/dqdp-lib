@@ -16,7 +16,16 @@ class Database extends FirebirdObject
 
 	function __construct(IBase $conn, string $name = "firebird_db"){
 		$this->connect($conn);
-		parent::__construct($this, $name);
+
+		return parent::__construct($this, $name);
+	}
+
+	static function getSQL(): Select {
+		return (new Select())->From('MON$DATABASE')->Join('RDB$DATABASE', 'TRUE');
+	}
+
+	function getMetadataSQL(): Select {
+		return $this->getSQL();
 	}
 
 	function __toString(){
@@ -25,16 +34,18 @@ class Database extends FirebirdObject
 
 	function connect(IBase $conn){
 		$this->conn = $conn;
+
+		return $this;
 	}
 
 	/**
 	 * @return Relation[]
 	 **/
 	function getTables(): array {
-		$sql = Relation::getSQL()->Where(['RDB$RELATION_TYPE = ?', Relation::TYPE_PERSISTENT]);
+		$sql = Relation::getSQL()->Where(['RDB$RELATION_TYPE = ?', Relation\Type::PERSISTENT]);
 
 		foreach($this->getList($sql) as $r){
-			$list[] = new Relation($this->getDb(), $r->RELATION_NAME);
+			$list[] = (new Relation($this->getDb(), $r->RELATION_NAME))->setMetadata($r);
 		}
 
 		return $list??[];
@@ -44,10 +55,10 @@ class Database extends FirebirdObject
 	 * @return Relation[]
 	 **/
 	function getViews(): array {
-		$sql = Relation::getSQL()->Where(['RDB$RELATION_TYPE = ?', Relation::TYPE_VIEW]);
+		$sql = Relation::getSQL()->Where(['RDB$RELATION_TYPE = ?', Relation\Type::VIEW]);
 
 		foreach($this->getList($sql) as $r){
-			$list[] = new Relation($this->getDb(), $r->RELATION_NAME);
+			$list[] = (new Relation($this->getDb(), $r->RELATION_NAME))->setMetadata($r);
 		}
 
 		return $list??[];
@@ -58,8 +69,9 @@ class Database extends FirebirdObject
 	 **/
 	function getTriggers(): array {
 		$sql = Trigger::getSQL();
+
 		foreach($this->getList($sql) as $r){
-			$list[] = new Trigger($this->getDb(), $r->TRIGGER_NAME);
+			$list[] = (new Trigger($this->getDb(), $r->TRIGGER_NAME))->setMetadata($r);
 		}
 
 		return $list??[];
@@ -74,8 +86,9 @@ class Database extends FirebirdObject
 	 **/
 	function getProcedures(){
 		$sql = Procedure::getSQL();
+
 		foreach($this->getList($sql) as $r){
-			$list[] = new Procedure($this->getDb(), $r->PROCEDURE_NAME);
+			$list[] = (new Procedure($this->getDb(), $r->PROCEDURE_NAME))->setMetadata($r);
 		}
 
 		return $list??[];
@@ -86,8 +99,9 @@ class Database extends FirebirdObject
 	 **/
 	function getGenerators(): array {
 		$sql = Generator::getSQL();
+
 		foreach($this->getList($sql) as $r){
-			$list[] = new Generator($this->getDb(), $r->GENERATOR_NAME);
+			$list[] = (new Generator($this->getDb(), $r->GENERATOR_NAME))->setMetadata($r);
 		}
 
 		return $list??[];
@@ -98,8 +112,9 @@ class Database extends FirebirdObject
 	 **/
 	function getExceptions(){
 		$sql = FireBirdException::getSQL();
+
 		foreach($this->getList($sql) as $r){
-			$list[] = new FireBirdException($this->getDb(), $r->EXCEPTION_NAME);
+			$list[] = (new FireBirdException($this->getDb(), $r->EXCEPTION_NAME))->setMetadata($r);
 		}
 
 		return $list??[];
@@ -156,8 +171,9 @@ class Database extends FirebirdObject
 	 **/
 	function getUDFs(){
 		$sql = UDF::getSQL();
+
 		foreach($this->getList($sql) as $r){
-			$list[] = new UDF($this->getDb(), $r->FUNCTION_NAME);
+			$list[] = (new UDF($this->getDb(), $r->FUNCTION_NAME))->setMetadata($r);
 		}
 
 		return $list??[];
@@ -168,8 +184,9 @@ class Database extends FirebirdObject
 	 **/
 	function getDomains(){
 		$sql = Domain::getSQL();
+
 		foreach($this->getList($sql) as $r){
-			$list[] = new Domain($this->getDb(), $r->FIELD_NAME);
+			$list[] = (new Domain($this->getDb(), $r->FIELD_NAME))->setMetadata($r);
 		}
 
 		return $list??[];
@@ -179,24 +196,8 @@ class Database extends FirebirdObject
 		return $this->conn;
 	}
 
-	static function getSQL(): Select {
-		return (new Select())
-		->From('MON$DATABASE')
-		->Join('RDB$DATABASE', 'TRUE')
-		;
-	}
-
 	function ddlParts(): array {
 		trigger_error("Not implemented yet");
 		return [];
-	}
-
-	function ddl($PARTS = null): string {
-		if(is_null($PARTS)){
-			$PARTS = $this->ddlParts();
-		}
-
-		trigger_error("Not implemented yet");
-		return "";
 	}
 }

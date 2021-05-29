@@ -40,28 +40,25 @@ abstract class FirebirdObject
 	private static $discardFields = ['RDB$RUNTIME', 'RDB$COMPUTED_BLR'];
 
 	abstract static function getSQL(): Select;
+	abstract function getMetadataSQL(): Select;
 	abstract function ddlParts(): array;
-	abstract function ddl($PARTS = null): string;
+	// abstract function ddl($PARTS = null): string;
 
-	function loadMetadata(){
-		return $this->loadMetadataBySQL($this->getSQL());
-	}
+	// private function loadMetadata(){
+	// 	return $this->loadMetadataBySQL($this->getSQL());
+	// }
 
 	function __construct(Database $db, $name){
-		# TODO: exception
-		// if($this->type === null){
-		// 	trigger_error("Type not set", E_USER_WARNING);
-		// }
-
 		$this->name = $name;
 		$this->setDb($db);
 
-		# TODO: switch
-		$this->loadMetadata();
+		return $this;
 	}
 
 	function setDb(Database $db){
 		$this->db = $db;
+
+		return $this;
 	}
 
 	static function isNameQuotable($name) {
@@ -212,7 +209,18 @@ abstract class FirebirdObject
 	// 	return $this->dependents;
 	// }
 
+	function setMetadata($metadata){
+		$this->metadata = $metadata;
+
+		return $this;
+	}
+
 	function getMetadata(){
+		# TODO: check if load once
+		if(!$this->metadata){
+			$this->loadMetadataBySQL($this->getMetadataSQL());
+		}
+
 		return $this->metadata;
 	}
 
@@ -235,7 +243,7 @@ abstract class FirebirdObject
 		return $list??[];
 	}
 
-	protected function loadMetadataBySQL($sql){
+	private function loadMetadataBySQL(Select $sql){
 		if($this->metadata !== null){
 			return $this->metadata;
 		}

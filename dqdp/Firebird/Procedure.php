@@ -34,7 +34,7 @@ use dqdp\SQL\Select;
 // <domain_or_non_array_type> ::=
 //   !! See Scalar Data Types Syntax !!
 
-class Procedure extends FirebirdType
+class Procedure extends FirebirdObject implements DDL
 {
 	const TYPE_LEGACY          = 0;
 	const TYPE_SELECTABLE      = 1;
@@ -43,23 +43,19 @@ class Procedure extends FirebirdType
 	protected $parameters;
 
 	static function getSQL(): Select {
-		return (new Select())
-		->From('RDB$PROCEDURES')
-		->Where('RDB$SYSTEM_FLAG = 0')
-		->OrderBy('RDB$PROCEDURE_NAME');
+		return (new Select())->From('RDB$PROCEDURES AS procedures')->Where('procedures.RDB$SYSTEM_FLAG = 0');
+		// ->OrderBy('RDB$PROCEDURE_NAME');
 	}
 
-	function loadMetadata(){
-		$sql = $this->getSQL()->Where(['RDB$PROCEDURE_NAME = ?', $this->name]);
-
-		return parent::loadMetadataBySQL($sql);
+	function getMetadataSQL(): Select {
+		return $this->getSQL()->Where(['procedures.RDB$PROCEDURE_NAME = ?', $this->name]);
 	}
 
 	function getParameters(){
-		$sql = ProcedureParameter::getSQL()->Where(['pp.RDB$PROCEDURE_NAME = ?', $this->name]);
+		$sql = ProcedureParameter::getSQL()->Where(['procedure_parameters.RDB$PROCEDURE_NAME = ?', $this->name]);
 
 		foreach($this->getList($sql) as $r){
-			$list[] = new ProcedureParameter($this, $r->PARAMETER_NAME);
+			$list[] = (new ProcedureParameter($this, $r->PARAMETER_NAME))->setMetadata($r);
 		}
 
 		return $list??[];

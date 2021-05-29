@@ -16,14 +16,19 @@ use dqdp\SQL\Select;
 //         [ON UPDATE {NO ACTION | CASCADE | SET DEFAULT | SET NULL}]
 //     | CHECK (<check_condition>) }
 
-class RelationConstraintUniq extends RelationConstraint
+class RelationConstraintUniq extends RelationIndex
 {
 	static function getSQL(): Select {
-		return parent::getSQL()
-		->Select('i.*')
-		->Join('RDB$INDICES i', 'rc.RDB$INDEX_NAME = i.RDB$INDEX_NAME')
-		->Where('i.RDB$SYSTEM_FLAG = 0')
-		->Where('rc.RDB$CONSTRAINT_TYPE = \'UNIQUE\'');
+		return Index::getSQL()
+		->Select('relation_constraints.*, indices.*')
+		->Join('RDB$RELATION_CONSTRAINTS AS relation_constraints', 'relation_constraints.RDB$INDEX_NAME = indices.RDB$INDEX_NAME')
+		->Where('relation_constraints.RDB$CONSTRAINT_TYPE = \'UNIQUE\'')
+		;
+		// return Index::getSQL()
+		// ->Select('i.*')
+		// ->Join('RDB$INDICES i', 'rc.RDB$INDEX_NAME = i.RDB$INDEX_NAME')
+		// ->Where('i.RDB$SYSTEM_FLAG = 0')
+		// ->Where('rc.RDB$CONSTRAINT_TYPE = \'UNIQUE\'');
 	}
 
 	function ddlParts(): array {

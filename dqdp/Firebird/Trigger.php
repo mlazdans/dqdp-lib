@@ -6,7 +6,69 @@ namespace dqdp\FireBird;
 
 use dqdp\SQL\Select;
 
-class Trigger extends FirebirdType
+// CREATE TRIGGER trigname
+//   { <relation_trigger_legacy>
+//   | <relation_trigger_sql2003>
+//   | <database_trigger>
+//   | <ddl_trigger> }
+//   <module-body>
+
+// <module-body> ::=
+//   !! See Syntax of Module Body !!
+
+// <relation_trigger_legacy> ::=
+//   FOR {tablename | viewname}
+//   [ACTIVE | INACTIVE]
+//   {BEFORE | AFTER} <mutation_list>
+//   [POSITION number]
+
+// <relation_trigger_sql2003> ::=
+//   [ACTIVE | INACTIVE]
+//   {BEFORE | AFTER} <mutation_list>
+//   [POSITION number]
+//   ON {tablename | viewname}
+
+// <database_trigger> ::=
+//   [ACTIVE | INACTIVE] ON <db_event>
+//   [POSITION number]
+
+// <ddl_trigger> ::=
+//   [ACTIVE | INACTIVE]
+//   {BEFORE | AFTER} <ddl_event>
+//   [POSITION number]
+
+// <mutation_list> ::=
+//   <mutation> [OR <mutation> [OR <mutation>]]
+
+// <mutation> ::= INSERT | UPDATE | DELETE
+
+// <db_event> ::=
+//     CONNECT | DISCONNECT
+//   | TRANSACTION {START | COMMIT | ROLLBACK}
+
+// <ddl_event> ::=
+//     ANY DDL STATEMENT
+//   | <ddl_event_item> [{OR <ddl_event_item>} ...]
+
+// <ddl_event_item> ::=
+//     {CREATE | ALTER | DROP} TABLE
+//   | {CREATE | ALTER | DROP} PROCEDURE
+//   | {CREATE | ALTER | DROP} FUNCTION
+//   | {CREATE | ALTER | DROP} TRIGGER
+//   | {CREATE | ALTER | DROP} EXCEPTION
+//   | {CREATE | ALTER | DROP} VIEW
+//   | {CREATE | ALTER | DROP} DOMAIN
+//   | {CREATE | ALTER | DROP} ROLE
+//   | {CREATE | ALTER | DROP} SEQUENCE
+//   | {CREATE | ALTER | DROP} USER
+//   | {CREATE | ALTER | DROP} INDEX
+//   | {CREATE | DROP} COLLATION
+//   | ALTER CHARACTER SET
+//   | {CREATE | ALTER | DROP} PACKAGE
+//   | {CREATE | DROP} PACKAGE BODY
+//   | {CREATE | ALTER | DROP} MAPPING
+
+class Trigger extends FirebirdObject implements DDL
 {
 	const TYPE_PRE_STORE            = 1;
 	const TYPE_POST_STORE           = 2;
@@ -40,17 +102,11 @@ class Trigger extends FirebirdType
 	// const DB_TRIGGER_MAX            = 5;
 
 	static function getSQL(): Select {
-		return (new Select())
-		->From('RDB$TRIGGERS')
-		->Where('RDB$SYSTEM_FLAG = 0');
+		return (new Select())->From('RDB$TRIGGERS AS triggers')->Where('triggers.RDB$SYSTEM_FLAG = 0');
 	}
 
-	function loadMetadata(){
-		$sql = $this->getSQL()
-		->Where(['RDB$TRIGGER_NAME = ?', $this->name])
-		;
-
-		return parent::loadMetadataBySQL($sql);
+	function getMetadataSQL(): Select {
+		return $this->getSQL()->Where(['triggers.RDB$TRIGGER_NAME = ?', $this->name]);
 	}
 
 	// Copied from FB source

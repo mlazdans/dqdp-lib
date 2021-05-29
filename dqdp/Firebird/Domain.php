@@ -14,23 +14,25 @@ use dqdp\SQL\Select;
 // <datatype> ::=
 //   <scalar_datatype> | <blob_datatype> | <array_datatype>
 
-class Domain extends Field
+class Domain extends Field implements DDL
 {
+	// static function getSQL(): Select {
+	// 	return (new Select('f.*, cs.*, c.*'))
+	// 	->From('RDB$FIELDS f')
+	// 	->LeftJoin('RDB$CHARACTER_SETS cs', 'cs.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID')
+	// 	->LeftJoin('RDB$COLLATIONS c', '(c.RDB$COLLATION_ID = f.RDB$COLLATION_ID AND c.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID)')
+	// 	->Where('f.RDB$SYSTEM_FLAG = 0')
+	// 	->Where('f.RDB$FIELD_NAME NOT LIKE \'RDB$%\'')
+	// 	// ->OrderBy('f.RDB$FIELD_NAME')
+	// 	;
+	// }
+
 	static function getSQL(): Select {
-		return (new Select('f.*, cs.*, c.*'))
-		->From('RDB$FIELDS f')
-		->LeftJoin('RDB$CHARACTER_SETS cs', 'cs.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID')
-		->LeftJoin('RDB$COLLATIONS c', '(c.RDB$COLLATION_ID = f.RDB$COLLATION_ID AND c.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID)')
-		->Where('f.RDB$SYSTEM_FLAG = 0')
-		->Where('f.RDB$FIELD_NAME NOT LIKE \'RDB$%\'')
-		// ->OrderBy('f.RDB$FIELD_NAME')
-		;
+		return parent::getSQL()->Select('fields.*, collations.*, character_sets.*')->Where('fields.RDB$FIELD_NAME NOT LIKE \'RDB$%\'');
 	}
 
-	function loadMetadata(){
-		$sql = $this->getSQL()->Where(['RDB$FIELD_NAME = ?', $this->name]);
-
-		return parent::loadMetadataBySQL($sql);
+	function getMetadataSQL(): Select {
+		return $this->getSQL()->Where(['fields.RDB$FIELD_NAME = ?', $this->name]);
 	}
 
 	function ddlParts(): array {
@@ -52,11 +54,12 @@ class Domain extends Field
 		// $ddl = ["CREATE DOMAIN $this AS"];
 		$ddl = ["$parts[colname] AS"];
 
-		if(isset($parts['domainname'])){
-			$ddl[] = $parts['domainname'];
-		} else {
-			$ddl[] = $parts['datatype'];
-		}
+		$ddl[] = $parts['datatype'];
+		// if(isset($parts['domainname'])){
+		// 	$ddl[] = $parts['domainname'];
+		// } else {
+		// 	$ddl[] = $parts['datatype'];
+		// }
 
 		if(isset($parts['charset'])){
 			$ddl[] = "CHARACTER SET $parts[charset]";

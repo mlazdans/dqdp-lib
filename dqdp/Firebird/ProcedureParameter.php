@@ -34,7 +34,7 @@ use dqdp\SQL\Select;
 // <domain_or_non_array_type> ::=
 //   !! See Scalar Data Types Syntax !!
 
-class ProcedureParameter extends Field
+class ProcedureParameter extends Field implements DDL
 {
 	const TYPE_INPUT                = 0;
 	const TYPE_RETURN               = 1;
@@ -43,57 +43,52 @@ class ProcedureParameter extends Field
 
 	function __construct(Procedure $proc, $name){
 		$this->proc = $proc;
-		parent::__construct($proc->getDb(), $name);
+		parent::__construct($proc->getDb(), "$name");
 	}
 
 	static function getSQL(): Select {
-		return (new Select('pp.*, f.*, c.*, cs.*'))
-		->From('RDB$PROCEDURE_PARAMETERS pp')
-		->LeftJoin('RDB$FIELDS f', 'f.RDB$FIELD_NAME = pp.RDB$FIELD_SOURCE')
-		->LeftJoin('RDB$COLLATIONS c', '(c.RDB$COLLATION_ID = f.RDB$COLLATION_ID AND c.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID)')
-		->LeftJoin('RDB$CHARACTER_SETS cs', 'cs.RDB$CHARACTER_SET_ID = f.RDB$CHARACTER_SET_ID')
-		->Where('pp.RDB$SYSTEM_FLAG = 0')
-		->OrderBy('RDB$PARAMETER_NUMBER')
+		return parent::getSQL()
+		->Select('procedure_parameters.*, fields.*, collations.*, character_sets.*')
+		->Join('RDB$PROCEDURE_PARAMETERS AS procedure_parameters', 'procedure_parameters.RDB$FIELD_SOURCE = fields.RDB$FIELD_NAME')
+		->OrderBy('procedure_parameters.RDB$PARAMETER_NUMBER')
 		;
 	}
 
-	function loadMetadata(){
-		$sql = $this->getSQL()
-		->Where(['pp.RDB$PROCEDURE_NAME = ?', $this->proc->name])
-		->Where(['pp.RDB$PARAMETER_NAME = ?', $this->name])
+	function getMetadataSQL(): Select {
+		return $this->getSQL()
+		->Where(['procedure_parameters.RDB$PROCEDURE_NAME = ?', $this->proc->name])
+		->Where(['procedure_parameters.RDB$PARAMETER_NAME = ?', $this->name])
 		;
-
-		return parent::loadMetadataBySQL($sql);
 	}
 
 	//, param2 VARCHAR(101) CHARACTER SET win1257 COLLATE WIN1257_LV
-	function ddl($PARTS = null): string {
-		if(is_null($PARTS)){
-			$PARTS = $this->ddlParts();
+	function ddl($parts = null): string {
+		if(is_null($parts)){
+			$parts = $this->ddlParts();
 		}
 
-		$DBMD = $this->getDb()->getMetadata();
-		$parts = $this->ddlParts();
+		// $DBMD = $this->getDb()->getMetadata();
 
 		$ddl = ["$this"];
-		if(isset($parts['domainname'])){
-			$ddl[] = $parts['domainname'];
-		} else {
-			$ddl[] = $parts['datatype'];
-		}
+		$ddl[] = $parts['datatype'];
+		// if(isset($parts['domainname'])){
+		// 	$ddl[] = $parts['domainname'];
+		// } else {
+		// 	$ddl[] = $parts['datatype'];
+		// }
 
-		$collate = "";
-		if(isset($parts['collation_name'])){
-			if($parts['charset'] != $parts['collation_name']){
-				$collate = "COLLATE $parts[collation_name]";
-			}
-		}
+		// $collate = "";
+		// if(isset($parts['collation_name'])){
+		// 	if($parts['charset'] != $parts['collation_name']){
+		// 		$collate = "COLLATE $parts[collation_name]";
+		// 	}
+		// }
 
-		if($collate || isset($parts['charset'])){
-			if($collate || ($DBMD->CHARACTER_SET_NAME != $parts['charset'])){
-				$ddl[] = "CHARACTER SET $parts[charset]";
-			}
-		}
+		// if($collate || isset($parts['charset'])){
+		// 	if($collate || ($DBMD->CHARACTER_SET_NAME != $parts['charset'])){
+		// 		$ddl[] = "CHARACTER SET $parts[charset]";
+		// 	}
+		// }
 
 		if(isset($parts['default'])){
 			$ddl[] = $parts['default'];
@@ -103,8 +98,8 @@ class ProcedureParameter extends Field
 			$ddl[] = "NOT NULL";
 		}
 
-		if($collate){
-			$ddl[] = $collate;
+		if(isset($parts['collation_name'])){
+			$ddl[] = "COLLATE $parts[collation_name]";
 		}
 
 		return join(" ", $ddl);

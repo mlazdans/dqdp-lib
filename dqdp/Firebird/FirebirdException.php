@@ -16,20 +16,15 @@ use dqdp\SQL\Select;
 
 // <slot> ::= one of 1..9
 
-class FireBirdException extends FirebirdType
+class FireBirdException extends FirebirdObject implements DDL
 {
 	static function getSQL(): Select {
-		return (new Select())
-		->From('RDB$EXCEPTIONS')
-		->Where('RDB$SYSTEM_FLAG = 0')
+		return (new Select())->From('RDB$EXCEPTIONS AS exceptions')->Where('exceptions.RDB$SYSTEM_FLAG = 0');
 		// ->OrderBy('RDB$EXCEPTION_NAME')
-		;
 	}
 
-	function loadMetadata(){
-		$sql = $this->getSQL()->Where(['RDB$EXCEPTION_NAME = ?', $this->name]);
-
-		return parent::loadMetadataBySQL($sql);
+	function getMetadataSQL(): Select {
+		return $this->getSQL()->Where(['exceptions.RDB$EXCEPTION_NAME = ?', $this->name]);
 	}
 
 	function ddlParts(): array {

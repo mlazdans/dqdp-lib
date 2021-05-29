@@ -10,7 +10,7 @@ use dqdp\SQL\Select;
 //   INDEX indexname ON tablename
 //   {(col [, col …]) | COMPUTED BY (<expression>)}
 
-class RelationIndex extends Index
+class RelationIndex extends Index implements DDL
 {
 	protected $relation;
 
@@ -21,17 +21,15 @@ class RelationIndex extends Index
 
 	static function getSQL(): Select {
 		return parent::getSQL()
-		->LeftJoin('RDB$RELATION_CONSTRAINTS rc', 'rc.RDB$INDEX_NAME = i.RDB$INDEX_NAME')
-		->Where('rc.RDB$CONSTRAINT_TYPE IS NULL');
+		->LeftJoin('RDB$RELATION_CONSTRAINTS AS relation_constraints', 'relation_constraints.RDB$INDEX_NAME = indices.RDB$INDEX_NAME')
+		->Where('relation_constraints.RDB$CONSTRAINT_TYPE IS NULL');
 	}
 
-	function loadMetadata(){
-		$sql = $this->getSQL()
-		->Where(['i.RDB$RELATION_NAME = ?', $this->getRelation()->name])
-		->Where(['i.RDB$INDEX_NAME = ?', $this->name])
+	function getMetadataSQL(): Select {
+		return $this->getSQL()
+		->Where(['indices.RDB$RELATION_NAME = ?', $this->getRelation()->name])
+		->Where(['indices.RDB$INDEX_NAME = ?', $this->name])
 		;
-
-		return parent::loadMetadataBySQL($sql);
 	}
 
 	function getRelation(){
