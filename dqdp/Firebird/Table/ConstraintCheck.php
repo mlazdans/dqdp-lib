@@ -51,10 +51,11 @@ class ConstraintCheck extends FirebirdObject implements DDL
 	function ddlParts(): array {
 		$MD = $this->getMetadata();
 
-		// $PARTS = parent::ddlParts();
 		$PARTS['constr_type'] = 'CHECK';
 		$PARTS['check_condition'] = $MD->TRIGGER_SOURCE;
-		if($MD->INDEX_NAME == $MD->CONSTRAINT_NAME){
+
+		# Grabbed from isql\extract.epp:1822
+		if(strpos($MD->CONSTRAINT_NAME, "INTEG_") !== 0){
 			$PARTS['constr_name'] = $MD->CONSTRAINT_NAME;
 		}
 
@@ -65,8 +66,6 @@ class ConstraintCheck extends FirebirdObject implements DDL
 		if(is_null($PARTS)){
 			$PARTS = $this->ddlParts();
 		}
-
-		$PARTS = $this->ddlParts();
 
 		if(isset($PARTS['constr_name'])){
 			$ddl[] = "CONSTRAINT $PARTS[constr_name]";
