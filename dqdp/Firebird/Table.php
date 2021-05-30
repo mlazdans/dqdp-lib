@@ -111,7 +111,8 @@ use dqdp\FireBird\Table\Index;
 // <domain_or_non_array_type> ::=
 //   !! See Scalar Data Types Syntax !!
 
-class Table extends Relation {
+class Table extends Relation implements DDL
+{
 	/**
 	 * @return Index[]
 	 **/
@@ -191,18 +192,20 @@ class Table extends Relation {
 	}
 
 	function ddlParts(): array {
-		$parts['tablename'] = "$this";
-		$parts['col_def'] = $this->getFields();
+		$parts = parent::ddlParts();
 
 		if($constraint = $this->getPKs()){
 			$parts['pks'] = $constraint;
 		}
+
 		if($constraint = $this->getFKs()){
 			$parts['fks'] = $constraint;
 		}
+
 		if($constraint = $this->getUniqs()){
 			$parts['uniqs'] = $constraint;
 		}
+
 		if($constraint = $this->getChecks()){
 			$parts['checks'] = $constraint;
 		}
@@ -215,7 +218,7 @@ class Table extends Relation {
 			$parts = $this->ddlParts();
 		}
 
-		$ddl = [$parts['tablename']];
+		$ddl = [$parts['relation_name']];
 
 		# col_def
 		$col_defs = [$parts['col_def']];

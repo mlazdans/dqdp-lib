@@ -116,6 +116,7 @@ class Trigger extends FirebirdObject
 	}
 
 	# database_trigger | relation_trigger | ddl_trigger
+	# TODO: ddl_trigger
 	static function getType($TRIGGER_TYPE){
 		if(($TRIGGER_TYPE & Trigger::TRIGGER_TYPE_MASK) == Trigger::TRIGGER_TYPE_DML){
 			return 'relation_trigger';

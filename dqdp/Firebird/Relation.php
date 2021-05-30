@@ -7,7 +7,7 @@ namespace dqdp\FireBird;
 use dqdp\FireBird\Relation\Field;
 use dqdp\SQL\Select;
 
-abstract class Relation extends FirebirdObject implements DDL
+class Relation extends FirebirdObject
 {
 	static function getSQL(): Select {
 		return (new Select())->From('RDB$RELATIONS AS relations')->Where('relations.RDB$SYSTEM_FLAG = 0');
@@ -28,5 +28,15 @@ abstract class Relation extends FirebirdObject implements DDL
 		}
 
 		return $list??[];
+	}
+
+	function ddlParts(): array {
+		$MD = $this->getMetadata();
+
+		$parts['relation_name'] = "$this";
+		$parts['relation_type'] = $MD->RELATION_TYPE;
+		$parts['col_def'] = $this->getFields();
+
+		return $parts;
 	}
 }

@@ -12,12 +12,12 @@ use dqdp\FireBird\Relation;
 
 // <full_column_list> ::= (colname [, colname ...])
 
-class View extends Relation {
+class View extends Relation implements DDL
+{
 	function ddlParts(): array {
 		$MD = $this->getMetadata();
 
-		$parts['viewname'] = "$this";
-		$parts['full_column_list'] = $this->getFields();
+		$parts = parent::ddlParts();
 		$parts['select_statement'] = $MD->VIEW_SOURCE;
 
 		return $parts;
@@ -28,9 +28,9 @@ class View extends Relation {
 			$parts = $this->ddlParts();
 		}
 
-		$ddl = [$parts['viewname']];
+		$ddl = [$parts['relation_name']];
 		$ddl[] = "(";
-		$ddl[] = "\t".join(",\n\t", $parts['full_column_list']);
+		$ddl[] = "\t".join(",\n\t", $parts['col_def']);
 		$ddl[] = ") AS";
 		$ddl[] = $parts['select_statement'];
 
