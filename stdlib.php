@@ -51,15 +51,27 @@ function country_find_iso($country){
 	return false;
 }
 
-function country_codes_eu(){
-	return [
+function country_codes_eu($date = null){
+	if($date){
+		$date = strtotime($date);
+	} else {
+		$date = time();
+	}
+
+	$codes = [
 		'AT','BE','BG','CY','CZ','DK','EE','FI','FR','DE','GR','HU','HR','IE',
-		'IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE','GB'
+		'IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'
 	];
+
+	if($date < strtotime('1.1.2020')){
+		$codes[] = 'GB';
+	}
+
+	return $codes;
 }
 
-function country_codes_eu_sql(){
-	return "'".join("','", country_codes_eu())."'";
+function country_codes_eu_sql($date = null){
+	return "'".join("','", country_codes_eu($date))."'";
 }
 
 function countries(){
@@ -1220,18 +1232,37 @@ function emailex($params){
 	}
 }
 
-function csv_col_count($file){
+function csv_get_header($file, $delim = ';'){
 	if(($f = fopen($file, "r")) === false){
 		return false;
 	}
 
-	$col_count = 0;
-	if(($line = fgetcsv($f, 2000, ';')) !== false){
-		$col_count = count($line);
+	$ret = false;
+	if(($line = fgetcsv($f, 2000, $delim)) !== false){
+		$ret = $line;
 	}
 	fclose($f);
 
-	return $col_count;
+	return $ret;
+}
+
+function csv_col_count($file, $delim = ';'){
+	if($line = csv_get_header($file, $delim)){
+		return count($line);
+	} else {
+		return false;
+	}
+	// if(($f = fopen($file, "r")) === false){
+	// 	return false;
+	// }
+
+	// $col_count = 0;
+	// if(($line = fgetcsv($f, 2000, $delim)) !== false){
+	// 	$col_count = count($line);
+	// }
+	// fclose($f);
+
+	// return $col_count;
 }
 
 function __csv_load($file, $map, $ret_type = 'array', $delim = ';'){
