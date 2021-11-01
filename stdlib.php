@@ -1203,10 +1203,15 @@ function emailex($params){
 	}
 	$mail->SMTPSecure = 'tls';
 
+	if(isset($params->smtpdebug)){
+		$mail->SMTPDebug = $params->smtpdebug;
+	}
+
 	$mail->setFrom($from);
 	$mail->addAddress($to);
 	$mail->isHTML($params->isHTML??false);
 	$mail->Subject = $subj;
+
 	if(empty($params->isHTML)){
 		$mail->Body = $msg;
 	} else {
