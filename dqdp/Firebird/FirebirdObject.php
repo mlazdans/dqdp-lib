@@ -51,6 +51,7 @@ abstract class FirebirdObject
 	function __construct(Database $db, $name){
 		$this->name = $name;
 		$this->setDb($db);
+		$this->loadMetadataBySQL($this->getMetadataSQL());
 
 		return $this;
 	}
@@ -213,9 +214,11 @@ abstract class FirebirdObject
 	// 	return $this->dependents;
 	// }
 
-	# TODO: configurable
-	function setMetadata($metadata){
-		$this->metadata = $metadata;
+	/**
+	 * @param stdClass|array $metadata
+	 **/
+	function setMetadata($o){
+		$this->metadata = $o;
 
 		return $this;
 	}
@@ -266,6 +269,7 @@ abstract class FirebirdObject
 			}
 
 			$this->metadata = FirebirdObject::process_rdb($r);
+			// $this->setMetadata(FirebirdObject::process_rdb($r));
 			// foreach($r as $k=>$v){
 			// 	# Skip RUNTIME binary field
 			// 	if(in_array($k, self::$discardFields)){
@@ -281,7 +285,8 @@ abstract class FirebirdObject
 			$c++;
 		}
 
-		return $this->metadata;
+		return $this;
+		// return $this->metadata;
 	}
 
 	protected static function process_rdb(Array $data){
