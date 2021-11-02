@@ -147,14 +147,9 @@ class IBase extends AbstractDBA
 		return ibase_escape($v);
 	}
 
+	# TODO: remove, use Firebird lib
 	function get_users(?iterable $F = null): array {
 		$F = eoe($F);
-
-		// if(is_scalar($PARAMS)){
-		// 	$PARAMS = eo(['USER_NAME'=>$PARAMS]);
-		// } else {
-		// 	$PARAMS = eoe($PARAMS);
-		// }
 
 		$sql = (new Select)
 		->From('SEC$USERS')
@@ -178,30 +173,17 @@ class IBase extends AbstractDBA
 		return ibase_strip_rdb($this->fetch_all($q));
 	}
 
+	# TODO: remove, use Firebird lib
 	function get_user($USER_NAME = null){
 		return ($u = $this->get_users(['USER_NAME'=>$USER_NAME])) ? $u[0] : $u;
 	}
 
+	# TODO: remove, use Firebird lib
 	function get_current_user(){
 		return ($u = $this->get_users(["CURRENT_USER"=>true])) ? $u[0] : $u;
 	}
 
-	function get_table_info($table){
-		$table = strtoupper($table);
-		$sql = 'SELECT rf.*,
-			f.RDB$FIELD_SUB_TYPE,
-			f.RDB$FIELD_TYPE,
-			f.RDB$FIELD_LENGTH,
-			f.RDB$CHARACTER_LENGTH,
-			f.RDB$FIELD_PRECISION
-		FROM RDB$RELATION_FIELDS rf
-		JOIN RDB$FIELDS f ON f.RDB$FIELD_NAME = rf.RDB$FIELD_SOURCE
-		WHERE rf.RDB$RELATION_NAME = ?
-		ORDER BY rf.RDB$FIELD_POSITION';
-
-		return ibase_strip_rdb($this->execute($sql, [$table]));
-	}
-
+	# TODO: remove, use Firebird lib
 	# TODO: principā return vajadzētu array|object atkarībā no default fetch
 	function get_privileges($PARAMS = null): array {
 		$ret = [];
@@ -271,6 +253,7 @@ class IBase extends AbstractDBA
 		return $ret;
 	}
 
+	# TODO: remove, use Firebird lib
 	function get_object_types(): array {
 		$sql = 'SELECT RDB$TYPE, RDB$TYPE_NAME FROM RDB$TYPES WHERE RDB$FIELD_NAME=\'RDB$OBJECT_TYPE\'';
 		$data = ibase_strip_rdb($this->execute($sql));
@@ -281,50 +264,10 @@ class IBase extends AbstractDBA
 		return $ret??[];
 	}
 
+	# TODO: remove, use Firebird lib
 	function get_current_role(): string {
 		return trim(get_prop($this->execute_single('SELECT CURRENT_ROLE AS RLE FROM RDB$DATABASE'), 'RLE'));
 	}
-
-	# TODO: remove and use Firebird lib!!!
-	# TODO: params
-	function get_generators(): array {
-		return trimmer($this->execute('SELECT RDB$GENERATOR_NAME AS NAME
-		FROM RDB$GENERATORS
-		WHERE RDB$SYSTEM_FLAG = 0
-		ORDER BY RDB$GENERATOR_NAME'));
-	}
-
-	function get_tables(): array {
-		return trimmer($this->execute('SELECT r.RDB$RELATION_NAME AS NAME FROM RDB$RELATIONS AS r
-		LEFT JOIN RDB$VIEW_RELATIONS v ON v.RDB$VIEW_NAME = r.RDB$RELATION_NAME
-		WHERE v.RDB$VIEW_NAME IS NULL AND r.RDB$SYSTEM_FLAG = 0
-		ORDER BY r.RDB$RELATION_NAME'));
-	}
-
-	function get_pk($table): ?string {
-		$sql = 'SELECT iseg.RDB$FIELD_NAME
-		FROM RDB$INDICES i
-		JOIN RDB$RELATION_CONSTRAINTS rc ON rc.RDB$INDEX_NAME = i.RDB$INDEX_NAME
-		JOIN RDB$INDEX_SEGMENTS iseg ON iseg.RDB$INDEX_NAME = i.RDB$INDEX_NAME
-		WHERE i.RDB$RELATION_NAME = ? AND rc.RDB$CONSTRAINT_TYPE = \'PRIMARY KEY\'';
-
-		if($r = $this->execute_single($sql, [$table])){
-			return trim(get_prop($r, 'RDB$FIELD_NAME'));
-		}
-
-		return null;
-	}
-
-	// function get_fields($table){
-	// 	$sql = 'SELECT F.RDB$RELATION_NAME, F.RDB$FIELD_NAME
-	// 	FROM RDB$RELATION_FIELDS F
-	// 	JOIN RDB$RELATIONS R ON F.RDB$RELATION_NAME = R.RDB$RELATION_NAME
-	// 	AND R.RDB$VIEW_BLR IS NULL
-	// 	AND (R.RDB$SYSTEM_FLAG IS NULL OR R.RDB$SYSTEM_FLAG = 0)
-	// 	WHERE R.RDB$RELATION_NAME = ?
-	// 	ORDER BY 1, F.RDB$FIELD_POSITION';
-	// 	return ibase_strip_rdb($this->execute($sql, [$table]));
-	// }
 
 	function save(iterable $DATA, AbstractTable $Table){
 		$sql_fields = (array)merge_only($Table->getFields(), $DATA);
