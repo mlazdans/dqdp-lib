@@ -231,3 +231,9 @@ function ibase_db_exists($db_path, $db_user, $db_password){
 	}
 	return false;
 }
+
+function ibase_quote($data){
+	return __object_map($data, function($item){
+		return str_replace("'", "''", $item);
+	});
+}
