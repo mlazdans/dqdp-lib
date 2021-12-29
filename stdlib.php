@@ -2068,3 +2068,17 @@ function array_rotate_left($map, $times){
 
 	return array_rotate_right($map, 4 - $times);
 }
+
+function dig($domain, $type){
+	// fprintf(STDERR, "Cheking $domain:\t");
+	list($errcode, $stdout, $stderr) = proc_exec("dig", ["+short", $type, $domain]);
+	$stdout = str_replace("\r\n", "\t", trim($stdout));
+	$stdout = str_replace("\n", "\t", $stdout);
+	$stdout = explode("\t", $stdout);
+
+	// sort($stdout, SORT_STRING);
+
+	// $stdout = join("\t", $stdout);
+
+	return $stdout[0];
+}
