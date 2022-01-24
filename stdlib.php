@@ -1688,13 +1688,22 @@ function proc_exec($cmd, $args = [], $input = '', $descriptorspec = []){
 
 	// Wrapperis
 	// https://github.com/cubiclesoft/createprocess-windows
-	$use_wrapper = false;
-	if($use_wrapper){
-		$cp_args = ['/w=5000', '/term', '"'.$cmd.'"'];
-		$process_cmd = proc_prepare_args('C:\bin\createprocess.exe', array_merge($cp_args, $args));
-	} else {
-		$process_cmd = proc_prepare_args($cmd, $args);
-	}
+	// $use_wrapper = false;
+	// if($use_wrapper){
+	// 	$cp_args = ['/w=5000', '/term', '"'.$cmd.'"'];
+	// 	$process_cmd = proc_prepare_args('C:\bin\createprocess.exe', array_merge($cp_args, $args));
+	// } else {
+	// $cmd .= sprintf("1> %s 2> %s", escapeshellarg($temp_stdout), escapeshellarg($temp_stderr));
+
+	# Fix pipe-blocks
+	$temp_stdout = tempnam(sys_get_temp_dir(), substr(md5(time()), 8));
+	$temp_stderr = tempnam(sys_get_temp_dir(), substr(md5(time()), 8));
+	$args[] = sprintf("1> %s", $temp_stdout);
+	$args[] = sprintf("2> %s", $temp_stderr);
+
+	$process_cmd = proc_prepare_args($cmd, $args);
+
+	// $process_cmd .= sprintf(" 1> %s 2> %s", escapeshellarg($temp_stdout), escapeshellarg($temp_stderr));
 
 	$process = proc_open($process_cmd, $descriptorspec, $pipes);
 	if(!is_resource($process)){
@@ -1709,16 +1718,28 @@ function proc_exec($cmd, $args = [], $input = '', $descriptorspec = []){
 	}
 
 	$stdout = $stderr = null;
-	if(isset($pipes[1]) && is_resource($pipes[1])){
-		$stdout = stream_get_contents($pipes[1]);
-		fclose($pipes[1]);
-	}
-	if(isset($pipes[2]) && is_resource($pipes[2])){
-		$stderr = stream_get_contents($pipes[2]);
-		fclose($pipes[2]);
-	}
+	// if(isset($pipes[1]) && is_resource($pipes[1])){
+	// 	// $stdout = stream_get_contents($pipes[1]);
+	// 	fclose($pipes[1]);
+	// }
+	// if(isset($pipes[2]) && is_resource($pipes[2])){
+	// 	// $stderr = stream_get_contents($pipes[2]);
+	// 	fclose($pipes[2]);
+	// }
 
 	$errcode = proc_close($process);
+
+	if(file_exists($temp_stdout)){
+		$stdout = file_get_contents($temp_stdout);
+		if(!$errcode)
+			unlink($temp_stdout);
+	}
+
+	if(file_exists($temp_stderr)){
+		$stderr = file_get_contents($temp_stderr);
+		if(!$errcode)
+			unlink($temp_stderr);
+	}
 
 	return [$errcode, $stdout, $stderr];
 }
