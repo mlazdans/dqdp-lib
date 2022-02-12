@@ -9,4 +9,7 @@ abstract class AbstractTable {
 	abstract function getName(): string;
 	abstract function getGen(): ?string;
 	abstract function getFields(): array;
+	function __toString(){
+		return $this->getName();
+	}
 }
