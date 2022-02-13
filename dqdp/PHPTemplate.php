@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace dqdp;
 
 class PHPTemplate
@@ -10,7 +12,7 @@ class PHPTemplate
 		return $this;
 	}
 
-	function set($k, $v){
+	function set($k, $v): PHPTemplate {
 		$this->Vars[$k] = $v;
 		return $this;
 	}
@@ -23,17 +25,17 @@ class PHPTemplate
 		return $this->Vars;
 	}
 
-	function set_vars($vars){
+	function set_vars($vars): PHPTemplate {
 		$this->Vars = $vars;
 		return $this;
 	}
 
-	function append_vars($vars){
+	function append_vars($vars): PHPTemplate {
 		$this->Vars = array_merge($this->Vars, $vars);
 		return $this;
 	}
 
-	function include($template){
+	function include($template): PHPTemplate {
 		extract($this->get_vars());
 		$TPL = $this;
 		include($template);
