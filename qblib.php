@@ -39,11 +39,7 @@ function sql_add_filter(&$filter, &$values, $newf){
 	}
 }
 
-function where($filter, $join = "AND"){
-	return ($f = sql_create_filter($filter, $join)) ? " WHERE $f" : '';
-}
-
-function search_to_sql_cond($q, $fields, $minWordLen = 0){
+function search_to_sql_cond($q, $fields, $minWordLen = 0, $options = []){
 	$words = parse_search_q($q, $minWordLen);
 	if(!is_array($fields)){
 		$fields = array($fields);
@@ -53,7 +49,12 @@ function search_to_sql_cond($q, $fields, $minWordLen = 0){
 	foreach($words as $word){
 		$Cond = new Condition();
 		foreach($fields as $field){
-			$Cond->add_condition(["UPPER($field) LIKE ?", "%".$word."%"], Condition::OR);
+			if(empty($options['wordboundary'])){
+				$Cond->add_condition(["UPPER($field) LIKE ?", "%".$word."%"], Condition::OR);
+			} else {
+				$Cond->add_condition(["UPPER($field) REGEXP ?", '([[:blank:][:punct:]]|^)'.$word.'([[:blank:][:punct:]]|$)'], Condition::OR);
+				// $Cond->add_condition(["UPPER($field) REGEXP ?", "[[:<:]]".$word."[[:>:]]"], Condition::OR);
+			}
 		}
 		$MainCond->add_condition($Cond, Condition::AND);
 	}
