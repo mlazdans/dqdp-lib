@@ -60,8 +60,19 @@ class Select extends Statement
 		return $this;
 	}
 
-	function Select(string $fields){
-		$this->parts->fields[] = $fields;
+	function Select($arg, $wrapper = ''){
+		if(is_array($arg) && $arg[0] instanceof \dqdp\SQL\Select){
+			list($sql, $alias) = $arg;
+			if($wrapper){
+				$this->parts->fields[] = "$wrapper(($sql)) $alias";
+			} else {
+				$this->parts->fields[] = "($sql) $alias";
+			}
+			$this->parts->where->add_vars($sql->vars());
+		} else {
+			$this->parts->fields[] = $arg;
+		}
+
 		return $this;
 	}
 
