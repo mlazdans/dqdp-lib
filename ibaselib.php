@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 use dqdp\DBA\AbstractDBA;
 use dqdp\SQL\Select;
 
@@ -199,14 +201,16 @@ function ibase_strip_rdb($data){
 	__object_walk_ref($data, function(&$item, &$k){
 		if((strpos($k, 'RDB$') === 0) || (strpos($k, 'SEC$') === 0)){
 			$k = trim(substr($k, 4));
-			$item = trim($item);
+			if(is_string($item)){
+				$item = trim($item);
+			}
 		}
 	});
 
 	return $data;
 }
 
-function ibase_pathinfo($DB_PATH){
+function ibase_pathinfo(string $DB_PATH){
 	if(count($parts = explode(":", $DB_PATH)) > 1){
 		$host = array_shift($parts);
 		$path = join(":", $parts);
@@ -224,7 +228,7 @@ function ibase_pathinfo($DB_PATH){
 	return $pi;
 }
 
-function ibase_db_exists($db_path, $db_user, $db_password){
+function ibase_db_exists(string $db_path, string $db_user, string $db_password){
 	if(
 		($pi = ibase_pathinfo($db_path)) &&
 		($service = ibase_service_attach($pi['host'], $db_user, $db_password)) &&
