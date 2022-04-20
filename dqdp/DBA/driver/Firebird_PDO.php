@@ -18,7 +18,6 @@ class Firebird_PDO extends AbstractDBA
 	protected $row_count;
 
 	function connect_params($params){
-		// $host = $params['host'] ?? 'localhost';
 		$username = $params['username'] ?? '';
 		$password = $params['password'] ?? '';
 		$database = $params['database'] ?? '';
@@ -30,16 +29,15 @@ class Firebird_PDO extends AbstractDBA
 
 	function connect($username = null, $password = null, $database = null, $charset = null, $role = null){
 		$dsn = [];
-		// if($host)$dsn[]= "host=$host";
 		if($database)$dsn[]= "dbname=$database";
 		if($charset)$dsn[]= "charset=$charset";
 		if($role)$dsn[]= "role=$role";
 
 		$this->conn = new PDO("firebird:".join(";", $dsn), $username, $password);
-		//$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
 		$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		$this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-		//$this->conn->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
+		// $this->conn->setAttribute(PDO::ATTR_AUTOCOMMIT, false);
+		// $this->conn->exec("SET TRANSACTION READ ONLY ISOLATION LEVEL READ COMMITTED NO WAIT");
 
 		return $this;
 	}
@@ -126,6 +124,7 @@ class Firebird_PDO extends AbstractDBA
 	// 	return $this->conn->rollBack();
 	// }
 
+	# Broken
 	function trans(){
 		$this->conn->beginTransaction();
 		$this->transactionCounter++;
