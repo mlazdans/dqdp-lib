@@ -7,14 +7,14 @@ declare(strict_types = 1);
 
 namespace dqdp\FireBird;
 
-use dqdp\DBA\driver\IBase;
+use dqdp\DBA\AbstractDBA;
 use dqdp\SQL\Select;
 
 class Database extends FirebirdObject
 {
 	private $conn;
 
-	function __construct(IBase $conn, string $name = "firebird_db"){
+	function __construct(AbstractDBA $conn, string $name = "firebird_db"){
 		$this->connect($conn);
 
 		return parent::__construct($this, $name);
@@ -32,7 +32,7 @@ class Database extends FirebirdObject
 		return $this->name;
 	}
 
-	function connect(IBase $conn){
+	function connect(AbstractDBA $conn){
 		$this->conn = $conn;
 
 		return $this;
@@ -212,7 +212,7 @@ class Database extends FirebirdObject
 		return $list??[];
 	}
 
-	function getConnection(): IBase {
+	function getConnection(): AbstractDBA {
 		return $this->conn;
 	}
 
