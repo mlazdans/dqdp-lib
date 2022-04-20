@@ -23,9 +23,9 @@ class Firebird_PDO extends AbstractDBA
 		$password = $params['password'] ?? '';
 		$database = $params['database'] ?? '';
 		$charset = $params['charset'] ?? 'utf8';
-		$port = $params['port'] ?? 3306;
+		$role = $params['role'] ?? '';
 
-		return $this->connect($username, $password, $database, $charset, $port);
+		return $this->connect($username, $password, $database, $charset, $role);
 	}
 
 	function connect($username = null, $password = null, $database = null, $charset = null, $role = null){
