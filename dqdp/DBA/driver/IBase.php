@@ -7,7 +7,6 @@ namespace dqdp\DBA\driver;
 use dqdp\DBA\AbstractDBA;
 use dqdp\DBA\AbstractTable;
 use dqdp\SQL\Insert;
-use dqdp\SQL\Select;
 
 require_once('ibaselib.php');
 
@@ -148,126 +147,126 @@ class IBase extends AbstractDBA
 	}
 
 	# TODO: remove, use Firebird lib
-	function get_users(?iterable $F = null): array {
-		$F = eoe($F);
+	// function get_users(?iterable $F = null): array {
+	// 	$F = eoe($F);
 
-		$sql = (new Select)
-		->From('SEC$USERS')
-		->Select('SEC$USER_NAME, SEC$FIRST_NAME, SEC$MIDDLE_NAME,SEC$LAST_NAME')
-		->Select('SEC$DESCRIPTION, SEC$PLUGIN')
-		->Select('IIF(SEC$ACTIVE, 1, 0) AS IS_ACTIVE')
-		->Select('IIF(SEC$ADMIN, 1, 0) AS IS_ADMIN')
-		->Where('SEC$PLUGIN = \'Srp\'');
+	// 	$sql = (new Select)
+	// 	->From('SEC$USERS')
+	// 	->Select('SEC$USER_NAME, SEC$FIRST_NAME, SEC$MIDDLE_NAME,SEC$LAST_NAME')
+	// 	->Select('SEC$DESCRIPTION, SEC$PLUGIN')
+	// 	->Select('IIF(SEC$ACTIVE, 1, 0) AS IS_ACTIVE')
+	// 	->Select('IIF(SEC$ADMIN, 1, 0) AS IS_ADMIN')
+	// 	->Where('SEC$PLUGIN = \'Srp\'');
 
-		if($F->USER_NAME){
-			$sql->Where(['SEC$USER_NAME = ?', $F->USER_NAME]);
-		} elseif($F->CURRENT_USER) {
-			$sql->Where('SEC$USER_NAME = CURRENT_USER');
-			//(SEC$USER_NAME = CURRENT_USER OR CURRENT_USER = \'SYSDBA\') AND
-		}
+	// 	if($F->USER_NAME){
+	// 		$sql->Where(['SEC$USER_NAME = ?', $F->USER_NAME]);
+	// 	} elseif($F->CURRENT_USER) {
+	// 		$sql->Where('SEC$USER_NAME = CURRENT_USER');
+	// 		//(SEC$USER_NAME = CURRENT_USER OR CURRENT_USER = \'SYSDBA\') AND
+	// 	}
 
-		if(!($q = $this->query($sql))){
-			return false;
-		}
+	// 	if(!($q = $this->query($sql))){
+	// 		return false;
+	// 	}
 
-		return ibase_strip_rdb($this->fetch_all($q));
-	}
-
-	# TODO: remove, use Firebird lib
-	function get_user($USER_NAME = null){
-		return ($u = $this->get_users(['USER_NAME'=>$USER_NAME])) ? $u[0] : $u;
-	}
+	// 	return ibase_strip_rdb($this->fetch_all($q));
+	// }
 
 	# TODO: remove, use Firebird lib
-	function get_current_user(){
-		return ($u = $this->get_users(["CURRENT_USER"=>true])) ? $u[0] : $u;
-	}
+	// function get_user($USER_NAME = null){
+	// 	return ($u = $this->get_users(['USER_NAME'=>$USER_NAME])) ? $u[0] : $u;
+	// }
+
+	# TODO: remove, use Firebird lib
+	// function get_current_user(){
+	// 	return ($u = $this->get_users(["CURRENT_USER"=>true])) ? $u[0] : $u;
+	// }
 
 	# TODO: remove, use Firebird lib
 	# TODO: principā return vajadzētu array|object atkarībā no default fetch
-	function get_privileges($PARAMS = null): array {
-		$ret = [];
+	// function get_privileges($PARAMS = null): array {
+	// 	$ret = [];
 
-		if(is_scalar($PARAMS)){
-			$PARAMS = eo(['USER'=>$PARAMS]);
-		} else {
-			$PARAMS = eoe($PARAMS);
-		}
+	// 	if(is_scalar($PARAMS)){
+	// 		$PARAMS = eo(['USER'=>$PARAMS]);
+	// 	} else {
+	// 		$PARAMS = eoe($PARAMS);
+	// 	}
 
-		# TODO: trigeri, view, tables, proc var pārklāties nosaukumi, vai nevar? Hmm...
-		$sql = (new Select)->From('RDB$USER_PRIVILEGES');
-		if($PARAMS->USER){
-			$sql->Where(['RDB$USER = ?', $PARAMS->USER]);
-		} else {
-			//if($PARAMS->EXCLUDE_SYSDBA)$sql->Where(['RDB$USER != ?', 'SYSDBA']);
-			//if($PARAMS->EXCLUDE_PUBLIC)$sql->Where(['RDB$USER != ?', 'PUBLIC']);
-			$sql->Where(['RDB$USER != ?', 'SYSDBA']);
-			$sql->Where(['RDB$USER != ?', 'PUBLIC']);
-		}
+	// 	# TODO: trigeri, view, tables, proc var pārklāties nosaukumi, vai nevar? Hmm...
+	// 	$sql = (new Select)->From('RDB$USER_PRIVILEGES');
+	// 	if($PARAMS->USER){
+	// 		$sql->Where(['RDB$USER = ?', $PARAMS->USER]);
+	// 	} else {
+	// 		//if($PARAMS->EXCLUDE_SYSDBA)$sql->Where(['RDB$USER != ?', 'SYSDBA']);
+	// 		//if($PARAMS->EXCLUDE_PUBLIC)$sql->Where(['RDB$USER != ?', 'PUBLIC']);
+	// 		$sql->Where(['RDB$USER != ?', 'SYSDBA']);
+	// 		$sql->Where(['RDB$USER != ?', 'PUBLIC']);
+	// 	}
 
-		if(!($q = $this->query($sql))){
-			return $ret;
-		}
+	// 	if(!($q = $this->query($sql))){
+	// 		return $ret;
+	// 	}
 
-		while($r = $this->fetch_object($q)){
-			$r = ibase_strip_rdb($r);
+	// 	while($r = $this->fetch_object($q)){
+	// 		$r = ibase_strip_rdb($r);
 
-			$k = $r->USER;
-			if($r->USER_TYPE == 13){
-				$k = "ROLE:$r->USER";
-			}
+	// 		$k = $r->USER;
+	// 		if($r->USER_TYPE == 13){
+	// 			$k = "ROLE:$r->USER";
+	// 		}
 
-			if(!isset($ret[$k][$r->RELATION_NAME])){
-				$ret[$k][$r->RELATION_NAME] = (object)[
-					'GRANTOR'=>$r->GRANTOR,
-					'GRANT_OPTION'=>$r->GRANT_OPTION,
-					'USER_TYPE'=>$r->USER_TYPE,
-					'OBJECT_TYPE'=>$r->OBJECT_TYPE,
-				];
-			}
+	// 		if(!isset($ret[$k][$r->RELATION_NAME])){
+	// 			$ret[$k][$r->RELATION_NAME] = (object)[
+	// 				'GRANTOR'=>$r->GRANTOR,
+	// 				'GRANT_OPTION'=>$r->GRANT_OPTION,
+	// 				'USER_TYPE'=>$r->USER_TYPE,
+	// 				'OBJECT_TYPE'=>$r->OBJECT_TYPE,
+	// 			];
+	// 		}
 
-			$p = &$ret[$k][$r->RELATION_NAME];
+	// 		$p = &$ret[$k][$r->RELATION_NAME];
 
-			# UPDATE, REFERENCE
-			if(($r->PRIVILEGE == 'U') || ($r->PRIVILEGE == 'R')){
-				$p->PRIVILEGES = $p->PRIVILEGES ?? [];
-				if(!in_array($r->PRIVILEGE, $p->PRIVILEGES)){
-					array_push($p->PRIVILEGES, $r->PRIVILEGE);
-				}
-				if($r->FIELD_NAME){
-					$k = $r->PRIVILEGE.'_FIELDS';
-					$p->{$k} = $p->{$k} ?? [];
-					array_push($p->{$k}, $r->FIELD_NAME);
-				}
-			# ROLE
-			} elseif($r->PRIVILEGE == 'M'){
-				//$ret = array_merge(ibase_get_privileges($r->RELATION_NAME, $tr), $ret);
-			} else {
-				$p->PRIVILEGES = $p->PRIVILEGES ?? [];
-				if(!in_array($r->PRIVILEGE, $p->PRIVILEGES)){
-					array_push($p->PRIVILEGES, $r->PRIVILEGE);
-				}
-			}
-		}
+	// 		# UPDATE, REFERENCE
+	// 		if(($r->PRIVILEGE == 'U') || ($r->PRIVILEGE == 'R')){
+	// 			$p->PRIVILEGES = $p->PRIVILEGES ?? [];
+	// 			if(!in_array($r->PRIVILEGE, $p->PRIVILEGES)){
+	// 				array_push($p->PRIVILEGES, $r->PRIVILEGE);
+	// 			}
+	// 			if($r->FIELD_NAME){
+	// 				$k = $r->PRIVILEGE.'_FIELDS';
+	// 				$p->{$k} = $p->{$k} ?? [];
+	// 				array_push($p->{$k}, $r->FIELD_NAME);
+	// 			}
+	// 		# ROLE
+	// 		} elseif($r->PRIVILEGE == 'M'){
+	// 			//$ret = array_merge(ibase_get_privileges($r->RELATION_NAME, $tr), $ret);
+	// 		} else {
+	// 			$p->PRIVILEGES = $p->PRIVILEGES ?? [];
+	// 			if(!in_array($r->PRIVILEGE, $p->PRIVILEGES)){
+	// 				array_push($p->PRIVILEGES, $r->PRIVILEGE);
+	// 			}
+	// 		}
+	// 	}
 
-		return $ret;
-	}
-
-	# TODO: remove, use Firebird lib
-	function get_object_types(): array {
-		$sql = 'SELECT RDB$TYPE, RDB$TYPE_NAME FROM RDB$TYPES WHERE RDB$FIELD_NAME=\'RDB$OBJECT_TYPE\'';
-		$data = ibase_strip_rdb($this->execute($sql));
-		foreach($data as $r){
-			$ret[$r->TYPE] = $r->TYPE_NAME;
-		}
-
-		return $ret??[];
-	}
+	// 	return $ret;
+	// }
 
 	# TODO: remove, use Firebird lib
-	function get_current_role(): string {
-		return trim(get_prop($this->execute_single('SELECT CURRENT_ROLE AS RLE FROM RDB$DATABASE'), 'RLE'));
-	}
+	// function get_object_types(): array {
+	// 	$sql = 'SELECT RDB$TYPE, RDB$TYPE_NAME FROM RDB$TYPES WHERE RDB$FIELD_NAME=\'RDB$OBJECT_TYPE\'';
+	// 	$data = ibase_strip_rdb($this->execute($sql));
+	// 	foreach($data as $r){
+	// 		$ret[$r->TYPE] = $r->TYPE_NAME;
+	// 	}
+
+	// 	return $ret??[];
+	// }
+
+	# TODO: remove, use Firebird lib
+	// function get_current_role(): string {
+	// 	return trim(get_prop($this->execute_single('SELECT CURRENT_ROLE AS RLE FROM RDB$DATABASE'), 'RLE'));
+	// }
 
 	function save(iterable $DATA, AbstractTable $Table){
 		$sql_fields = (array)merge_only($Table->getFields(), $DATA);

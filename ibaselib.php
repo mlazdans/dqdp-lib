@@ -1,5 +1,8 @@
 <?php
 
+use dqdp\DBA\AbstractDBA;
+use dqdp\SQL\Select;
+
 require_once("stdlib.php");
 
 function ibase_field_types(){
@@ -236,4 +239,116 @@ function ibase_quote($data){
 	return __object_map($data, function($item){
 		return str_replace("'", "''", $item);
 	});
+}
+
+# TODO: Zemāk esošajām f-ijām lietot Firebird lib
+function ibase_get_current_user(AbstractDBA $db){
+	return ($u = ibase_get_users($db, ["CURRENT_USER"=>true])) ? $u[0] : $u;
+}
+
+function ibase_get_users(AbstractDBA $db, ?iterable $F = null): array {
+	$F = eoe($F);
+
+	$sql = (new Select)
+	->From('SEC$USERS')
+	->Select('SEC$USER_NAME, SEC$FIRST_NAME, SEC$MIDDLE_NAME,SEC$LAST_NAME')
+	->Select('SEC$DESCRIPTION, SEC$PLUGIN')
+	->Select('IIF(SEC$ACTIVE, 1, 0) AS IS_ACTIVE')
+	->Select('IIF(SEC$ADMIN, 1, 0) AS IS_ADMIN')
+	->Where('SEC$PLUGIN = \'Srp\'');
+
+	if($F->USER_NAME){
+		$sql->Where(['SEC$USER_NAME = ?', $F->USER_NAME]);
+	} elseif($F->CURRENT_USER) {
+		$sql->Where('SEC$USER_NAME = CURRENT_USER');
+		//(SEC$USER_NAME = CURRENT_USER OR CURRENT_USER = \'SYSDBA\') AND
+	}
+
+	if(!($q = $db->query($sql))){
+		return false;
+	}
+
+	return ibase_strip_rdb($db->fetch_all($q));
+}
+
+function ibase_get_current_role(AbstractDBA $db): string {
+	return trim(get_prop($db->execute_single('SELECT CURRENT_ROLE AS RLE FROM RDB$DATABASE'), 'RLE'));
+}
+
+function ibase_get_object_types(AbstractDBA $db): array {
+	$sql = 'SELECT RDB$TYPE, RDB$TYPE_NAME FROM RDB$TYPES WHERE RDB$FIELD_NAME=\'RDB$OBJECT_TYPE\'';
+	$data = ibase_strip_rdb($db->execute($sql));
+	foreach($data as $r){
+		$ret[$r->TYPE] = $r->TYPE_NAME;
+	}
+
+	return $ret??[];
+}
+
+function ibase_get_privileges(AbstractDBA $db, $PARAMS = null): array {
+	$ret = [];
+
+	if(is_scalar($PARAMS)){
+		$PARAMS = eo(['USER'=>$PARAMS]);
+	} else {
+		$PARAMS = eoe($PARAMS);
+	}
+
+	# TODO: trigeri, view, tables, proc var pārklāties nosaukumi, vai nevar? Hmm...
+	$sql = (new Select)->From('RDB$USER_PRIVILEGES');
+	if($PARAMS->USER){
+		$sql->Where(['RDB$USER = ?', $PARAMS->USER]);
+	} else {
+		//if($PARAMS->EXCLUDE_SYSDBA)$sql->Where(['RDB$USER != ?', 'SYSDBA']);
+		//if($PARAMS->EXCLUDE_PUBLIC)$sql->Where(['RDB$USER != ?', 'PUBLIC']);
+		$sql->Where(['RDB$USER != ?', 'SYSDBA']);
+		$sql->Where(['RDB$USER != ?', 'PUBLIC']);
+	}
+
+	if(!($q = $db->query($sql))){
+		return $ret;
+	}
+
+	while($r = $db->fetch_object($q)){
+		$r = ibase_strip_rdb($r);
+
+		$k = $r->USER;
+		if($r->USER_TYPE == 13){
+			$k = "ROLE:$r->USER";
+		}
+
+		if(!isset($ret[$k][$r->RELATION_NAME])){
+			$ret[$k][$r->RELATION_NAME] = (object)[
+				'GRANTOR'=>$r->GRANTOR,
+				'GRANT_OPTION'=>$r->GRANT_OPTION,
+				'USER_TYPE'=>$r->USER_TYPE,
+				'OBJECT_TYPE'=>$r->OBJECT_TYPE,
+			];
+		}
+
+		$p = &$ret[$k][$r->RELATION_NAME];
+
+		# UPDATE, REFERENCE
+		if(($r->PRIVILEGE == 'U') || ($r->PRIVILEGE == 'R')){
+			$p->PRIVILEGES = $p->PRIVILEGES ?? [];
+			if(!in_array($r->PRIVILEGE, $p->PRIVILEGES)){
+				array_push($p->PRIVILEGES, $r->PRIVILEGE);
+			}
+			if($r->FIELD_NAME){
+				$k = $r->PRIVILEGE.'_FIELDS';
+				$p->{$k} = $p->{$k} ?? [];
+				array_push($p->{$k}, $r->FIELD_NAME);
+			}
+		# ROLE
+		} elseif($r->PRIVILEGE == 'M'){
+			//$ret = array_merge(ibase_get_privileges($r->RELATION_NAME, $tr), $ret);
+		} else {
+			$p->PRIVILEGES = $p->PRIVILEGES ?? [];
+			if(!in_array($r->PRIVILEGE, $p->PRIVILEGES)){
+				array_push($p->PRIVILEGES, $r->PRIVILEGE);
+			}
+		}
+	}
+
+	return $ret;
 }
