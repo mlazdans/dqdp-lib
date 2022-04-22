@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 use dqdp\LV;
 use dqdp\QueueMailer;
@@ -379,21 +379,20 @@ function upload($key, $default = ''){
 	return isset($_FILES[$key]) ? $_FILES[$key] : $default;
 }
 
-function redirect($url = ''){
-	$url = $url ? $url : php_self();
-	header("Location: $url");
+function redirect(string $url = null): void {
+	header("Location: ".($url??php_self()));
 }
 
-function redirectp($url){
-	header("Location: $url",true, 301);
+function redirectp($url): void {
+	header("Location: $url", true, 301);
 }
 
-function redirect_not_found($url = '/', $msg = ''){
+function redirect_not_found(string $url = '/', string $msg = ''): void {
 	header404($msg);
 	redirect($url);
 }
 
-function redirect_referer($default = "/"){
+function redirect_referer(string $default = "/"): void {
 	if(empty($_SERVER['HTTP_REFERER'])){
 		redirect($default);
 	} else {
@@ -402,24 +401,24 @@ function redirect_referer($default = "/"){
 }
 
 
-function floatpoint($val){
+function floatpoint($val): float {
 	$val = preg_replace('/[^0-9,\.\-]/', '', $val);
-	return str_replace(',', '.', $val);
+	return (float)str_replace(',', '.', $val);
 }
 
 function to_float($data){
-	return __object_map($data, function($item){
-		return floatval(floatpoint($item));
+	return __object_map($data, function($item): float {
+		return floatpoint($item);
 	});
 }
 
 function to_int($data){
-	return __object_map($data, function($item){
-		return intval($item);
+	return __object_map($data, function($item): int {
+		return (int)$item;
 	});
 }
 
-function money_conv($data){
+function money_conv($data): float {
 	return floatpoint($data);
 }
 
@@ -480,12 +479,12 @@ function upload_errormsg($id){
 	return $errormsg;
 }
 
-function numpad($data, $size = 2){
+function numpad($data, int $size = 2): string {
 	return str_pad($data, $size, "0", STR_PAD_LEFT);
 }
 
-function md5uniqid(){
-	return md5(uniqid(rand(), true));
+function md5uniqid(): string {
+	return md5(uniqid((string)rand(), true));
 }
 
 function browse_tree($path, callable $function){
@@ -620,7 +619,7 @@ function __object_map($data, callable $func, $i = null){
 		}
 		return $d;
 	} else {
-		return $func($data, $i);
+		return $func((string)$data, $i);
 	}
 }
 
@@ -706,12 +705,12 @@ function rawurldec($data){
 ##
 
 function specialchars($data){
-	return __object_map($data, function($item){
+	return __object_map($data, function(string $item){
 		return htmlspecialchars($item, ENT_COMPAT | ENT_HTML401, '', false);
 	});
 }
 
-function date_in_periods($date, array $periods){
+function date_in_periods($date, array $periods): bool {
 	if(empty($periods)){
 		return false;
 	}
@@ -766,52 +765,52 @@ function set_time_format($f){
 	return dqdp::$TIME_FORMAT = $f;
 }
 
-function datef($ts = null){
+function datef(int $ts = null): string {
 	return date(get_date_format(), $ts ?? time());
 }
 
-function date_today(){
+function date_today(): string {
 	return datef(time());
 }
 
-function date_yesterday(){
+function date_yesterday(): string {
 	return datef(strtotime('yesterday'));
 }
 
-function date_daycount($m = false, $y = false){
-	return $m ? (date('t', mktime(0,0,0, $m, 1, ($y ? $y : date('Y'))))) : date('t');
+function date_daycount(int $m = null, int $y = null): int {
+	return (int)($m ? (date('t', mktime(0,0,0, $m, 1, ($y ? $y : (int)date('Y'))))) : date('t'));
 }
 
-function date_month_start(){
+function date_month_start(): string {
 	return datef(strtotime("first day of this month"));
 }
 
-function date_month_end(){
+function date_month_end(): string {
 	return datef(strtotime("last day of this month"));
 }
 
-function date_lastmonth_start(){
+function date_lastmonth_start(): string {
 	return datef(strtotime("first day of previous month"));
 }
 
-function date_lastmonth_end(){
+function date_lastmonth_end(): string {
 	return datef(strtotime("last day of previous month"));
 }
 
-function is_valid_date($date){
+function is_valid_date($date): bool {
 	return strtotime($date) !== false;
 }
 
-function ustrftime($format, $timestamp = 0){
+function ustrftime(string $format, int $timestamp = 0): string {
 	return win2utf(strftime($format, $timestamp));
 }
 
 # quarter month
-function date_qt_month($C, $m = 1){
+function date_qt_month(int $C, int $m = 1): int {
 	return ($C - 1) * 3 + $m;
 }
 
-function date_startend($D){
+function date_startend($D): array {
 	$DATE = eoe($D);
 	$format = get_date_format();
 	$start_date = $end_date = false;
@@ -827,9 +826,9 @@ function date_startend($D){
 		// $start_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 1, 1, date('Y'));
 		// $days_in_end_month = date_daycount(($ceturksnis - 1) * 3 + 3);
 		// $end_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 3, $days_in_end_month, date('Y'));
-		$start_date = mktime(0,0,0, date_qt_month($ceturksnis, 1), 1, date('Y'));
+		$start_date = mktime(0,0,0, date_qt_month($ceturksnis, 1), 1, (int)date('Y'));
 		$days_in_end_month = date_daycount(date_qt_month($ceturksnis, 3));
-		$end_date = mktime(0,0,0, date_qt_month($ceturksnis, 3), $days_in_end_month, date('Y'));
+		$end_date = mktime(0,0,0, date_qt_month($ceturksnis, 3), $days_in_end_month, (int)date('Y'));
 	} elseif($DATE->PREV_YEAR) {
 		$start_date = strtotime('first day of January last year');
 		$end_date = strtotime('last day of December last year');
@@ -854,7 +853,7 @@ function date_startend($D){
 		$end_date = time();
 	} elseif($DATE->MONTH){
 		if(empty($DATE->YEAR))$DATE->YEAR = date('Y');
-		$dc = date_daycount($DATE->MONTH, $DATE->YEAR);
+		$dc = date_daycount((int)$DATE->MONTH, (int)$DATE->YEAR);
 		$start_date = strtotime("$DATE->YEAR-$DATE->MONTH-01");
 		$end_date = strtotime("$DATE->YEAR-$DATE->MONTH-$dc");
 	} elseif($DATE->YEAR){
@@ -1237,12 +1236,12 @@ function emailex($params){
 	}
 }
 
-function csv_get_header($file, $delim = ';'){
+function csv_get_header(string $file, string $delim = ';'): ?array {
 	if(($f = fopen($file, "r")) === false){
 		return false;
 	}
 
-	$ret = false;
+	$ret = null;
 	if(($line = fgetcsv($f, 2000, $delim)) !== false){
 		$ret = $line;
 	}
@@ -1251,11 +1250,11 @@ function csv_get_header($file, $delim = ';'){
 	return $ret;
 }
 
-function csv_col_count($file, $delim = ';'){
+function csv_col_count($file, $delim = ';'): ?int {
 	if($line = csv_get_header($file, $delim)){
 		return count($line);
 	} else {
-		return false;
+		return null;
 	}
 	// if(($f = fopen($file, "r")) === false){
 	// 	return false;
@@ -1270,7 +1269,7 @@ function csv_col_count($file, $delim = ';'){
 	// return $col_count;
 }
 
-function __csv_load($file, $map, $ret_type = 'array', $delim = ';'){
+function __csv_load(string $file, array $map, string $ret_type = 'array', string $delim = ';'): array {
 	if(($f = fopen($file, "r")) === false){
 		return false;
 	}
@@ -1297,25 +1296,25 @@ function csv_load_object($file, $map, $delim = ';'){
 	return __csv_load($file, $map, 'object', $delim);
 }
 
-function csv_find_key($map, $field){
+function csv_find_key($map, $field): ?string {
 	foreach($map as $k=>$v){
 		if($v == $field){
 			return $k;
 		}
 	}
 
-	return false;
+	return null;
 }
 
-function csv_find_value($map, $line, $field){
-	if(($k = csv_find_key($map, $field)) !== false){
+function csv_find_value($map, $line, $field): ?string {
+	if(($k = csv_find_key($map, $field)) !== null){
 		return $line[$k];
 	}
 
-	return false;
+	return null;
 }
 
-function __header($code, $msg_header, $msg_display = null){
+function __header(int $code, string $msg_header, string $msg_display = null): void {
 	$SERVER_PROTOCOL = $_ENV['SERVER_PROTOCOL']??($_SERVER['SERVER_PROTOCOL']??'');
 
 	header("$SERVER_PROTOCOL $code $msg_header", true, $code);
@@ -1340,13 +1339,13 @@ function header503($msg = "Server error"){
 	__header(503, "Server error", $msg);
 }
 
-function proc_date($date){
+function proc_date(string $date){
 	$D = ['šodien', 'vakar', 'aizvakar'];
 	$M = ['janvārī', 'februārī', 'martā', 'aprīlī', 'maijā', 'jūnijā', 'jūlijā', 'augustā', 'septembrī', 'oktobrī', 'novembrī', 'decembrī'];
 
 	$date_now = date("Y:m:j:H:i");
-	list($y0, $m0, $d0, $h0, $min0) = explode(":", date("Y:m:j:H:i", strtotime($date)));
-	list($y1, $m1, $d1, $h1, $min1) = explode(":", $date_now);
+	list($y0, $m0, $d0, $h0, $min0) = to_int(explode(":", date("Y:m:j:H:i", strtotime($date))));
+	list($y1, $m1, $d1, $h1, $min1) = to_int(explode(":", $date_now));
 	// mktime ( [int hour [, int minute [, int second [, int month [, int day [, int year [, int is_dst]]]]]]])
 	$dlong0 = mktime($h0, $min0, 0, $m0, $d0, $y0);
 	$dlong1 = mktime($h1, $min1, 0, $m1, $d1, $y1);
@@ -1528,39 +1527,39 @@ function println(){
 	print is_climode() ? "\n" : "<br>\n";
 }
 
-function __vp(){
+function __vpbc(){
 	$args = func_get_args();
-	$f = array_shift($args);
-	$v1 = array_shift($args);
+	$f = (string)array_shift($args);
+	$v1 = (string)array_shift($args);
 	foreach($args as $v){
-		$v1 = $f($v1, $v);
+		$v1 = $f($v1, (string)$v);
 	}
 
 	return $v1;
 }
 function vpaddr(&$v1){
-	return $v1 = call_user_func_array('__vp', array_merge(['bcadd'], func_get_args()));
+	return $v1 = call_user_func_array('__vpbc', array_merge(['bcadd'], func_get_args()));
 }
 function vpsubr(&$v1){
-	return $v1 = call_user_func_array('__vp', array_merge(['bcsub'], func_get_args()));
+	return $v1 = call_user_func_array('__vpbc', array_merge(['bcsub'], func_get_args()));
 }
 function vpmulr(&$v1){
-	return $v1 = call_user_func_array('__vp', array_merge(['bcmul'], func_get_args()));
+	return $v1 = call_user_func_array('__vpbc', array_merge(['bcmul'], func_get_args()));
 }
 function vpdivr(&$v1){
-	return $v1 = call_user_func_array('__vp', array_merge(['bcdiv'], func_get_args()));
+	return $v1 = call_user_func_array('__vpbc', array_merge(['bcdiv'], func_get_args()));
 }
 function vpadd(){
-	return call_user_func_array('__vp', array_merge(['bcadd'], func_get_args()));
+	return call_user_func_array('__vpbc', array_merge(['bcadd'], func_get_args()));
 }
 function vpsub(){
-	return call_user_func_array('__vp', array_merge(['bcsub'], func_get_args()));
+	return call_user_func_array('__vpbc', array_merge(['bcsub'], func_get_args()));
 }
 function vpmul(){
-	return call_user_func_array('__vp', array_merge(['bcmul'], func_get_args()));
+	return call_user_func_array('__vpbc', array_merge(['bcmul'], func_get_args()));
 }
 function vpdiv(){
-	return call_user_func_array('__vp', array_merge(['bcdiv'], func_get_args()));
+	return call_user_func_array('__vpbc', array_merge(['bcdiv'], func_get_args()));
 }
 
 function between($v, $s, $e){
@@ -1657,7 +1656,7 @@ function is_php_fatal_error($errno){
 	return in_array($errno, [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR]);
 }
 
-function prepend_path($path, $cmd){
+function prepend_path(string $path, string $cmd){
 	$cmd = is_windows() ? "$cmd.exe" : $cmd;
 	if($path = realpath($path)){
 		return $path.DIRECTORY_SEPARATOR.$cmd;
@@ -1669,9 +1668,12 @@ function prepend_path($path, $cmd){
 function wkhtmltopdf($HTML){
 	$args = ["-", "-"];
 
-	$wkhtmltopdf = prepend_path(getenv('WKHTMLTOPDF_BIN', true), "wkhtmltopdf");
-
-	return proc_exec('"'.$wkhtmltopdf.'"', $args, $HTML);
+	if($WKHTMLTOPDF_BIN = getenv('WKHTMLTOPDF_BIN', true)){
+		$wkhtmltopdf = prepend_path($WKHTMLTOPDF_BIN, "wkhtmltopdf");
+		return proc_exec('"'.$wkhtmltopdf.'"', $args, $HTML);
+	} else {
+		return null;
+	}
 }
 
 function proc_prepare_args($cmd, $args = []){
@@ -1696,8 +1698,8 @@ function proc_exec($cmd, $args = [], $input = '', $descriptorspec = []){
 	// $cmd .= sprintf("1> %s 2> %s", escapeshellarg($temp_stdout), escapeshellarg($temp_stderr));
 
 	# Fix pipe-blocks
-	$temp_stdout = tempnam(sys_get_temp_dir(), substr(md5(time()), 8));
-	$temp_stderr = tempnam(sys_get_temp_dir(), substr(md5(time()), 8));
+	$temp_stdout = tempnam(sys_get_temp_dir(), substr(md5((string)time()), 8));
+	$temp_stderr = tempnam(sys_get_temp_dir(), substr(md5((string)time()), 8));
 	$args[] = sprintf("1> %s", $temp_stdout);
 	$args[] = sprintf("2> %s", $temp_stderr);
 
@@ -1749,7 +1751,7 @@ function debug2file($msg){
 	file_put_contents(getenv('TMPDIR').'./debug.log', sprintf("[%s] %s\n", date('c'), $msg), FILE_APPEND);
 }
 
-function get_ex_rate($CURR_ID, $date = false){
+function get_ex_rate($CURR_ID, $date = null){
 	$ts = $date ? strtotime($date) : time();
 
 	$url = "http://www.bank.lv/vk/ecb.xml";
@@ -1783,17 +1785,19 @@ function html_select_prepare($data, $k_field, $l_field = null){
 	}
 }
 
-function __options_select_kv($data, $selected){
+function __options_select_kv(array $data, string $selected = null): string {
 	foreach($data as $k=>$v){
 		$ret[] = "<option".selected($k, $selected).">$v</option>";
 	}
+
 	return join("", $ret??[]);
 }
 
-function options_select($data, $vk, $lk, $selected = null){
+function options_select(array $data, string $vk, string $lk, string $selected = null): string {
 	foreach($data as $i){
 		$ret[] = "<option".selected($i[$vk], $selected).">$i[$lk]</option>";
 	}
+
 	return join("", $ret??[]);
 }
 

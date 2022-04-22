@@ -1,21 +1,20 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace dqdp;
 
 abstract class API {
-	static $URL;
+	static string $URL;
 	static $KEY;
 	static $SID;
 	static $RAW_RESPONSE_DATA;
 
-	abstract static function set_host($host);
+	abstract static function set_host(string $host): void;
 
-	static function decode_response($data){
-		self::$RAW_RESPONSE_DATA = $data;
-		return json_decode($data);
+	static function decode_response(string $data){
+		return json_decode(self::$RAW_RESPONSE_DATA = $data);
 	}
 
-	static function post($url, Array $data = []){
+	static function post(string $url, array $data = []){
 		if(($ch = curl_init()) === false){
 			return false;
 		}
@@ -34,6 +33,7 @@ abstract class API {
 		return self::decode_response($HTML);
 	}
 
+	# TODO: remove
 	static function set_sid($SID){
 		self::$SID = $SID;
 	}

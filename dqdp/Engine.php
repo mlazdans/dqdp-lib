@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace dqdp;
 
@@ -54,7 +54,7 @@ class Engine
 			trigger_error('self::$SYS_ROOT not set', E_USER_ERROR);
 		}
 		self::$START_TIME = microtime(true);
-		ini_set('display_errors', 0); // 1, ja iebūvētais
+		ini_set('display_errors', '0'); // 1, ja iebūvētais
 		set_error_handler('dqdp\Engine::error_handler');
 		set_exception_handler('dqdp\Engine::exception_handler');
 		register_shutdown_function('dqdp\Engine::shutdown');
@@ -233,11 +233,12 @@ class Engine
 	}
 	*/
 
-	static function __msg($key, $msg = null){
+	static function __msg(string $key, $msg = null){
 		if(is_climode() && $msg){
 			$io = in_array($key, ['ERR', 'DEBUG']) ? STDERR : STDOUT;
 			fprintf($io, "[%s] %s\n", $key, translit($msg));
 		}
+
 		if($msg === null){
 			return self::$MSG[$key];
 		} else {
