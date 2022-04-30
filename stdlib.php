@@ -1611,16 +1611,17 @@ function eo_debug(StdObject $o, $keys = null){
 	return join(",", $ret);
 }
 
-function escape_shell(Array $args){
-	foreach($args as $k=>$part){
-		if(is_string($k)){
-			$params[] = escapeshellarg($k).'='.escapeshellarg($part);
-		} else {
-			$params[] = escapeshellarg($part);
-		}
-	}
-	return $args;
-}
+# TODO: kāpēc return $args?
+// function escape_shell(Array $args){
+// 	foreach($args as $k=>$part){
+// 		if(is_string($k)){
+// 			$params[] = escapeshellarg($k).'='.escapeshellarg($part);
+// 		} else {
+// 			$params[] = escapeshellarg($part);
+// 		}
+// 	}
+// 	return $args;
+// }
 
 function is_windows(){
 	return strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
@@ -1676,14 +1677,15 @@ function wkhtmltopdf($HTML){
 	}
 }
 
-function proc_prepare_args($cmd, $args = []){
-	if($args){
-		$cmd .= ' '.join(" ", escape_shell($args));
-	}
-	return $cmd;
-}
+// function proc_prepare_args($cmd, $args = []){
+// 	if($args){
+// 		$cmd .= ' '.join(" ", escape_shell($args));
+// 	}
+// 	return $cmd;
+// }
 
-function proc_exec($cmd, $args = [], $input = '', $descriptorspec = []){
+# TODO: create return type
+function proc_exec(string $cmd, array $args = [], string $input = '', array $descriptorspec = []){
 	if(empty($descriptorspec[0]))$descriptorspec[0] = ["pipe", "r"];
 	if(empty($descriptorspec[1]))$descriptorspec[1] = ["pipe", "w"];
 	if(empty($descriptorspec[2]))$descriptorspec[2] = ["pipe", "w"];
@@ -1697,37 +1699,30 @@ function proc_exec($cmd, $args = [], $input = '', $descriptorspec = []){
 	// } else {
 	// $cmd .= sprintf("1> %s 2> %s", escapeshellarg($temp_stdout), escapeshellarg($temp_stderr));
 
-	# Fix pipe-blocks
-	$temp_stdout = tempnam(sys_get_temp_dir(), substr(md5((string)time()), 8));
-	$temp_stderr = tempnam(sys_get_temp_dir(), substr(md5((string)time()), 8));
-	$args[] = sprintf("1> %s", $temp_stdout);
-	$args[] = sprintf("2> %s", $temp_stderr);
+	// $process_cmd = proc_prepare_args($cmd, $args);
+	$process_cmd = $cmd.' '.join(" ", $args);
 
-	$process_cmd = proc_prepare_args($cmd, $args);
+	# Fix pipe-blocks
+	$temp_stdout = tempnam(sys_get_temp_dir(), substr(md5((string)rand()), 8));
+	$temp_stderr = tempnam(sys_get_temp_dir(), substr(md5((string)rand()), 8));
+	$temp_stdout = 'C:\Program Files\test';
+	// $process_cmd .= ' '.sprintf("1> %s", ($temp_stdout));
+	// $process_cmd .= ' '.sprintf("2> %s", ($temp_stderr));
+	$descriptorspec[1] = ['file', ($temp_stdout), 'w'];
+	$descriptorspec[2] = ['file', ($temp_stderr), 'w'];
 
 	// $process_cmd .= sprintf(" 1> %s 2> %s", escapeshellarg($temp_stdout), escapeshellarg($temp_stderr));
 
 	$process = proc_open($process_cmd, $descriptorspec, $pipes);
+
 	if(!is_resource($process)){
 		return false;
 	}
 
-	if(isset($pipes[0]) && is_resource($pipes[0])){
-		if($input){
+	if($input && isset($pipes[0]) && is_resource($pipes[0])){
 			fwrite($pipes[0], $input);
-		}
 		fclose($pipes[0]);
 	}
-
-	$stdout = $stderr = null;
-	// if(isset($pipes[1]) && is_resource($pipes[1])){
-	// 	// $stdout = stream_get_contents($pipes[1]);
-	// 	fclose($pipes[1]);
-	// }
-	// if(isset($pipes[2]) && is_resource($pipes[2])){
-	// 	// $stderr = stream_get_contents($pipes[2]);
-	// 	fclose($pipes[2]);
-	// }
 
 	$errcode = proc_close($process);
 
@@ -1735,12 +1730,16 @@ function proc_exec($cmd, $args = [], $input = '', $descriptorspec = []){
 		$stdout = file_get_contents($temp_stdout);
 		if(!$errcode)
 			unlink($temp_stdout);
+	} else {
+		$stdout = null;
 	}
 
 	if(file_exists($temp_stderr)){
 		$stderr = file_get_contents($temp_stderr);
 		if(!$errcode)
 			unlink($temp_stderr);
+	} else {
+		$stderr = null;
 	}
 
 	return [$errcode, $stdout, $stderr];
