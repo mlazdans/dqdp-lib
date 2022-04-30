@@ -1671,13 +1671,9 @@ function prepend_path(string $path, string $cmd): string {
 
 function wkhtmltopdf($HTML){
 	$args = ["-", "-"];
+	$wkhtmltopdf = prepend_path(constant('WKHTMLTOPDF_BIN'), "wkhtmltopdf");
 
-	if($WKHTMLTOPDF_BIN = getenv('WKHTMLTOPDF_BIN', true)){
-		$wkhtmltopdf = prepend_path($WKHTMLTOPDF_BIN, "wkhtmltopdf");
-		return proc_exec('"'.$wkhtmltopdf.'"', $args, $HTML);
-	} else {
-		return null;
-	}
+	return proc_exec('"'.$wkhtmltopdf.'"', $args, $HTML);
 }
 
 // function proc_prepare_args($cmd, $args = []){
@@ -1750,7 +1746,7 @@ function proc_exec(string $cmd, array $args = [], string $input = '', array $des
 
 function debug2file($msg){
 	$msg = str_replace(array("\r", "\n"), ' ', $msg);
-	return file_put_contents(getenv('TMPDIR').'./debug.log', sprintf("[%s] %s\n", date('c'), $msg), FILE_APPEND);
+	return file_put_contents(constant('TMPDIR').'./debug.log', sprintf("[%s] %s\n", date('c'), $msg), FILE_APPEND);
 }
 
 function get_ex_rate($CURR_ID, $date = null): ?float {

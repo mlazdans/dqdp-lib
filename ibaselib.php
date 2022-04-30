@@ -128,11 +128,11 @@ function ibase_isql_exec(array $args = [], string $input = ''){
 		$args[] = is_windows() ? 'CON' : '/dev/stdout';
 	} else {
 		$args[] = '-o';
-		$tmpfname = tempnam(getenv('TMPDIR'), 'isql');
+		$tmpfname = tempnam(sys_get_temp_dir(), 'isql');
 		$args[] = $tmpfname;
 	}
 
-	$cmd = '"'.prepend_path(getenv('IBASE_BIN', true), "isql").'"';
+	$cmd = '"'.prepend_path(constant('IBASE_BIN'), "isql").'"';
 	// Wrapper
 	// https://github.com/cubiclesoft/createprocess-windows
 	// if(is_windows() && !is_climode()){
@@ -149,6 +149,7 @@ function ibase_isql_exec(array $args = [], string $input = ''){
 			//unlink($tmpfname);
 		}
 	}
+
 	return $exe;
 }
 
@@ -175,15 +176,8 @@ function __ibase_isql_args($params = null, $args = []){
 }
 
 // args = ['DB', 'USER', 'PASS'];
-# NOTE: Caur web karās pie kļūdas (nevar dabūt STDERR), tāpēc wrappers un killers.
-# NOTE: timeout jāmaina lielākiem/lēnākiem skriptiem :E
 function ibase_isql($SQL, $params = null){
 	$args = __ibase_isql_args($params, ['-e', '-noautocommit', '-bail', '-q']);
-
-	// $args[] = '-i';
-	// $tmpfname = tempnam(getenv('TMPDIR'), 'isql');
-	// file_put_contents($tmpfname, $SQL);
-	// $args[] = $tmpfname;
 
 	return ibase_isql_exec($args, $SQL);
 }
