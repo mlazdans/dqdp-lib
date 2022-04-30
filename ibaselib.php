@@ -1,6 +1,4 @@
-<?php
-
-declare(strict_types = 1);
+<?php declare(strict_types = 1);
 
 use dqdp\DBA\AbstractDBA;
 use dqdp\SQL\Select;
@@ -123,7 +121,7 @@ function ibase_escape($data){
 	return str_replace("'", "''", $data);
 }
 
-function ibase_isql_exec($args = [], $input = '', $descriptorspec = []){
+function ibase_isql_exec(array $args = [], string $input = ''){
 	if(defined('STDOUT')){
 		$args[] = '-o';
 		# TODO: -o CON only on Windows, need test on linux
@@ -137,13 +135,13 @@ function ibase_isql_exec($args = [], $input = '', $descriptorspec = []){
 	$cmd = '"'.prepend_path(getenv('IBASE_BIN', true), "isql").'"';
 	// Wrapper
 	// https://github.com/cubiclesoft/createprocess-windows
-	if(is_windows() && !is_climode()){
-		$args = array_merge(['/w=5000', '/term', $cmd], $args);
-		$cmd = 'C:\bin\createprocess.exe';
-	}
+	// if(is_windows() && !is_climode()){
+	// 	$args = array_merge(['/w=5000', '/term', $cmd], $args);
+	// 	$cmd = 'C:\bin\createprocess.exe';
+	// }
 
 	# Capture isql output. isql tends to keep isql in interactive mode if no -i or -o specified
-	if($exe = proc_exec($cmd, $args, $input, $descriptorspec)){
+	if($exe = proc_exec($cmd, $args, $input)){
 		if(isset($tmpfname)){
 			if($outp = file_get_contents($tmpfname)){
 				$exe[1] = $outp;
