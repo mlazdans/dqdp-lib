@@ -1623,41 +1623,44 @@ function eo_debug(StdObject $o, $keys = null){
 // 	return $args;
 // }
 
-function is_windows(){
+function is_windows(): bool {
 	return strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
 }
 
-function get_include_paths(){
+function get_include_paths(): array {
 	return array_map(function($i){
 		return realpath($i);
 	}, explode(PATH_SEPARATOR, ini_get('include_path')));
 }
 
-function trim_includes_path($path){
-	$path = realpath($path);
-	foreach(get_include_paths() as $root){
-		$root = $root.DIRECTORY_SEPARATOR;
-		if(strpos($path, $root) === 0){
-			return str_replace($root, '', $path);
+function trim_includes_path(string $path): ?string {
+	if($path = realpath($path)){
+		foreach(get_include_paths() as $root){
+			$root = $root.DIRECTORY_SEPARATOR;
+			if(strpos($path, $root) === 0){
+				return str_replace($root, '', $path);
+			}
 		}
+	} else {
+		return null;
 	}
 }
 
 function trimmer($data){
-	return __object_map($data, function($item){
+	return __object_map($data, function(string $item){
 		return trim($item);
 	});
 }
 
-function is_fatal_error($errno){
+function is_fatal_error($errno): bool {
 	return in_array($errno, [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR]);
 }
 
-function is_php_fatal_error($errno){
+function is_php_fatal_error($errno): bool {
 	return in_array($errno, [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR]);
 }
 
-function prepend_path(string $path, string $cmd){
+function prepend_path(string $path, string $cmd): string {
 	$cmd = is_windows() ? "$cmd.exe" : $cmd;
 	if($path = realpath($path)){
 		return $path.DIRECTORY_SEPARATOR.$cmd;
@@ -1720,7 +1723,7 @@ function proc_exec(string $cmd, array $args = [], string $input = '', array $des
 	}
 
 	if($input && isset($pipes[0]) && is_resource($pipes[0])){
-			fwrite($pipes[0], $input);
+		fwrite($pipes[0], $input);
 		fclose($pipes[0]);
 	}
 
@@ -1747,10 +1750,10 @@ function proc_exec(string $cmd, array $args = [], string $input = '', array $des
 
 function debug2file($msg){
 	$msg = str_replace(array("\r", "\n"), ' ', $msg);
-	file_put_contents(getenv('TMPDIR').'./debug.log', sprintf("[%s] %s\n", date('c'), $msg), FILE_APPEND);
+	return file_put_contents(getenv('TMPDIR').'./debug.log', sprintf("[%s] %s\n", date('c'), $msg), FILE_APPEND);
 }
 
-function get_ex_rate($CURR_ID, $date = null){
+function get_ex_rate($CURR_ID, $date = null): ?float {
 	$ts = $date ? strtotime($date) : time();
 
 	$url = "http://www.bank.lv/vk/ecb.xml";
@@ -1764,7 +1767,7 @@ function get_ex_rate($CURR_ID, $date = null){
 		}
 	}
 
-	return false;
+	return null;
 }
 
 function array_enfold($v) : array {
@@ -1784,7 +1787,7 @@ function html_select_prepare($data, $k_field, $l_field = null){
 	}
 }
 
-function __options_select_kv(array $data, string $selected = null): string {
+function __options_select_kv(iterable $data, $selected = null): string {
 	foreach($data as $k=>$v){
 		$ret[] = "<option".selected($k, $selected).">$v</option>";
 	}
@@ -1792,7 +1795,7 @@ function __options_select_kv(array $data, string $selected = null): string {
 	return join("", $ret??[]);
 }
 
-function options_select(array $data, string $vk, string $lk, string $selected = null): string {
+function options_select(iterable $data, string $vk, string $lk, $selected = null): string {
 	foreach($data as $i){
 		$ret[] = "<option".selected($i[$vk], $selected).">$i[$lk]</option>";
 	}
@@ -1830,12 +1833,11 @@ function parse_search_q($q, $minWordLen = 0){
 	return array_unique($words);
 }
 
-function split_words($q){
-	$words = preg_split('/\s+/', trim($q));
-	return $words;
+function split_words(string $q){
+	return preg_split('/\s+/', trim($q));
 }
 
-function is_valid_host($host){
+function is_valid_host(string $host){
 	$testip = gethostbyname($host);
 	$test1 = ip2long($testip);
 	$test2 = long2ip($test1);
@@ -1843,11 +1845,7 @@ function is_valid_host($host){
 	return ($testip == $test2);
 }
 
-function is_valid_email($email){
-	if(!$email){
-		return false;
-	}
-
+function is_valid_email(string $email){
 	$parts = explode('@', $email);
 
 	if(count($parts) != 2){
@@ -1867,7 +1865,7 @@ function accepts_gzip(){
 	return substr_count($_SERVER['HTTP_ACCEPT_ENCODING']??'', 'gzip');
 }
 
-function get_mime($buf){
+function get_mime(string $buf){
 	if(!extension_loaded('fileinfo')){
 		return false;
 	}
@@ -1913,6 +1911,7 @@ function get_mime($buf){
 // 	}
 // }
 
+# TODO: remove ref, return data
 function hl(&$data, $kw)
 {
 	//strip_script($data, $keys, $scripts);
@@ -1953,20 +1952,20 @@ function hl(&$data, $kw)
 } // hl
 
 # TODO: pārbaudīt vai tas nesakrīt ar translit
-function substitute_change($str){
-	$patt = array(
+function substitute_change(string $str){
+	$patt = [
 		"'Ā'", "'Č'", "'Ē'", "'Ģ'", "'Ī'", "'Ķ'", "'Ļ'", "'Ņ'", "'Ō'", "'Ŗ'", "'Š'", "'Ū'", "'Ž'",
 		"'ā'", "'č'", "'ē'", "'ģ'", "'ī'", "'ķ'", "'ļ'", "'ņ'", "'ō'", "'ŗ'", "'š'", "'ū'", "'ž'",
-	);
-	$repl = array(
+	];
+	$repl = [
 		"A", "C", "E", "G", "I", "K", "L", "N", "O", "R", "S", "U", "Z",
 		"a", "c", "e", "g", "i", "k", "l", "n", "o", "r", "s", "u", "z",
-	);
+	];
 
 	return preg_replace($patt, $repl, $str);
 }
 
-function substitute($str){
+function substitute(string $str){
 	/*
 	$patt = array(
 		"/([ĀČĒĢĪĶĻŅŌŖŠŪŽ])/iue"
@@ -1976,21 +1975,16 @@ function substitute($str){
 	);
 	return preg_replace($patt, $repl, $str);
 	*/
-	$patt = array(
-		"/([ĀČĒĢĪĶĻŅŌŖŠŪŽ])/iu"
-	);
+	$patt = ["/([ĀČĒĢĪĶĻŅŌŖŠŪŽ])/iu"];
 	return preg_replace_callback(
 		$patt,
 		function($m){
-			//if(false && $i_am_admin)
-				return "[".$m[1]."|".substitute_change($m[1])."]";
-			//else
-			//	return "'[".$m[1]."|'".substitute_change($m[1])."']'";
+			return "[".$m[1]."|".substitute_change($m[1])."]";
 		},
 		$str);
 }
 
-function join_paths($a){
+function join_paths($a) {
 	return join(DIRECTORY_SEPARATOR, $a);
 }
 
@@ -2034,11 +2028,11 @@ function ktolower($data){
 	return $data;
 }
 
-function array_flatten(array $a) : array {
+function array_flatten(array $a): array {
 	return flatten($a);
 }
 
-function flatten($o) : array {
+function flatten($o): array {
 	__object_walk($o, function($i) use (&$ret){
 		$ret[] = $i;
 	});
