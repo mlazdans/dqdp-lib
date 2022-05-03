@@ -24,7 +24,7 @@ abstract class Entity implements EntityInterface {
 	}
 
 	protected function select(): Select {
-		return (new Select("*"))->From($this->tableName);
+		return (new Select("$this->tableName.*"))->From($this->tableName);
 	}
 
 	function get($ID, ?iterable $filters = null){
