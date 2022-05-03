@@ -121,7 +121,7 @@ class IBase extends AbstractDBA
 		return $this->__fetch('ibase_fetch_object', ...func_get_args());
 	}
 
-	function trans(){
+	function new_trans(): self {
 		$tr = ibase_trans($this->conn, ...func_get_args());
 
 		$o = clone $this;
@@ -135,6 +135,10 @@ class IBase extends AbstractDBA
 		$this->tr = null;
 
 		return $ret;
+	}
+
+	function commit_ret(): bool {
+		return ibase_commit_ret($this->tr);
 	}
 
 	function rollback(): bool {
