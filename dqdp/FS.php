@@ -210,6 +210,11 @@ class FS implements DBA\TransactionInterface {
 
 	function scandirraw($path, $params = null){
 		$d = $this->get_by_fullpath($this->path($path), $this->defaults_params());
+
+		if(!$d){
+			return false;
+		}
+
 		// if($sort == SCANDIR_SORT_ASCENDING){
 		// 	$orderby = "$this->Table.fs_fullpath ASC";
 		// } elseif($sort == SCANDIR_SORT_DESCENDING){
