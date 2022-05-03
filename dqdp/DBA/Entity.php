@@ -279,39 +279,39 @@ abstract class Entity implements EntityInterface {
 	}
 
 	# TODO: savest kārtībā
-	protected function ids_process(...$args){
-		$sql = array_shift($args);
-		$IDS = array_shift($args);
-		if(!is_array($IDS)){
-			$IDS = [$IDS];
-		}
+	// protected function ids_process(...$args){
+	// 	$sql = array_shift($args);
+	// 	$IDS = array_shift($args);
+	// 	if(!is_array($IDS)){
+	// 		$IDS = [$IDS];
+	// 	}
 
-		if(!($smt = $this->get_trans()->prepare($sql))){
-			return false;
-		}
+	// 	if(!($smt = $this->get_trans()->prepare($sql))){
+	// 		return false;
+	// 	}
 
-		$ret = true;
-		foreach($IDS as $ID){
-			$ret = $ret && $this->get_trans()->execute($smt, [$ID]);
-			// $params = array_merge([$smt], $args, [$ID]);
-			// $ret = $ret && call_user_func_array('ibase_execute', $params);
-		}
-		return $ret;
-	}
+	// 	$ret = true;
+	// 	foreach($IDS as $ID){
+	// 		$ret = $ret && $this->get_trans()->execute($smt, [$ID]);
+	// 		// $params = array_merge([$smt], $args, [$ID]);
+	// 		// $ret = $ret && call_user_func_array('ibase_execute', $params);
+	// 	}
+	// 	return $ret;
+	// }
 
-	# TODO: šiem trans() te nevajadzētu būt?
-	function new_trans(){
-		$this->dba = $this->dba->trans();
+	// # TODO: šiem trans() te nevajadzētu būt?
+	// function new_trans(){
+	// 	$this->dba = $this->dba->trans();
 
-		return $this;
-	}
+	// 	return $this;
+	// }
 
-	function commit(...$args){
-		return $this->dba->commit(...$args);
-	}
+	// function commit(...$args){
+	// 	return $this->dba->commit(...$args);
+	// }
 
-	function rollback(...$args){
-		return $this->dba->rollback(...$args);
-	}
+	// function rollback(...$args){
+	// 	return $this->dba->rollback(...$args);
+	// }
 	###
 }
