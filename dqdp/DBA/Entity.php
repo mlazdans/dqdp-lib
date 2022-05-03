@@ -115,9 +115,11 @@ abstract class Entity implements EntityInterface {
 	// }
 
 	function delete(){
+		$ID = func_get_arg(0);
 		# TODO: multi field PK
 		# TODO: dqdp\SQL\Statement
-		return $this->ids_process("DELETE FROM $this->tableName WHERE $this->PK = ?", ...func_get_args());
+		return $this->get_trans()->query("DELETE FROM $this->tableName WHERE $this->PK = ?", $ID);
+		// return $this->ids_process("DELETE FROM $this->tableName WHERE $this->PK = ?", ...func_get_args());
 	}
 
 	function set_trans(AbstractDBA $dba){
