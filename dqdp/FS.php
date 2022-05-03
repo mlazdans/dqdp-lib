@@ -139,7 +139,7 @@ class FS implements DBA\TransactionInterface {
 		//$sql = "DELETE FROM $this->Table WHERE fs_fullpath_hash = SHA1(?)";
 		$sql = "DELETE FROM $this->Table WHERE fs_fullpath = ?";
 
-		return $this->get_trans()->Execute($sql, [$path]) ? true : false;
+		return $this->get_trans()->Execute($sql, $path) ? true : false;
 	}
 
 	function dirmax($path){
