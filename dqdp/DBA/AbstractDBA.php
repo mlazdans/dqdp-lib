@@ -16,6 +16,7 @@ abstract class AbstractDBA
 	abstract function fetch_object();
 	abstract function execute();
 	abstract function execute_single();
+	abstract function execute_prepared();
 	abstract function new_trans();
 	abstract function commit(): bool;
 	abstract function commit_ret(): bool;

@@ -53,6 +53,10 @@ class IBase extends AbstractDBA
 		return $this->__execute("fetch", ...func_get_args());
 	}
 
+	function execute_prepared(){
+		return ibase_execute(...func_get_args());
+	}
+
 	function query() {
 		$args = func_get_args();
 

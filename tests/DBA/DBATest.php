@@ -1,10 +1,11 @@
 <?php
 
+use dqdp\DBA\AbstractDBA;
 use PHPUnit\Framework\TestCase;
 
 abstract class DBATest extends TestCase
 {
-	protected static $db;
+	protected static AbstractDBA $db;
 
 	public function testSelect1() {
 		$this->assertTrue(self::$db->execute("SELECT * FROM table1") !== false);
@@ -20,7 +21,7 @@ abstract class DBATest extends TestCase
 
 	public function testSelect4() {
 		$q = self::$db->prepare("SELECT * FROM table1 WHERE name = ?");
-		$this->assertTrue(self::$db->execute($q, 'test') !== false);
+		$this->assertTrue(self::$db->execute_prepared($q, 'test') !== false);
 	}
 
 	public function testSelect5() {
@@ -38,7 +39,7 @@ abstract class DBATest extends TestCase
 
 	public function testInsert3() {
 		$q = self::$db->prepare("INSERT INTO table1 (name) VALUES (?)");
-		$this->assertTrue(self::$db->execute($q, 'test3') !== false);
+		$this->assertTrue(self::$db->execute_prepared($q, 'test3') !== false);
 	}
 
 	public static function tearDownAfterClass(): void {
