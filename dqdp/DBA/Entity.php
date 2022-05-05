@@ -286,6 +286,10 @@ abstract class Entity implements EntityInterface {
 		return $sql;
 	}
 
+	function fetch($q){
+		return $this->get_trans()->fetch($q);
+	}
+
 	# TODO: savest kārtībā
 	// protected function ids_process(...$args){
 	// 	$sql = array_shift($args);

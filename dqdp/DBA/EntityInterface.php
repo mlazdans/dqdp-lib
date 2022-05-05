@@ -11,4 +11,5 @@ interface EntityInterface extends TransactionInterface {
 	function search(?iterable $filters = null);
 	function save(iterable $DATA);
 	function delete();
+	function fetch($q);
 }
