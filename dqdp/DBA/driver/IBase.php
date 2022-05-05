@@ -126,12 +126,14 @@ class IBase extends AbstractDBA
 	}
 
 	function new_trans(): self {
-		$tr = ibase_trans($this->conn, ...func_get_args());
+		$this->tr = ibase_trans($this->conn, ...func_get_args());
 
-		$o = clone $this;
-		$o->tr = $tr;
+		return $this;
 
-		return $o;
+		// $o = clone $this;
+		// $o->tr = $tr;
+
+		// return $o;
 	}
 
 	function commit(): bool {
@@ -218,5 +220,19 @@ class IBase extends AbstractDBA
 		} else {
 			return false;
 		}
+	}
+
+	function with_new_trans(callable $func, ...$args){
+		$tr = $this->tr;
+
+		$this->new_trans();
+		if($result = $func($this, ...$args)){
+			$this->commit();
+		} else {
+			$this->rollback();
+		}
+		$this->tr = $tr;
+
+		return $result;
 	}
 }
