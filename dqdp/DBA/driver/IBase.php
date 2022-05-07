@@ -107,14 +107,17 @@ class IBase extends AbstractDBA
 			$args[1] = self::$FETCH_FLAGS;
 		}
 
-		// if($d = $func(...$args)){
-		// 	if(is_array($d)){
-		// 		return array_change_key_case($d, CASE_LOWER);
-		// 	}
-		// }
+		if($this->fetch_case === 'lower'){
+			if($d = $func(...$args)){
+				if(is_array($d)){
+					return array_change_key_case($d, CASE_LOWER);
+				}
+			}
 
-		// return $d;
-		return $func(...$args);
+			return $d;
+		} else {
+			return $func(...$args);
+		}
 	}
 
 	function fetch_assoc(){
@@ -182,7 +185,9 @@ class IBase extends AbstractDBA
 		$PK = $Table->getPK();
 		if(is_array($PK)){
 		} else {
-			// $PK = strtolower($PK);
+			if($this->fetch_case === 'lower'){
+				$PK = strtolower($PK);
+			}
 			$PK_val = get_prop($DATA, $PK);
 			if(is_null($PK_val)){
 				if($Gen = $Table->getGen()){

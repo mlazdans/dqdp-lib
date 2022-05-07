@@ -6,7 +6,9 @@ namespace dqdp\DBA;
 
 abstract class AbstractDBA
 {
+	# TODO: static?
 	protected $fetch_function = 'fetch_assoc';
+	protected $fetch_case = null;
 
 	abstract function connect();
 	abstract function connect_params(iterable $params);
@@ -30,6 +32,10 @@ abstract class AbstractDBA
 		$this->fetch_function = $func;
 
 		return $this;
+	}
+
+	function set_fetch_case(string $case){
+		$this->fetch_case = $case;
 	}
 
 	function fetch(){
