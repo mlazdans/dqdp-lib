@@ -195,7 +195,7 @@ class Select extends Statement
 		$this->merge_lines($lines, $this->orderby_parser());
 
 		if(isset($this->rows) && isset($this->offset)){
-			$lines[] = "ROWS $this->offset TO ".($this->rows + $this->offset);
+			$lines[] = sprintf("ROWS %d TO %d", $this->offset + 1, $this->rows + $this->offset);
 		} elseif(isset($this->rows)){
 			$lines[] = "ROWS $this->rows";
 		}
