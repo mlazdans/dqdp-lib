@@ -8,12 +8,13 @@ use dqdp\DBA\AbstractDBA;
 use dqdp\DBA\AbstractTable;
 use dqdp\DBA\DBAException;
 use dqdp\SQL\Insert;
+use Exception;
 use PDO;
 use PDOStatement;
 
 class MySQL_PDO extends AbstractDBA
 {
-	var $conn;
+	var PDO $conn;
 	protected $transactionCounter = 0;
 	protected $row_count;
 
@@ -62,6 +63,10 @@ class MySQL_PDO extends AbstractDBA
 		return $this->__execute("fetch", ...func_get_args());
 	}
 
+	function execute_prepared(){
+		throw new Exception("Not implemented");
+	}
+
 	function query(){
 		$args = func_get_args();
 
@@ -70,24 +75,31 @@ class MySQL_PDO extends AbstractDBA
 				if($q = $this->prepare($args[0])){
 					$q->execute($args[0]->vars());
 				}
-			} elseif($args[0] instanceof PDOStatement) {
-				$q = $args[0];
-				$q->execute($args[1]);
-			} elseif(count($args) == 2) {
-				if($q = $this->prepare($args[0])){
-					$q->execute($args[1]);
-				}
-			} else {
+			// } elseif($args[0] instanceof PDOStatement) {
+			// 	$q = $args[0];
+			// 	$q->execute($args[1]);
+			// } elseif(count($args) == 2) {
+			// 	if($q = $this->prepare($args[0])){
+			// 		$q->execute($args[1]);
+			// 	}
+			} elseif(count($args) == 1) {
 				$q = $this->conn->query(...$args);
+			} else {
+				if($q = $this->prepare(array_shift($args))){
+					$q->execute($args);
+				}
+				// $q = $this->conn->query(...$args);
 			}
 
 			if($q){
 				return $q;
 			}
 
-			throw new DBAException("Invalid query: $q->queryString");
+			throw new DBAException("Invalid query");
 		} finally {
-			$this->row_count = $q->rowCount();
+			if($q){
+				$this->row_count = $q->rowCount();
+			}
 		}
 	}
 
@@ -126,7 +138,7 @@ class MySQL_PDO extends AbstractDBA
 	// 	return $this->conn->rollBack();
 	// }
 
-	function trans(){
+	function new_trans(){
 		$this->conn->beginTransaction();
 		$this->transactionCounter++;
 
@@ -135,6 +147,10 @@ class MySQL_PDO extends AbstractDBA
 
 	function commit(): bool {
 		return $this->conn->commit();
+	}
+
+	function commit_ret(): bool {
+		throw new Exception("Not implemented");
 	}
 
 	function rollback(): bool {
@@ -208,5 +224,16 @@ class MySQL_PDO extends AbstractDBA
 
 	private function mysql_last_id(){
 		return get_prop($this->execute_single("SELECT LAST_INSERT_ID() AS last_id"), 'last_id');
+	}
+
+	function with_new_trans(callable $func, ...$args){
+		$this->new_trans();
+		if($result = $func($this, ...$args)){
+			$this->commit();
+		} else {
+			$this->rollback();
+		}
+
+		return $result;
 	}
 }
