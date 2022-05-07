@@ -1368,8 +1368,7 @@ function proc_date(string $date){
 	return $retdate;
 }
 
-function print_time($start_time, $end_time = false)
-{
+function print_time($start_time, $end_time = false): string {
 	if(!$end_time)$end_time = mt();
 
 	$seconds = $end_time - $start_time;
@@ -1395,38 +1394,38 @@ function print_time($start_time, $end_time = false)
 	return join(" ", $print_time);
 }
 
-function print_memory($mem){
+function print_memory($mem): string {
 	return number_format($mem / 1024 / 1024, 2, '.', '').'MB';
 }
 
-function selected($v, $value){
+function selected($v, $value): string {
 	return sprintf(' value="%s"%s', $v, $v == $value ? ' selected' : '');
 }
 
-function optioned($v, $value){
+function optioned($v, $value): string {
 	return sprintf(' value="%s"%s', $v, checked($v == $value));
 }
 
-function checked($v){
+function checked($v): string {
 	return ($v ? ' checked' : '');
 }
 
-function checkeda(Array $a, $k){
+function checkeda(Array $a, $k): string {
 	return checked($a[$k]??null);
 }
 
-function checkedina(Array $a, $k){
+function checkedina(Array $a, $k): string {
 	return checked(in_array($k, $a));
 }
 
 # Hacking POST checkboxes
-function boolcheckbox($NAME, $checked){
+function boolcheckbox($NAME, $checked): string {
 	$ret[] = sprintf('<input type=hidden value=0 name=%s>', $NAME);
 	$ret[] = sprintf('<input type=checkbox value=1 name=%s%s>', $NAME, checked($checked));
 	return join("\n", $ret);
 }
 
-function datediff($d1, $d2, $calc = 3600 * 24){
+function datediff($d1, $d2, $calc = 3600 * 24): float {
 	$date1 = strtotime($d1);
 	$date2 = strtotime($d2);
 
