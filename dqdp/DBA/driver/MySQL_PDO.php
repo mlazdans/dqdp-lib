@@ -10,11 +10,10 @@ use dqdp\DBA\DBAException;
 use dqdp\SQL\Insert;
 use Exception;
 use PDO;
-use PDOStatement;
 
 class MySQL_PDO extends AbstractDBA
 {
-	var PDO $conn;
+	var ?PDO $conn;
 	protected $transactionCounter = 0;
 	protected $row_count;
 
