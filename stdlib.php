@@ -1228,12 +1228,7 @@ function emailex($params){
 		}
 	}
 
-	try {
-		$mail->send();
-		return true;
-	} catch (Exception $e) {
-		return $e;
-	}
+	return $mail->send();
 }
 
 function csv_get_header(string $file, string $delim = ';'): ?array {
