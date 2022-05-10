@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace dqdp;
 
@@ -21,10 +21,6 @@ class TemplateBlock
 		'disabled'=>false
 	];
 
-	function __get($ID){
-		return $this->get_block($ID);
-	}
-
 	function __construct(TemplateBlock $parent = NULL, $ID, $content){
 		if($this->block_exists($ID)){
 			$this->error("block already exists ($ID)", E_USER_ERROR);
@@ -35,6 +31,10 @@ class TemplateBlock
 		$this->parent = $parent;
 		$this->content = $content;
 		$this->__find_blocks();
+	}
+
+	function __get($ID){
+		return $this->get_block($ID);
 	}
 
 	private function __find_blocks(){
@@ -123,7 +123,7 @@ class TemplateBlock
 		trigger_error($msg, $e);
 	}
 
-	private function __get_block($ID){
+	private function __get_block($ID): ?TemplateBlock {
 		if($ID instanceof TemplateBlock){
 			return $ID;
 		}
@@ -137,11 +137,11 @@ class TemplateBlock
 		return $block;
 	}
 
-	function block_exists($ID){
-		return $this->__get_block($ID) ? true : false;
+	function block_exists($ID): bool {
+		return (bool)$this->__get_block($ID);
 	}
 
-	function get_block($ID){
+	function get_block($ID): ?TemplateBlock {
 		$block = $this->__get_block($ID);
 		if($block === NULL){
 			$this->error("block not found ($ID)");
@@ -150,7 +150,7 @@ class TemplateBlock
 		return $block;
 	}
 
-	function get_block_under($ID){
+	function get_block_under($ID): ?TemplateBlock {
 		if(isset($this->blocks[$ID])){
 			return $this->blocks[$ID];
 		}
@@ -292,34 +292,34 @@ class TemplateBlock
 	}
 
 	# TODO: test vai remove?
-	function copy_block($ID_to, $ID_from){
-		if(!($block_to = $this->get_block($ID_to))){
-			return false;
-		}
+	// function copy_block($ID_to, $ID_from){
+	// 	if(!($block_to = $this->get_block($ID_to))){
+	// 		return false;
+	// 	}
 
-		if(!($block_from = $this->get_block($ID_from))){
-			return false;
-		}
+	// 	if(!($block_from = $this->get_block($ID_from))){
+	// 		return false;
+	// 	}
 
-		# tagat noskaidrosim, vai block_to nav zem block_from
-		if($block_from->get_block_under($ID_to)){
-			$this->error("block is a child of parent ($ID_from:$ID_to)");
-			return false;
-		}
+	// 	# tagat noskaidrosim, vai block_to nav zem block_from
+	// 	if($block_from->get_block_under($ID_to)){
+	// 		$this->error("block is a child of parent ($ID_from:$ID_to)");
+	// 		return false;
+	// 	}
 
-		# paarkopeejam paareejos parametrus
-		$block_to->vars = &$block_from->vars;
-		$block_to->blocks = &$block_from->blocks;
-		$block_to->block_vars = &$block_from->block_vars;
-		$block_to->content = &$block_from->content;
-		$block_to->parsed_content = &$block_from->parsed_content;
-		$block_to->attributes = &$block_from->attributes;
-		$block_from->parent = $block_to;
+	// 	# paarkopeejam paareejos parametrus
+	// 	$block_to->vars = &$block_from->vars;
+	// 	$block_to->blocks = &$block_from->blocks;
+	// 	$block_to->block_vars = &$block_from->block_vars;
+	// 	$block_to->content = &$block_from->content;
+	// 	$block_to->parsed_content = &$block_from->parsed_content;
+	// 	$block_to->attributes = &$block_from->attributes;
+	// 	$block_from->parent = $block_to;
 
-		//unset($block_from->parent->blocks[$ID_from]);
+	// 	//unset($block_from->parent->blocks[$ID_from]);
 
-		return true;
-	}
+	// 	return true;
+	// }
 
 	function set_block_string($ID, $content){
 		if($block = $this->get_block($ID)){
