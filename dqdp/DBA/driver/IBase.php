@@ -61,7 +61,11 @@ class IBase extends AbstractDBA
 		$args = func_get_args();
 
 		if($this->is_dqdp_statement($args)){
-			$q = ibase_query($this->tr??$this->conn, (string)$args[0], ...$args[0]->vars());
+			if($this->tr){
+				$q = ibase_query($this->conn, $this->tr, (string)$args[0], ...$args[0]->vars());
+			} else {
+				$q = ibase_query($this->conn, (string)$args[0], ...$args[0]->vars());
+			}
 			// if(!$q){
 			// 	sqlr($args[0]);
 			// }
@@ -82,7 +86,12 @@ class IBase extends AbstractDBA
 		// 	// }
 		// 	//$q = ibase_query($this->tr??$this->conn, $args[0], ...$args[1]);
 		} else {
-			$q = ibase_query($this->tr??$this->conn, ...$args);
+			if($this->tr){
+				$q = ibase_query($this->conn, $this->tr, ...$args);
+			} else {
+				$q = ibase_query($this->conn, ...$args);
+			}
+
 			// if(!$q){
 			// 	printr($args);
 			// }
@@ -169,10 +178,18 @@ class IBase extends AbstractDBA
 		$args = func_get_args();
 
 		if($this->is_dqdp_statement($args)){
-			return ibase_prepare($this->tr??$this->conn, (string)$args[0]);
+			if($this->tr){
+				return ibase_prepare($this->conn, $this->tr, (string)$args[0]);
+			} else {
+				return ibase_prepare($this->conn, (string)$args[0]);
+			}
 		}
 
-		return ibase_prepare($this->tr??$this->conn, ...$args);
+		if($this->tr){
+			return ibase_prepare($this->conn, $this->tr, ...$args);
+		} else {
+			return ibase_prepare($this->conn, ...$args);
+		}
 	}
 
 	function escape($v): string {
