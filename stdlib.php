@@ -988,10 +988,6 @@ function dumprr(){
 	return ob_get_clean();
 }
 
-function mt(){
-	return microtime(true);
-}
-
 function br2nl($text){
 	return preg_replace('/<br\\\\s*?\\/??>/i', "\\n", $text);
 }
@@ -1363,8 +1359,8 @@ function proc_date(string $date){
 	return $retdate;
 }
 
-function print_time($start_time, $end_time = false): string {
-	if(!$end_time)$end_time = mt();
+function print_time(float $start_time, float $end_time = null): string {
+	if(is_null($end_time))$end_time = microtime(true);
 
 	$seconds = $end_time - $start_time;
 
@@ -1384,7 +1380,7 @@ function print_time($start_time, $end_time = false): string {
 		$seconds -= $m * 60;
 	}
 
-	$print_time[] = sprintf("%.2f sec", $seconds);
+	$print_time[] = sprintf("%.3f sec", $seconds);
 
 	return join(" ", $print_time);
 }
