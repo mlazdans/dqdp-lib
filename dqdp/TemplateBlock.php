@@ -2,12 +2,16 @@
 
 namespace dqdp;
 
+use InvalidArgumentException;
+
 define('TMPL_APPEND', true);
 
 class TemplateBlock
 {
 	var string $ID = '';
 	var array $vars = [];
+
+	/** @var TemplateBlock[] */
 	var array $blocks = [];
 
 	var ?TemplateBlock $parent = null;
@@ -33,46 +37,23 @@ class TemplateBlock
 		$this->__find_blocks();
 	}
 
-	function __get($ID): ?TemplateBlock {
-		return $this->get_block($ID);
+	function block_exists(string $ID): bool {
+		return (bool)$this->_get_block($ID);
 	}
 
-	function block_exists($ID): bool {
-		return (bool)$this->__get_block($ID);
-	}
-
-	protected function get_block($ID): ?TemplateBlock {
-		$block = $this->__get_block($ID);
-		if($block === NULL){
-			$this->error("block not found ($ID)");
+	function get_block(string $ID): TemplateBlock {
+		if($block = $this->_get_block($ID)){
+			return $block;
 		}
 
-		return $block;
+		throw new InvalidArgumentException("block not found ($ID)");
 	}
 
-	function get_block_under($ID): ?TemplateBlock {
-		if(isset($this->blocks[$ID])){
-			return $this->blocks[$ID];
-		}
-
-		foreach($this->blocks as $o){
-			if($block = $o->get_block_under($ID)){
-				return $block;
-			}
-		}
-
-		return NULL;
+	function parse_block(string $ID, bool $append = false): string {
+		return $this->get_block($ID)->parse($append);
 	}
 
-	function parse_block($ID = NULL, bool $append = false): string {
-		if($block = $this->get_block($ID)){
-			return $block->parse($append);
-		}
-
-		return '';
-	}
-
-	function parse(bool $append = false){
+	function parse(bool $append = false): string {
 		# ja bloks sleegts
 		if($this->attributes['disabled']){
 			return '';
@@ -114,32 +95,33 @@ class TemplateBlock
 		return $this->parsed_content;
 	}
 
-	function get_parsed_content($ID = NULL){
-		return ($block = $this->get_block($ID)) ? $block->parsed_content : NULL;
+	function get_parsed_content(string $ID = NULL){
+		return ($block = $this->_get_block_or_self($ID)) ? $block->parsed_content : NULL;
+		// return ($block = $this->get_block($ID)) ? $block->parsed_content : NULL;
 	}
 
-	function get_var(string $k, $ID = NULL){
-		if($block = $this->get_block($ID)){
-			if(isset($block->vars[$k])) {
-				return $block->vars[$k];
+	function get_var(string $var_id, string $ID = NULL){
+		if($block = $this->_get_block_or_self($ID)){
+			if(isset($block->vars[$var_id])) {
+				return $block->vars[$var_id];
 			} elseif($block->parent) {
-				return $block->parent->get_var($k);
+				return $block->parent->get_var($var_id);
 			}
 		}
 
 		return NULL;
 	}
 
-	function set_var(string $var_id, $value, $ID = NULL){
-		if($block = $this->get_block($ID)){
+	function set_var(string $var_id, $value, string $ID = NULL): TemplateBlock {
+		if($block = $this->_get_block_or_self($ID)){
 			$block->vars[$var_id] = $value;
 		}
 
 		return $this;
 	}
 
-	function set_array(array $array, $ID = NULL){
-		if($block = $this->get_block($ID)){
+	function set_array(iterable $array, string $ID = NULL): TemplateBlock {
+		if($block = $this->_get_block_or_self($ID)){
 			foreach($array as $k=>$v){
 				$block->vars[$k] = $v;
 			}
@@ -148,8 +130,8 @@ class TemplateBlock
 		return $this;
 	}
 
-	function set_except(array $exclude, array $data, $ID = NULL){
-		if($block = $this->get_block($ID)){
+	function set_except(array $exclude, array $data, string $ID = NULL): TemplateBlock {
+		if($block = $this->_get_block_or_self($ID)){
 			$diff = array_diff(array_keys($data), $exclude);
 			foreach($diff as $k){
 				$block->vars[$k] = $data[$k];
@@ -159,8 +141,8 @@ class TemplateBlock
 		return $this;
 	}
 
-	function reset($ID = NULL){
-		if($block = $this->get_block($ID)){
+	function reset(string $ID = NULL): TemplateBlock {
+		if($block = $this->_get_block_or_self($ID)){
 			$block->parsed_content = '';
 			$block->parsed_count = 0;
 			foreach($block->blocks as $o){
@@ -171,20 +153,20 @@ class TemplateBlock
 		return $this;
 	}
 
-	function enable_if($cond, $ID = NULL){
-		return $this->set_attribute('disabled', !((bool)$cond), $ID);
+	function enable_if(bool $cond, string $ID = NULL): TemplateBlock {
+		return $this->set_attribute('disabled', !$cond, $ID);
 	}
 
-	function enable($ID = NULL){
+	function enable(string $ID = NULL): TemplateBlock {
 		return $this->set_attribute('disabled', false, $ID);
 	}
 
-	function disable($ID = NULL){
+	function disable(string $ID = NULL): TemplateBlock {
 		return $this->set_attribute('disabled', true, $ID);
 	}
 
-	function set_attribute(string $attribute, $value, $ID = NULL){
-		if(($block = $this->get_block($ID)) && isset($block->attributes[$attribute])){
+	function set_attribute(string $attribute, $value, string $ID = NULL): TemplateBlock {
+		if($block = $this->_get_block_or_self($ID)){
 			$block->attributes[$attribute] = $value;
 		}
 
@@ -221,7 +203,7 @@ class TemplateBlock
 	// 	return true;
 	// }
 
-	function set_block_string($ID, string $content){
+	function set_block_string(string $ID, string $content){
 		if($block = $this->get_block($ID)){
 			$block->content = $content;
 		}
@@ -323,17 +305,30 @@ class TemplateBlock
 		trigger_error($msg, $e);
 	}
 
-	private function __get_block($ID): ?TemplateBlock {
-		if($ID instanceof TemplateBlock){
-			return $ID;
-		}
-
-		if(!$ID || ($this->ID == $ID)){
-			$block = $this;
+	private function _get_block_or_self(string $ID = null): ?TemplateBlock {
+		if(is_null($ID)){
+			return $this;
 		} else {
-			$block = $this->get_block_under($ID);
+			return $this->_get_block($ID);
+		}
+	}
+
+	private function _get_block(string $ID): ?TemplateBlock {
+		if($this->ID == $ID){
+			return $this;
 		}
 
-		return $block;
+		if(isset($this->blocks[$ID])){
+			return $this->blocks[$ID];
+		}
+
+		foreach($this->blocks as $o){
+			if($block = $o->_get_block($ID)){
+				return $block;
+			}
+		}
+
+		return null;
 	}
+
 }
