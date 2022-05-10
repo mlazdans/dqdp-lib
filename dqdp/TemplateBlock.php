@@ -37,106 +37,6 @@ class TemplateBlock
 		return $this->get_block($ID);
 	}
 
-	private function __find_blocks(){
-		$patt = '/<!--\s+BEGIN\s+(.*)\s+(.*)-->(.*)<!--\s+END\s+\1\s+-->/smU';
-		preg_match_all($patt, $this->content, $m);
-
-		if(!isset($m[1])){
-			return false;
-		}
-
-		for($c = 0; $c < count($m[1]); $c++){
-			$id = $m[1][$c];
-			$this->blocks[$id] = new TemplateBlock($this, $id, $m[3][$c]);
-			//$this->blocks[$id] = new TemplateBlock($id, $m[3][$c]);
-			//$this->blocks[$id]->vars = $this->vars;
-
-			$arr_attributes = explode(' ', strtolower($m[2][$c]));
-			$this->blocks[$id]->attributes['disabled'] = in_array('disabled', $arr_attributes);
-		}
-	}
-
-	private function __parse_vars(){
-		$patt = $repl = $vars_cache = [];
-
-		if($this->block_vars === null){
-			preg_match_all("/{([a-zA-Z0-9_]+)}/U", $this->content, $m);
-			$this->block_vars = $m[1];
-		}
-
-		foreach($this->block_vars as $k){
-			$patt[] = '/{'.$k.'}/';
-			//chr(92).chr(92)
-			$p = array("/([\\\])+/", "/([\$])+/");
-			$r = array("\\\\$1", "\\\\$1");
-			$vars_cache[$k] = $vars_cache[$k]??$this->get_var($k);
-
-			$repl[] = preg_replace($p, $r, $vars_cache[$k]);
-		}
-
-		$r = preg_replace($patt, $repl, $this->content);
-
-		if($r === NULL){
-			printr($this->ID, $patt, $repl, $this->content);
-		}
-
-		return $r;
-
-		/*
-		switch ($this->undefined)
-		{
-			case 'remove':
-				$content = preg_replace('/([^\\\])?{'.$variable_pattern.'}/U', '\1', $content);
-				$content = preg_replace('/\\\{('.$variable_pattern.')}/', '{\1}', $content);
-				return $content;
-				//preg_replace('/\\\{'.$variable_pattern.'\}/', 'aaa{'.$variable_pattern.'}', $content);
-				//return preg_replace('/(\n+|\r\n+)?{'.$variable_pattern.'}(\n+|\r\n+)?/', '', $content);
-				break;
-			case 'comment':
-				return preg_replace('/{('.$variable_pattern.')}/', '<!-- UNDEFINED \1 -->', $content);
-				//return preg_replace('/(\n+|\r\n+)?{('.$variable_pattern.')}(\n+|\r\n+)?/', '<!-- UNDEFINED \1 -->', $content);
-				break;
-			case 'warn':
-				return preg_replace('/{('.$variable_pattern.')}/', 'UNDEFINED \1', $content);
-				//return preg_replace('/(\n+|\r\n+)?{('.$variable_pattern.')}(\n+|\r\n+)?/', 'UNDEFINED \1', $content);
-				break;
-		}
-		*/
-	}
-
-	protected function error($msg, $e = E_USER_WARNING){
-		$tmsg = '';
-		$t = debug_backtrace();
-		for($i=1;$i<count($t);$i++){
-			$bn = basename($t[$i]['file']);
-			if($bn == 'TemplateBlock.php' || $bn == 'Template.php'){
-				continue;
-			}
-			$tmsg = sprintf("(called %s line %d)", $t[$i]['file'], $t[$i]['line']);
-			break;
-		}
-
-		if($tmsg){
-			$msg .= " $tmsg";
-		}
-
-		trigger_error($msg, $e);
-	}
-
-	private function __get_block($ID): ?TemplateBlock {
-		if($ID instanceof TemplateBlock){
-			return $ID;
-		}
-
-		if(!$ID || ($this->ID == $ID)){
-			$block = $this;
-		} else {
-			$block = $this->get_block_under($ID);
-		}
-
-		return $block;
-	}
-
 	function block_exists($ID): bool {
 		return (bool)$this->__get_block($ID);
 	}
@@ -335,5 +235,105 @@ class TemplateBlock
 			print "$pre$a$block_id($object->parsed_count)<br>\n";
 			$object->dump_blocks("| $pre");
 		}
+	}
+
+	private function __find_blocks(){
+		$patt = '/<!--\s+BEGIN\s+(.*)\s+(.*)-->(.*)<!--\s+END\s+\1\s+-->/smU';
+		preg_match_all($patt, $this->content, $m);
+
+		if(!isset($m[1])){
+			return false;
+		}
+
+		for($c = 0; $c < count($m[1]); $c++){
+			$id = $m[1][$c];
+			$this->blocks[$id] = new TemplateBlock($this, $id, $m[3][$c]);
+			//$this->blocks[$id] = new TemplateBlock($id, $m[3][$c]);
+			//$this->blocks[$id]->vars = $this->vars;
+
+			$arr_attributes = explode(' ', strtolower($m[2][$c]));
+			$this->blocks[$id]->attributes['disabled'] = in_array('disabled', $arr_attributes);
+		}
+	}
+
+	private function __parse_vars(){
+		$patt = $repl = $vars_cache = [];
+
+		if($this->block_vars === null){
+			preg_match_all("/{([a-zA-Z0-9_]+)}/U", $this->content, $m);
+			$this->block_vars = $m[1];
+		}
+
+		foreach($this->block_vars as $k){
+			$patt[] = '/{'.$k.'}/';
+			//chr(92).chr(92)
+			$p = array("/([\\\])+/", "/([\$])+/");
+			$r = array("\\\\$1", "\\\\$1");
+			$vars_cache[$k] = $vars_cache[$k]??$this->get_var($k);
+
+			$repl[] = preg_replace($p, $r, $vars_cache[$k]);
+		}
+
+		$r = preg_replace($patt, $repl, $this->content);
+
+		if($r === NULL){
+			printr($this->ID, $patt, $repl, $this->content);
+		}
+
+		return $r;
+
+		/*
+		switch ($this->undefined)
+		{
+			case 'remove':
+				$content = preg_replace('/([^\\\])?{'.$variable_pattern.'}/U', '\1', $content);
+				$content = preg_replace('/\\\{('.$variable_pattern.')}/', '{\1}', $content);
+				return $content;
+				//preg_replace('/\\\{'.$variable_pattern.'\}/', 'aaa{'.$variable_pattern.'}', $content);
+				//return preg_replace('/(\n+|\r\n+)?{'.$variable_pattern.'}(\n+|\r\n+)?/', '', $content);
+				break;
+			case 'comment':
+				return preg_replace('/{('.$variable_pattern.')}/', '<!-- UNDEFINED \1 -->', $content);
+				//return preg_replace('/(\n+|\r\n+)?{('.$variable_pattern.')}(\n+|\r\n+)?/', '<!-- UNDEFINED \1 -->', $content);
+				break;
+			case 'warn':
+				return preg_replace('/{('.$variable_pattern.')}/', 'UNDEFINED \1', $content);
+				//return preg_replace('/(\n+|\r\n+)?{('.$variable_pattern.')}(\n+|\r\n+)?/', 'UNDEFINED \1', $content);
+				break;
+		}
+		*/
+	}
+
+	protected function error($msg, $e = E_USER_WARNING){
+		$tmsg = '';
+		$t = debug_backtrace();
+		for($i=1;$i<count($t);$i++){
+			$bn = basename($t[$i]['file']);
+			if($bn == 'TemplateBlock.php' || $bn == 'Template.php'){
+				continue;
+			}
+			$tmsg = sprintf("(called %s line %d)", $t[$i]['file'], $t[$i]['line']);
+			break;
+		}
+
+		if($tmsg){
+			$msg .= " $tmsg";
+		}
+
+		trigger_error($msg, $e);
+	}
+
+	private function __get_block($ID): ?TemplateBlock {
+		if($ID instanceof TemplateBlock){
+			return $ID;
+		}
+
+		if(!$ID || ($this->ID == $ID)){
+			$block = $this;
+		} else {
+			$block = $this->get_block_under($ID);
+		}
+
+		return $block;
 	}
 }
