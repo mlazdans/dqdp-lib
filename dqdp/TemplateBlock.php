@@ -6,22 +6,22 @@ define('TMPL_APPEND', true);
 
 class TemplateBlock
 {
-	var $ID;
-	var $vars = [];
-	var $blocks = [];
+	var string $ID = '';
+	var array $vars = [];
+	var array $blocks = [];
 
-	var $parent = null;
-	var $block_vars = null;
+	var ?TemplateBlock $parent = null;
+	var ?array $block_vars = null;
 
-	var $content;
-	var $parsed_content;
-	var $parsed_count = 0;
+	var string $content = '';
+	var string $parsed_content = '';
+	var int $parsed_count = 0;
 
-	var $attributes = [
+	var array $attributes = [
 		'disabled'=>false
 	];
 
-	function __construct(TemplateBlock $parent = NULL, $ID, $content){
+	function __construct(TemplateBlock $parent = NULL, string $ID, string $content){
 		if($this->block_exists($ID)){
 			$this->error("block already exists ($ID)", E_USER_ERROR);
 			return;
@@ -33,7 +33,7 @@ class TemplateBlock
 		$this->__find_blocks();
 	}
 
-	function __get($ID){
+	function __get($ID): ?TemplateBlock {
 		return $this->get_block($ID);
 	}
 
@@ -41,7 +41,7 @@ class TemplateBlock
 		return (bool)$this->__get_block($ID);
 	}
 
-	function get_block($ID): ?TemplateBlock {
+	protected function get_block($ID): ?TemplateBlock {
 		$block = $this->__get_block($ID);
 		if($block === NULL){
 			$this->error("block not found ($ID)");
@@ -64,7 +64,7 @@ class TemplateBlock
 		return NULL;
 	}
 
-	function parse_block($ID = NULL, $append = false){
+	function parse_block($ID = NULL, bool $append = false): string {
 		if($block = $this->get_block($ID)){
 			return $block->parse($append);
 		}
@@ -72,7 +72,7 @@ class TemplateBlock
 		return '';
 	}
 
-	function parse($append = false){
+	function parse(bool $append = false){
 		# ja bloks sleegts
 		if($this->attributes['disabled']){
 			return '';
@@ -118,7 +118,7 @@ class TemplateBlock
 		return ($block = $this->get_block($ID)) ? $block->parsed_content : NULL;
 	}
 
-	function get_var($k, $ID = NULL){
+	function get_var(string $k, $ID = NULL){
 		if($block = $this->get_block($ID)){
 			if(isset($block->vars[$k])) {
 				return $block->vars[$k];
@@ -130,7 +130,7 @@ class TemplateBlock
 		return NULL;
 	}
 
-	function set_var($var_id, $value, $ID = NULL){
+	function set_var(string $var_id, $value, $ID = NULL){
 		if($block = $this->get_block($ID)){
 			$block->vars[$var_id] = $value;
 		}
@@ -138,7 +138,7 @@ class TemplateBlock
 		return $this;
 	}
 
-	function set_array(Array $array, $ID = NULL){
+	function set_array(array $array, $ID = NULL){
 		if($block = $this->get_block($ID)){
 			foreach($array as $k=>$v){
 				$block->vars[$k] = $v;
@@ -148,7 +148,7 @@ class TemplateBlock
 		return $this;
 	}
 
-	function set_except(Array $exclude, Array $data, $ID = NULL){
+	function set_except(array $exclude, array $data, $ID = NULL){
 		if($block = $this->get_block($ID)){
 			$diff = array_diff(array_keys($data), $exclude);
 			foreach($diff as $k){
@@ -183,7 +183,7 @@ class TemplateBlock
 		return $this->set_attribute('disabled', true, $ID);
 	}
 
-	function set_attribute($attribute, $value, $ID = NULL){
+	function set_attribute(string $attribute, $value, $ID = NULL){
 		if(($block = $this->get_block($ID)) && isset($block->attributes[$attribute])){
 			$block->attributes[$attribute] = $value;
 		}
@@ -221,7 +221,7 @@ class TemplateBlock
 	// 	return true;
 	// }
 
-	function set_block_string($ID, $content){
+	function set_block_string($ID, string $content){
 		if($block = $this->get_block($ID)){
 			$block->content = $content;
 		}
