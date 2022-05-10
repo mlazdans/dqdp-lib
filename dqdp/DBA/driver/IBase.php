@@ -138,14 +138,9 @@ class IBase extends AbstractDBA
 	}
 
 	function new_trans(): self {
-		$this->tr = ibase_trans($this->conn, ...func_get_args());
+		$this->tr = ibase_trans(...[...func_get_args(), $this->conn]);
 
 		return $this;
-
-		// $o = clone $this;
-		// $o->tr = $tr;
-
-		// return $o;
 	}
 
 	function commit(): bool {
