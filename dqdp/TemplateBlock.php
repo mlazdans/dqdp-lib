@@ -259,7 +259,7 @@ class TemplateBlock
 
 		foreach($this->block_vars as $k){
 			$patt[] = '{'.$k.'}';
-			$repl[] = $vars_cache[$k] = $vars_cache[$k]??$this->get_var($k);
+			$repl[] = $this->get_var($k);
 		}
 
 		return str_replace($patt, $repl, $data);
