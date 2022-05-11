@@ -82,12 +82,11 @@ class TemplateBlock
 			$this->parsed_content = $parsed_content;
 		}
 
-		# reset childs
-		//if($append) {
+		if($append) {
 			foreach($this->blocks as $object) {
 				$object->reset();
 			}
-		//}
+		}
 
 		return $this->parsed_content;
 	}
