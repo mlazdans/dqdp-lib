@@ -51,7 +51,6 @@ class TemplateBlock
 	}
 
 	function parse(bool $append = false): string {
-		# ja bloks sleegts
 		if($this->attributes['disabled']){
 			return '';
 		}
@@ -62,18 +61,37 @@ class TemplateBlock
 
 		$this->parsed_count++;
 
-		$parsed_content = $this->__parse_vars();
+		// $parsed_content = $this->__parse_vars();
+		// $parsed_content = $this->content;
 
+		// printr($this->ID, $this->dump());
+		// print "===========\n";
+		$c = count($this->blocks_order);
 		# ja blokaa veel ir bloki
-		foreach($this->blocks as $block_id => $object){
-			$block_content = $object->parse();
-			$patt = '/\s*<!--\s+BEGIN\s+' . $block_id . '\s+[^<]*-->.*<!--\s+END\s+' . $block_id . '\s+-->\s*/smi';
-			preg_match_all($patt, $parsed_content, $m);
-			//printr($block_id,$m);
-			foreach($m[0] as $mm) {
-				$parsed_content = str_replace($mm, $block_content, $parsed_content);
-			}
+		// foreach($this->blocks as $block_id => $object){
+		// for($i = $c; $i >= 0; $i--){
+		$parsed_content = '';
+		for($i = 0; $i < $c; $i++){
+			$id = $this->blocks_order[$i];
+			$block = $this->blocks[$id];
+			$parsed_content .= $this->_apply_vars($this->content_parts[$i]);
+			$parsed_content .= $block->parse();
+			// $parsed_content = substr_replace($parsed_content, $block_content, $block->offset_start, $block->len);
+			// $parsed_content = substr_replace($parsed_content, '<tada>', $block->offset_start, $block->len);
+
+			// printr($id, $block->dump(), $parsed_content);
+			// die;
+			// $patt = '/\s*<!--\s+BEGIN\s+' . $block_id . '\s+[^<]*-->.*<!--\s+END\s+' . $block_id . '\s+-->\s*/smi';
+			// preg_match_all($patt, $parsed_content, $m);
+			// //printr($block_id,$m);
+			// foreach($m[0] as $mm) {
+			// 	$parsed_content = str_replace($mm, $block_content, $parsed_content);
+			// }
 		}
+		$parsed_content .= $this->_apply_vars($this->content_parts[$c]);
+
+		// dumpr($parsed_content);
+		// die;
 
 		if($append) {
 			$this->parsed_content .= $parsed_content;
