@@ -30,10 +30,6 @@ class TemplateBlock
 	private int $len;       // where block ends
 
 	function __construct(TemplateBlock $parent = NULL, string $ID, string $content){
-		if($this->block_exists($ID)){
-			throw new InvalidArgumentException("block already exists ($ID)");
-		}
-
 		$this->ID = $ID;
 		$this->parent = $parent;
 		$this->content = $content;
@@ -280,6 +276,11 @@ class TemplateBlock
 		$striped_content = '';
 		foreach($matches as $item){
 			$id = $item[$m_ID][0];
+
+			if(isset($this->blocks[$id])){
+				$content_offset = $item[$m_CONTENTS][1];
+				throw new InvalidArgumentException(sprintf("block already exists ($id), at %d near: '%s'", $item[$m_WHOLE][1], substr($this->content, $content_offset - 20, 40)));
+			}
 
 			$Block = new TemplateBlock($this, $id, $item[$m_CONTENTS][0]);
 			$Block->len = strlen($item[$m_WHOLE][0]);
