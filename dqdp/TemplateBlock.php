@@ -62,9 +62,8 @@ class TemplateBlock
 			return '';
 		}
 
-		# ja jau noparseets
 		if($this->parsed_count && !$append) {
-			return $this->get_parsed_content();
+			return $this->parsed_content;
 		}
 
 		$this->parsed_count++;
