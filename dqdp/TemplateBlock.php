@@ -219,9 +219,9 @@ class TemplateBlock
 		}
 	}
 
-	private function __parse_vars(): string {
+	private function _apply_vars($data): string {
 		if(empty($this->block_vars)){
-			return $this->content;
+			return $data;
 		}
 
 		foreach($this->block_vars as $k){
@@ -229,7 +229,7 @@ class TemplateBlock
 			$repl[] = $vars_cache[$k] = $vars_cache[$k]??$this->get_var($k);
 		}
 
-		return str_replace($patt, $repl, $this->content);
+		return str_replace($patt, $repl, $data);
 	}
 
 	private function __find_blocks(){
