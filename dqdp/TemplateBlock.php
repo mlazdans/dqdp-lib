@@ -3,6 +3,7 @@
 namespace dqdp;
 
 use InvalidArgumentException;
+use ParseError;
 
 define('TMPL_APPEND', true);
 
@@ -25,10 +26,12 @@ class TemplateBlock
 		'disabled'=>false
 	];
 
+	protected int $offset;    // where block starts
+	protected int $len;       // where block ends
+
 	function __construct(TemplateBlock $parent = NULL, string $ID, string $content){
 		if($this->block_exists($ID)){
-			$this->error("block already exists ($ID)", E_USER_ERROR);
-			return;
+			throw new InvalidArgumentException("block already exists ($ID)");
 		}
 
 		$this->ID = $ID;
@@ -219,24 +222,24 @@ class TemplateBlock
 		}
 	}
 
-	private function __find_blocks(){
-		$patt = '/<!--\s+BEGIN\s+(.*)\s+(.*)-->(.*)<!--\s+END\s+\1\s+-->/smU';
-		preg_match_all($patt, $this->content, $m);
+	// private function __find_blocks(){
+	// 	$patt = '/<!--\s+BEGIN\s+(.*)\s+(.*)-->(.*)<!--\s+END\s+\1\s+-->/smU';
+	// 	preg_match_all($patt, $this->content, $m);
 
-		if(!isset($m[1])){
-			return false;
-		}
+	// 	if(!isset($m[1])){
+	// 		return false;
+	// 	}
 
-		for($c = 0; $c < count($m[1]); $c++){
-			$id = $m[1][$c];
-			$this->blocks[$id] = new TemplateBlock($this, $id, $m[3][$c]);
-			//$this->blocks[$id] = new TemplateBlock($id, $m[3][$c]);
-			//$this->blocks[$id]->vars = $this->vars;
+	// 	for($c = 0; $c < count($m[1]); $c++){
+	// 		$id = $m[1][$c];
+	// 		$this->blocks[$id] = new TemplateBlock($this, $id, $m[3][$c]);
+	// 		//$this->blocks[$id] = new TemplateBlock($id, $m[3][$c]);
+	// 		//$this->blocks[$id]->vars = $this->vars;
 
-			$arr_attributes = explode(' ', strtolower($m[2][$c]));
-			$this->blocks[$id]->attributes['disabled'] = in_array('disabled', $arr_attributes);
-		}
-	}
+	// 		$arr_attributes = explode(' ', strtolower($m[2][$c]));
+	// 		$this->blocks[$id]->attributes['disabled'] = in_array('disabled', $arr_attributes);
+	// 	}
+	// }
 
 	private function __parse_vars(){
 		$patt = $repl = $vars_cache = [];
@@ -263,27 +266,54 @@ class TemplateBlock
 		}
 
 		return $r;
+	}
 
-		/*
-		switch ($this->undefined)
-		{
-			case 'remove':
-				$content = preg_replace('/([^\\\])?{'.$variable_pattern.'}/U', '\1', $content);
-				$content = preg_replace('/\\\{('.$variable_pattern.')}/', '{\1}', $content);
-				return $content;
-				//preg_replace('/\\\{'.$variable_pattern.'\}/', 'aaa{'.$variable_pattern.'}', $content);
-				//return preg_replace('/(\n+|\r\n+)?{'.$variable_pattern.'}(\n+|\r\n+)?/', '', $content);
-				break;
-			case 'comment':
-				return preg_replace('/{('.$variable_pattern.')}/', '<!-- UNDEFINED \1 -->', $content);
-				//return preg_replace('/(\n+|\r\n+)?{('.$variable_pattern.')}(\n+|\r\n+)?/', '<!-- UNDEFINED \1 -->', $content);
-				break;
-			case 'warn':
-				return preg_replace('/{('.$variable_pattern.')}/', 'UNDEFINED \1', $content);
-				//return preg_replace('/(\n+|\r\n+)?{('.$variable_pattern.')}(\n+|\r\n+)?/', 'UNDEFINED \1', $content);
-				break;
+	private function __find_blocks(){
+		$m_WHOLE = 0;
+		$m_BEGIN = 1;
+		$m_ID = 2;
+		$m_ATTRS = 3;
+		$m_CONTENTS = 4;
+		$m_END = 5;
+
+		ini_set('pcre.backtrack_limit', '-1');
+		// $patt = "/(<!--\s*BEGIN\s+([\S]+)\s*(.*)-->)(.*)(<!--\s*END\s+\\$m_ID\s*-->)/smU";
+		// $patt = "/(<!--\s+BEGIN\s+([^\s]*)\s+(.*)-->)(.*)(<!--\s+END\s+\\$m_ID\s+-->)/smU";
+		$patt = '/(<!-- BEGIN ([\S]+) (.*)-->)(.*)(<!-- END \2 -->)/smUS';
+
+		if(preg_match_all($patt, $this->content, $matches, PREG_OFFSET_CAPTURE | PREG_SET_ORDER) === false){
+			// debug_print_backtrace();
+			$err = array_flip(array_filter(get_defined_constants(true)['pcre'], function ($value) {
+				return substr($value, -6) === '_ERROR';
+			  }, ARRAY_FILTER_USE_KEY))[preg_last_error()];
+			throw new ParseError(sprintf("template compilation failure $this->ID (%s)", $err));
 		}
-		*/
+
+		$striped_offset = 0;
+		$striped_content = '';
+		foreach($matches as $item){
+			$id = $item[$m_ID][0];
+
+			$Block = new TemplateBlock($this, $id, $item[$m_CONTENTS][0]);
+			$Block->len = strlen($item[$m_WHOLE][0]);
+			$Block->offset = (int)$item[$m_WHOLE][1];
+
+			// $attributes = explode(' ', $item[$m_ATTRS][0]);
+			// $Block->attributes['disabled'] = in_array('disabled', $attributes);
+			$Block->attributes['disabled'] = (strpos($item[$m_ATTRS][0], 'disabled') !== false);
+
+			$this->blocks[$id] = $Block;
+			$striped_content .= substr($this->content, $striped_offset, $Block->offset - $striped_offset)."<!-- removed $striped_offset:$Block->offset $id";
+			$striped_offset = $Block->offset + $Block->len;
+			$striped_content .= " $striped_offset -->";
+		}
+		$striped_content .= substr($this->content, $striped_offset);
+
+		$this->striped_content = $striped_content;
+
+		preg_match_all("/{([a-zA-Z0-9_]+)}/U", $this->content, $m);
+
+		$this->block_vars = $m[1];
 	}
 
 	protected function error($msg, $e = E_USER_WARNING){
@@ -330,5 +360,4 @@ class TemplateBlock
 
 		return null;
 	}
-
 }
