@@ -88,7 +88,7 @@ class TemplateBlock
 			}
 		}
 
-		return $this->parsed_content;
+		return $parsed_content;
 	}
 
 	function get_vars(string $ID = NULL): ?array {
