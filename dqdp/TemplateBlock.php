@@ -228,21 +228,30 @@ class TemplateBlock
 	private function __parse_vars(){
 		$patt = $repl = $vars_cache = [];
 
+		// foreach($this->block_vars as $k){
+		// 	$patt[] = '/{'.$k.'}/';
+		// 	//chr(92).chr(92)
+		// 	$p = array("/([\\\])+/", "/([\$])+/");
+		// 	$r = array("\\\\$1", "\\\\$1");
+		// 	$vars_cache[$k] = $vars_cache[$k]??$this->get_var($k);
+
+		// 	$repl[] = preg_replace($p, $r, $vars_cache[$k]);
+		// }
 		foreach($this->block_vars as $k){
-			$patt[] = '/{'.$k.'}/';
-			//chr(92).chr(92)
-			$p = array("/([\\\])+/", "/([\$])+/");
-			$r = array("\\\\$1", "\\\\$1");
-			$vars_cache[$k] = $vars_cache[$k]??$this->get_var($k);
-
-			$repl[] = preg_replace($p, $r, $vars_cache[$k]);
+			$patt[] = '{'.$k.'}';
+			// //chr(92).chr(92)
+			// $p = array("/([\\\])+/", "/([\$])+/");
+			// $r = array("\\\\$1", "\\\\$1");
+			$repl[] = $vars_cache[$k] = $vars_cache[$k]??$this->get_var($k);
+			// $repl[] = preg_replace($p, $r, $vars_cache[$k]);
 		}
+		$r = str_replace($patt, $repl, $this->content);
 
-		$r = preg_replace($patt, $repl, $this->content);
+		// $r = preg_replace($patt, $repl, $this->content);
 
-		if($r === NULL){
-			printr($this->ID, $patt, $repl, $this->content);
-		}
+		// if($r === NULL){
+		// 	printr($this->ID, $patt, $repl, $this->content);
+		// }
 
 		return $r;
 	}
