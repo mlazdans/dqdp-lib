@@ -221,35 +221,17 @@ class TemplateBlock
 		}
 	}
 
-	private function __parse_vars(){
-		$patt = $repl = $vars_cache = [];
+	private function __parse_vars(): string {
+		if(empty($this->block_vars)){
+			return $this->content;
+		}
 
-		// foreach($this->block_vars as $k){
-		// 	$patt[] = '/{'.$k.'}/';
-		// 	//chr(92).chr(92)
-		// 	$p = array("/([\\\])+/", "/([\$])+/");
-		// 	$r = array("\\\\$1", "\\\\$1");
-		// 	$vars_cache[$k] = $vars_cache[$k]??$this->get_var($k);
-
-		// 	$repl[] = preg_replace($p, $r, $vars_cache[$k]);
-		// }
 		foreach($this->block_vars as $k){
 			$patt[] = '{'.$k.'}';
-			// //chr(92).chr(92)
-			// $p = array("/([\\\])+/", "/([\$])+/");
-			// $r = array("\\\\$1", "\\\\$1");
 			$repl[] = $vars_cache[$k] = $vars_cache[$k]??$this->get_var($k);
-			// $repl[] = preg_replace($p, $r, $vars_cache[$k]);
 		}
-		$r = str_replace($patt, $repl, $this->content);
 
-		// $r = preg_replace($patt, $repl, $this->content);
-
-		// if($r === NULL){
-		// 	printr($this->ID, $patt, $repl, $this->content);
-		// }
-
-		return $r;
+		return str_replace($patt, $repl, $this->content);
 	}
 
 	private function __find_blocks(){
@@ -260,15 +242,15 @@ class TemplateBlock
 		$m_CONTENTS = 4;
 		$m_END = 5;
 
-		// $patt = "/(<!--\s*BEGIN\s+([\S]+)\s*(.*)-->)(.*)(<!--\s*END\s+\\$m_ID\s*-->)/smU";
+		$patt = '/(<!--\s*BEGIN\s+([\S]+)\s*(.*)-->)(.*)(<!--\s*END\s+\\2\s*-->)/smU';
 		// $patt = "/(<!--\s+BEGIN\s+([^\s]*)\s+(.*)-->)(.*)(<!--\s+END\s+\\$m_ID\s+-->)/smU";
-		$patt = '/(<!-- BEGIN ([\S]+) (.*)-->)(.*)(<!-- END \2 -->)/smUS';
+		// $patt = '/(<!-- BEGIN ([\S]+) (.*)-->)(.*)(<!-- END \2 -->)/smUS';
 
 		if(preg_match_all($patt, $this->content, $matches, PREG_OFFSET_CAPTURE | PREG_SET_ORDER) === false){
-			// debug_print_backtrace();
 			$err = array_flip(array_filter(get_defined_constants(true)['pcre'], function ($value) {
 				return substr($value, -6) === '_ERROR';
 			  }, ARRAY_FILTER_USE_KEY))[preg_last_error()];
+
 			throw new ParseError(sprintf("template compilation failure $this->ID (%s)", $err));
 		}
 
@@ -278,7 +260,7 @@ class TemplateBlock
 			$id = $item[$m_ID][0];
 
 			if(isset($this->blocks[$id])){
-				$content_offset = $item[$m_CONTENTS][1];
+				$content_offset = (int)$item[$m_CONTENTS][1];
 				throw new InvalidArgumentException(sprintf("block already exists ($id), at %d near: '%s'", $item[$m_WHOLE][1], substr($this->content, $content_offset - 20, 40)));
 			}
 
