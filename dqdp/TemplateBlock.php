@@ -288,8 +288,8 @@ class TemplateBlock
 			$id = $item[$m_ID][0];
 
 			$Block = new TemplateBlock($this, $id, $item[$m_CONTENTS][0]);
-			$Block->len = strlen($item[$m_WHOLE][0]);
-			$Block->offset = (int)$item[$m_WHOLE][1];
+			// $Block->len = strlen($item[$m_WHOLE][0]);
+			// $Block->offset = (int)$item[$m_WHOLE][1];
 
 			// $attributes = explode(' ', $item[$m_ATTRS][0]);
 			// $Block->attributes['disabled'] = in_array('disabled', $attributes);
