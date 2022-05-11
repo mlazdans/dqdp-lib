@@ -225,25 +225,6 @@ class TemplateBlock
 		}
 	}
 
-	// private function __find_blocks(){
-	// 	$patt = '/<!--\s+BEGIN\s+(.*)\s+(.*)-->(.*)<!--\s+END\s+\1\s+-->/smU';
-	// 	preg_match_all($patt, $this->content, $m);
-
-	// 	if(!isset($m[1])){
-	// 		return false;
-	// 	}
-
-	// 	for($c = 0; $c < count($m[1]); $c++){
-	// 		$id = $m[1][$c];
-	// 		$this->blocks[$id] = new TemplateBlock($this, $id, $m[3][$c]);
-	// 		//$this->blocks[$id] = new TemplateBlock($id, $m[3][$c]);
-	// 		//$this->blocks[$id]->vars = $this->vars;
-
-	// 		$arr_attributes = explode(' ', strtolower($m[2][$c]));
-	// 		$this->blocks[$id]->attributes['disabled'] = in_array('disabled', $arr_attributes);
-	// 	}
-	// }
-
 	private function __parse_vars(){
 		$patt = $repl = $vars_cache = [];
 
