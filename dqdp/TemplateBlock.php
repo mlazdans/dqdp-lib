@@ -10,24 +10,22 @@ define('TMPL_APPEND', true);
 class TemplateBlock
 {
 	private string $ID = '';
-	private array $vars = [];
-
-	/** @var TemplateBlock[] */
-	private array $blocks = [];
-
-	private ?TemplateBlock $parent = null;
-	private array $block_vars = [];
-
-	private string $content = '';
-	private string $parsed_content = '';
 	private int $parsed_count = 0;
-
+	private ?int $offset_start = null;    // where block starts
+	private ?int $offset_end = null;      // where block ends
+	private ?int $len = null;             // block length
 	private array $attributes = [
 		'disabled'=>false
 	];
-
-	private int $offset;    // where block starts
-	private int $len;       // where block ends
+	/** @var TemplateBlock[] */
+	private array $blocks = [];
+	private array $blocks_order = [];
+	private array $vars = [];
+	private array $block_vars = [];
+	private string $content = '';
+	private array $content_parts = [];
+	private string $parsed_content = '';
+	private ?TemplateBlock $parent = null;
 
 	function __construct(TemplateBlock $parent = NULL, string $ID, string $content){
 		$this->ID = $ID;
