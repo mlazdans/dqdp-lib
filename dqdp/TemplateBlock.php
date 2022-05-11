@@ -296,7 +296,7 @@ class TemplateBlock
 		$striped_content .= $part;
 
 		# Vars
-		if(preg_match_all("/{([a-zA-Z0-9_]+)}/U", $striped_content, $m)){
+		if(preg_match_all("/{([\S]+)}/U", $striped_content, $m)){
 			$this->block_vars = array_unique($m[1]);
 		}
 	}
