@@ -1385,6 +1385,40 @@ function print_time(float $start_time, float $end_time = null): string {
 	return join(" ", $print_time);
 }
 
+function print_nanotime(array $start_time, array $end_time = null, int $precision = 4): string {
+	if(is_null($end_time))$end_time = hrtime();
+
+	list($s1, $ns1) = $start_time;
+	list($s2, $ns2) = $end_time;
+
+	$seconds = $s2 - $s1;
+
+	$print_time = [];
+	if($seconds > 86400){
+		$d = floor($seconds / 86400);
+		$print_time[] = $d."d";
+		$seconds -= $d * 86400;
+	}
+
+	if($seconds > 3600){
+		$h = floor($seconds / 3600);
+		$print_time[] = $h."h";
+		$seconds -= $h * 3600;
+	}
+
+	if($seconds > 60){
+		$m = floor($seconds / 60);
+		$print_time[] = $m."min";
+		$seconds -= $m * 60;
+	}
+
+	$seconds += ($ns2 - $ns1) / 1e9;
+
+	$print_time[] = sprintf("%.".$precision."f sec", $seconds);
+
+	return join(" ", $print_time);
+}
+
 function print_memory($mem): string {
 	return number_format($mem / 1024 / 1024, 2, '.', '').'MB';
 }
