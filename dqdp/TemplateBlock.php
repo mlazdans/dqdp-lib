@@ -14,9 +14,7 @@ class TemplateBlock
 	private ?int $offset_start = null;    // where block starts
 	private ?int $offset_end = null;      // where block ends
 	private ?int $len = null;             // block length
-	private array $attributes = [
-		'disabled'=>false
-	];
+	private bool $attr_disabled = false;
 	/** @var TemplateBlock[] */
 	private array $blocks = [];
 	private array $blocks_order = [];
@@ -51,7 +49,7 @@ class TemplateBlock
 	}
 
 	function parse(bool $append = false): string {
-		if($this->attributes['disabled']){
+		if($this->attr_disabled){
 			return '';
 		}
 
@@ -89,9 +87,6 @@ class TemplateBlock
 			// }
 		}
 		$parsed_content .= $this->_apply_vars($this->content_parts[$c]);
-
-		// dumpr($parsed_content);
-		// die;
 
 		if($append) {
 			$this->parsed_content .= $parsed_content;
@@ -185,9 +180,10 @@ class TemplateBlock
 
 	function set_attribute(string $attribute, $value, string $ID = NULL): TemplateBlock {
 		if($block = $this->_get_block_or_self($ID)){
-			$block->attributes[$attribute] = $value;
+			if($attribute == 'disabled'){
+				$block->attr_disabled = $value;
+			}
 		}
-
 		return $this;
 	}
 
@@ -240,8 +236,8 @@ class TemplateBlock
 
 	function dump(){
 		$vars = [
-			'ID', 'blocks_order', 'parsed_count', 'offset_start', 'offset_end', 'len',
-			'attributes', 'vars', 'block_vars', 'content_parts', 'content',
+			'ID', 'attr_disabled', 'blocks_order', 'parsed_count', 'offset_start', 'offset_end', 'len',
+			'vars', 'block_vars', 'content_parts', 'content',
 			'parsed_content'
 		];
 
@@ -302,7 +298,7 @@ class TemplateBlock
 
 			// $attributes = explode(' ', $item[$m_ATTRS][0]);
 			// $Block->attributes['disabled'] = in_array('disabled', $attributes);
-			$Block->attributes['disabled'] = (strpos($item[$m_ATTRS][0], 'disabled') !== false);
+			$Block->attr_disabled = (strpos($item[$m_ATTRS][0], 'disabled') !== false);
 
 			$this->blocks[$id] = $Block;
 			$this->blocks_order[] = $id;
@@ -317,7 +313,7 @@ class TemplateBlock
 		$this->content_parts[] = $part;
 		$striped_content .= $part;
 
-		$this->striped_content = $striped_content;
+		// $this->striped_content = $striped_content;
 
 		# Vars
 		if(preg_match_all("/{([a-zA-Z0-9_]+)}/U", $striped_content, $m)){
