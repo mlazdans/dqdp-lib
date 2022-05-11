@@ -335,10 +335,10 @@ class TemplateBlock
 	}
 
 	private function _get_block_or_self(string $ID = null): ?TemplateBlock {
-		if(is_null($ID)){
-			return $this;
-		} else {
+		if($ID){
 			return $this->_get_block($ID);
+		} else {
+			return $this;
 		}
 	}
 
