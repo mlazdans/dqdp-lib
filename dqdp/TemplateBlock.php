@@ -205,7 +205,8 @@ class TemplateBlock
 
 	function set_block_string(string $ID, string $content){
 		if($block = $this->get_block($ID)){
-			$block->content = $content;
+			$block->parsed_content = $content;
+			$block->parsed_count = 1;
 		}
 
 		return $this;
