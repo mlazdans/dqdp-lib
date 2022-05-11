@@ -240,9 +240,9 @@ class TemplateBlock
 		$m_CONTENTS = 4;
 		$m_END = 5;
 
-		$patt = '/(<!--\s*BEGIN\s+([\S]+)\s*(.*)-->)(.*)(<!--\s*END\s+\\2\s*-->)/smU';
+		// $patt = '/(<!--\s*BEGIN\s+([\S]+)\s*(.*)-->)(.*)(<!--\s*END\s+\\2\s*-->)/smU';
 		// $patt = "/(<!--\s+BEGIN\s+([^\s]*)\s+(.*)-->)(.*)(<!--\s+END\s+\\$m_ID\s+-->)/smU";
-		// $patt = '/(<!-- BEGIN ([\S]+) (.*)-->)(.*)(<!-- END \2 -->)/smUS';
+		$patt = '/(<!-- BEGIN ([\S]+) (.*)-->)(.*)(<!-- END \2 -->)/smUS';
 
 		if(preg_match_all($patt, $this->content, $matches, PREG_OFFSET_CAPTURE | PREG_SET_ORDER) === false){
 			$err = array_flip(array_filter(get_defined_constants(true)['pcre'], function ($value) {
