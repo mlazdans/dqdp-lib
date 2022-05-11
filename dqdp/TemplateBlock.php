@@ -289,8 +289,8 @@ class TemplateBlock
 			throw new ParseError(sprintf("template compilation failure $this->ID (%s)", $err));
 		}
 
-		$striped_offset = 0;
-		$striped_content = '';
+		// $striped_offset = 0;
+		// $striped_content = '';
 		foreach($matches as $item){
 			$id = $item[$m_ID][0];
 
@@ -303,13 +303,13 @@ class TemplateBlock
 			$Block->attributes['disabled'] = (strpos($item[$m_ATTRS][0], 'disabled') !== false);
 
 			$this->blocks[$id] = $Block;
-			$striped_content .= substr($this->content, $striped_offset, $Block->offset - $striped_offset)."<!-- removed $striped_offset:$Block->offset $id";
-			$striped_offset = $Block->offset + $Block->len;
-			$striped_content .= " $striped_offset -->";
+			// $striped_content .= substr($this->content, $striped_offset, $Block->offset - $striped_offset)."<!-- removed $striped_offset:$Block->offset $id";
+			// $striped_offset = $Block->offset + $Block->len;
+			// $striped_content .= " $striped_offset -->";
 		}
-		$striped_content .= substr($this->content, $striped_offset);
+		// $striped_content .= substr($this->content, $striped_offset);
 
-		$this->striped_content = $striped_content;
+		// $this->striped_content = $striped_content;
 
 		preg_match_all("/{([a-zA-Z0-9_]+)}/U", $this->content, $m);
 
