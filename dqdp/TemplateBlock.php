@@ -276,7 +276,6 @@ class TemplateBlock
 		$m_CONTENTS = 4;
 		$m_END = 5;
 
-		ini_set('pcre.backtrack_limit', '-1');
 		// $patt = "/(<!--\s*BEGIN\s+([\S]+)\s*(.*)-->)(.*)(<!--\s*END\s+\\$m_ID\s*-->)/smU";
 		// $patt = "/(<!--\s+BEGIN\s+([^\s]*)\s+(.*)-->)(.*)(<!--\s+END\s+\\$m_ID\s+-->)/smU";
 		$patt = '/(<!-- BEGIN ([\S]+) (.*)-->)(.*)(<!-- END \2 -->)/smUS';
