@@ -9,25 +9,25 @@ define('TMPL_APPEND', true);
 
 class TemplateBlock
 {
-	var string $ID = '';
-	var array $vars = [];
+	private string $ID = '';
+	private array $vars = [];
 
 	/** @var TemplateBlock[] */
-	var array $blocks = [];
+	private array $blocks = [];
 
-	var ?TemplateBlock $parent = null;
-	var ?array $block_vars = null;
+	private ?TemplateBlock $parent = null;
+	private array $block_vars = [];
 
-	var string $content = '';
-	var string $parsed_content = '';
-	var int $parsed_count = 0;
+	private string $content = '';
+	private string $parsed_content = '';
+	private int $parsed_count = 0;
 
-	var array $attributes = [
+	private array $attributes = [
 		'disabled'=>false
 	];
 
-	protected int $offset;    // where block starts
-	protected int $len;       // where block ends
+	private int $offset;    // where block starts
+	private int $len;       // where block ends
 
 	function __construct(TemplateBlock $parent = NULL, string $ID, string $content){
 		if($this->block_exists($ID)){
@@ -95,6 +95,10 @@ class TemplateBlock
 		//}
 
 		return $this->parsed_content;
+	}
+
+	function get_vars(string $ID = NULL): ?array {
+		return ($block = $this->_get_block_or_self($ID)) ? $block->vars : NULL;
 	}
 
 	function get_parsed_content(string $ID = NULL){
