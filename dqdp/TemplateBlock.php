@@ -279,19 +279,25 @@ class TemplateBlock
 
 			$Block = new TemplateBlock($this, $id, $item[$m_CONTENTS][0]);
 			$Block->len = strlen($item[$m_WHOLE][0]);
-			$Block->offset = (int)$item[$m_WHOLE][1];
+			$Block->offset_start = (int)$item[$m_WHOLE][1];
+			$Block->offset_end = $Block->offset_start + $Block->len;
 
 			// $attributes = explode(' ', $item[$m_ATTRS][0]);
 			// $Block->attributes['disabled'] = in_array('disabled', $attributes);
 			$Block->attributes['disabled'] = (strpos($item[$m_ATTRS][0], 'disabled') !== false);
 
 			$this->blocks[$id] = $Block;
+			$this->blocks_order[] = $id;
 
-			$striped_content .= substr($this->content, $striped_offset, $Block->offset - $striped_offset);//."<!-- removed $striped_offset:$Block->offset $id";
-			$striped_offset = $Block->offset + $Block->len;
+			$part = substr($this->content, $striped_offset, $Block->offset_start - $striped_offset);
+			$this->content_parts[] = $part;
+			$striped_content .= $part;//."<!-- removed $striped_offset:$Block->offset_start $id";
+			$striped_offset = $Block->offset_end;
 			// $striped_content .= " $striped_offset -->";
 		}
-		$striped_content .= substr($this->content, $striped_offset);
+		$part = substr($this->content, $striped_offset);
+		$this->content_parts[] = $part;
+		$striped_content .= $part;
 
 		$this->striped_content = $striped_content;
 
