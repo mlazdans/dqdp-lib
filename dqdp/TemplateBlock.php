@@ -56,9 +56,7 @@ class TemplateBlock
 		}
 
 		$this->parsed_count++;
-
 		$parsed_content = $this->content;
-
 		foreach($this->blocks as $id=>$block){
 			// $id = $this->blocks_order[$i];
 			// $block = $this->blocks[$id];
