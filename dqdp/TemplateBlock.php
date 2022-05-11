@@ -17,12 +17,10 @@ class TemplateBlock
 	private bool $attr_disabled = false;
 	/** @var TemplateBlock[] */
 	private array $blocks = [];
-	private array $blocks_order = [];
 	private array $vars = [];
 	private array $block_vars = [];
 	private string $content = '';
-	private array $content_parts = [];
-	private string $parsed_content = '';
+	private $parsed_content = '';         // XXX: ja uzliek type, tad baigi lēns!!!
 	private ?TemplateBlock $parent = null;
 
 	function __construct(TemplateBlock $parent = NULL, string $ID, string $content){
@@ -59,34 +57,24 @@ class TemplateBlock
 
 		$this->parsed_count++;
 
-		// $parsed_content = $this->__parse_vars();
-		// $parsed_content = $this->content;
+		$parsed_content = $this->content;
 
-		// printr($this->ID, $this->dump());
-		// print "===========\n";
-		$c = count($this->blocks_order);
-		# ja blokaa veel ir bloki
-		// foreach($this->blocks as $block_id => $object){
-		// for($i = $c; $i >= 0; $i--){
-		$parsed_content = '';
-		for($i = 0; $i < $c; $i++){
-			$id = $this->blocks_order[$i];
-			$block = $this->blocks[$id];
-			$parsed_content .= $this->_apply_vars($this->content_parts[$i]);
-			$parsed_content .= $block->parse();
+		foreach($this->blocks as $id=>$block){
+			// $id = $this->blocks_order[$i];
+			// $block = $this->blocks[$id];
+			// $parsed_content .= $this->_apply_vars($this->content_parts[$i]);
+			// $parsed_content .= $block->parse();
 			// $parsed_content = substr_replace($parsed_content, $block_content, $block->offset_start, $block->len);
 			// $parsed_content = substr_replace($parsed_content, '<tada>', $block->offset_start, $block->len);
 
-			// printr($id, $block->dump(), $parsed_content);
-			// die;
-			// $patt = '/\s*<!--\s+BEGIN\s+' . $block_id . '\s+[^<]*-->.*<!--\s+END\s+' . $block_id . '\s+-->\s*/smi';
-			// preg_match_all($patt, $parsed_content, $m);
-			// //printr($block_id,$m);
-			// foreach($m[0] as $mm) {
-			// 	$parsed_content = str_replace($mm, $block_content, $parsed_content);
-			// }
+			$patt = "/<!-- BEGIN $id .*-->.*<!-- END $id -->/smUS";
+			if(preg_match($patt, $parsed_content, $m, PREG_OFFSET_CAPTURE)){
+				$offset = (int)$m[0][1];
+				$len = strlen($m[0][0]);
+				$parsed_content = substr_replace($parsed_content, $block->parse(), $offset, $len);
+			}
 		}
-		$parsed_content .= $this->_apply_vars($this->content_parts[$c]);
+		$parsed_content = $this->_apply_vars($parsed_content);
 
 		if($append) {
 			$this->parsed_content .= $parsed_content;
@@ -110,7 +98,6 @@ class TemplateBlock
 
 	function get_parsed_content(string $ID = NULL){
 		return ($block = $this->_get_block_or_self($ID)) ? $block->parsed_content : NULL;
-		// return ($block = $this->get_block($ID)) ? $block->parsed_content : NULL;
 	}
 
 	function get_var(string $var_id, string $ID = NULL){
@@ -236,13 +223,16 @@ class TemplateBlock
 
 	function dump(){
 		$vars = [
-			'ID', 'attr_disabled', 'blocks_order', 'parsed_count', 'offset_start', 'offset_end', 'len',
-			'vars', 'block_vars', 'content_parts', 'content',
-			'parsed_content'
+			'ID', 'attr_disabled', 'parsed_count', 'offset_start', 'offset_end', 'len',
+			'blocks', 'vars', 'block_vars', 'content', 'parsed_content'
 		];
 
 		foreach($vars as $k){
-			$ret[$k] = $this->{$k};
+			if($k == 'blocks'){
+				$ret[$k] = array_keys($this->blocks);
+			} else {
+				$ret[$k] = $this->{$k};
+			}
 		}
 
 		return $ret;
@@ -269,8 +259,6 @@ class TemplateBlock
 		$m_CONTENTS = 4;
 		$m_END = 5;
 
-		// $patt = '/(<!--\s*BEGIN\s+([\S]+)\s*(.*)-->)(.*)(<!--\s*END\s+\\2\s*-->)/smU';
-		// $patt = "/(<!--\s+BEGIN\s+([^\s]*)\s+(.*)-->)(.*)(<!--\s+END\s+\\$m_ID\s+-->)/smU";
 		$patt = '/(<!-- BEGIN ([\S]+) (.*)-->)(.*)(<!-- END \2 -->)/smUS';
 
 		if(preg_match_all($patt, $this->content, $matches, PREG_OFFSET_CAPTURE | PREG_SET_ORDER) === false){
@@ -296,24 +284,16 @@ class TemplateBlock
 			$Block->offset_start = (int)$item[$m_WHOLE][1];
 			$Block->offset_end = $Block->offset_start + $Block->len;
 
-			// $attributes = explode(' ', $item[$m_ATTRS][0]);
-			// $Block->attributes['disabled'] = in_array('disabled', $attributes);
 			$Block->attr_disabled = (strpos($item[$m_ATTRS][0], 'disabled') !== false);
 
 			$this->blocks[$id] = $Block;
-			$this->blocks_order[] = $id;
 
 			$part = substr($this->content, $striped_offset, $Block->offset_start - $striped_offset);
-			$this->content_parts[] = $part;
-			$striped_content .= $part;//."<!-- removed $striped_offset:$Block->offset_start $id";
+			$striped_content .= $part;
 			$striped_offset = $Block->offset_end;
-			// $striped_content .= " $striped_offset -->";
 		}
 		$part = substr($this->content, $striped_offset);
-		$this->content_parts[] = $part;
 		$striped_content .= $part;
-
-		// $this->striped_content = $striped_content;
 
 		# Vars
 		if(preg_match_all("/{([a-zA-Z0-9_]+)}/U", $striped_content, $m)){
