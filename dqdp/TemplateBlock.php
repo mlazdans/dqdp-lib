@@ -267,31 +267,33 @@ class TemplateBlock
 			throw new ParseError(sprintf("template compilation failure $this->ID (%s)", $err));
 		}
 
-		// $striped_offset = 0;
-		// $striped_content = '';
+		$striped_offset = 0;
+		$striped_content = '';
 		foreach($matches as $item){
 			$id = $item[$m_ID][0];
 
 			$Block = new TemplateBlock($this, $id, $item[$m_CONTENTS][0]);
-			// $Block->len = strlen($item[$m_WHOLE][0]);
-			// $Block->offset = (int)$item[$m_WHOLE][1];
+			$Block->len = strlen($item[$m_WHOLE][0]);
+			$Block->offset = (int)$item[$m_WHOLE][1];
 
 			// $attributes = explode(' ', $item[$m_ATTRS][0]);
 			// $Block->attributes['disabled'] = in_array('disabled', $attributes);
 			$Block->attributes['disabled'] = (strpos($item[$m_ATTRS][0], 'disabled') !== false);
 
 			$this->blocks[$id] = $Block;
-			// $striped_content .= substr($this->content, $striped_offset, $Block->offset - $striped_offset)."<!-- removed $striped_offset:$Block->offset $id";
-			// $striped_offset = $Block->offset + $Block->len;
+
+			$striped_content .= substr($this->content, $striped_offset, $Block->offset - $striped_offset);//."<!-- removed $striped_offset:$Block->offset $id";
+			$striped_offset = $Block->offset + $Block->len;
 			// $striped_content .= " $striped_offset -->";
 		}
-		// $striped_content .= substr($this->content, $striped_offset);
+		$striped_content .= substr($this->content, $striped_offset);
 
-		// $this->striped_content = $striped_content;
+		$this->striped_content = $striped_content;
 
-		preg_match_all("/{([a-zA-Z0-9_]+)}/U", $this->content, $m);
-
-		$this->block_vars = $m[1];
+		# Vars
+		if(preg_match_all("/{([a-zA-Z0-9_]+)}/U", $striped_content, $m)){
+			$this->block_vars = array_unique($m[1]);
+		}
 	}
 
 	protected function error($msg, $e = E_USER_WARNING){
