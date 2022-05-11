@@ -244,11 +244,6 @@ class TemplateBlock
 	private function __parse_vars(){
 		$patt = $repl = $vars_cache = [];
 
-		if($this->block_vars === null){
-			preg_match_all("/{([a-zA-Z0-9_]+)}/U", $this->content, $m);
-			$this->block_vars = $m[1];
-		}
-
 		foreach($this->block_vars as $k){
 			$patt[] = '/{'.$k.'}/';
 			//chr(92).chr(92)
