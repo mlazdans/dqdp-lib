@@ -219,6 +219,20 @@ class TemplateBlock
 		}
 	}
 
+	function dump(){
+		$vars = [
+			'ID', 'blocks_order', 'parsed_count', 'offset_start', 'offset_end', 'len',
+			'attributes', 'vars', 'block_vars', 'content_parts', 'content',
+			'parsed_content'
+		];
+
+		foreach($vars as $k){
+			$ret[$k] = $this->{$k};
+		}
+
+		return $ret;
+	}
+
 	private function _apply_vars($data): string {
 		if(empty($this->block_vars)){
 			return $data;
