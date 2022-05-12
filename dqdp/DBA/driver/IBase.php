@@ -240,15 +240,40 @@ class IBase extends AbstractDBA
 	}
 
 	function with_new_trans(callable $func, ...$args){
+		// printr("New trans!", $this->tr);
 		$tr = $this->tr;
+		// if($this->tr){
+		// 	trigger_error("Transaction in use, rollback", E_USER_WARNING);
+		// 	$this->rollback();
+		// }
 
-		$this->new_trans();
-		if($result = $func($this, ...$args)){
-			$this->commit();
-		} else {
-			$this->rollback();
+		// $tr = $this->tr;
+
+		$this->new_trans(...$args);
+		try {
+			// register_shutdown_function(function(AbstractDBA $db){
+			// 	printr("Shut!", $this->tr);
+			// 	if($db->tr){
+			// 		printr("Shut - rollback!", $this->tr);
+			// 		$db->rollback();
+			// 	}
+			// 	// dumpr($db);
+			// }, $this);
+
+			if($result = $func($this, ...$args)){
+				// printr("Commit!", $this->tr);
+				$this->commit();
+			// } else {
+			// 	$this->rollback();
+			}
+		} finally {
+			// printr("Finally!", $this->tr);
+			if(empty($result)){
+				// printr("Finally - rollback!", $this->tr);
+				$this->rollback();
+			}
+			$this->tr = $tr;
 		}
-		$this->tr = $tr;
 
 		return $result;
 	}
