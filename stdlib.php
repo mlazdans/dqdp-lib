@@ -942,7 +942,7 @@ function format_debug($v, $depth = 0){
 function sqlr(){
 	if(!is_climode())print "<pre><code class=\"sql\">";
 
-	print ($t = debug_backtrace()) ? __back_trace_fmt($t[0]) : '';
+	print ($t = debug_backtrace()) ? __back_trace_fmt($t[0])."\n\n" : '';
 	__output_wrapper(function($v){
 		if($v instanceof dqdp\SQL\Statement){
 			print (string)$v;
@@ -971,7 +971,7 @@ function printr(){
 function __pre_wrapper(callable $func, ...$args){
 	if(!is_climode())print '<pre style="background: lightgrey; color: black">';
 
-	print ($t = debug_backtrace()) ? __back_trace_fmt($t[1]) : '';
+	print ($t = debug_backtrace()) ? __back_trace_fmt($t[1])."\n\n" : '';
 	__output_wrapper($func, ...$args);
 
 	if(!is_climode())print '</pre>';
@@ -986,7 +986,7 @@ function __output_wrapper(callable $func, ...$args){
 }
 
 function __back_trace_fmt($t){
-	return sprintf("called '%s' in '%s' on line %d\n", $t['function'], $t['file'], $t['line']);
+	return sprintf("called '%s' in '%s' on line %d", $t['function'], $t['file'], $t['line']);
 }
 
 function printrr(){
