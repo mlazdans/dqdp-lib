@@ -68,16 +68,13 @@ class TemplateBlock
 
 		$parsed_content = $this->_apply_vars($parsed_content);
 
-		if($append) {
+		if($append){
 			$this->parsed_content .= $parsed_content;
-		} else {
-			$this->parsed_content = $parsed_content;
-		}
-
-		if($append) {
-			foreach($this->blocks as $object) {
+			foreach($this->blocks as $object){
 				$object->reset();
 			}
+		} else {
+			$this->parsed_content = $parsed_content;
 		}
 
 		return $parsed_content;
