@@ -58,13 +58,6 @@ class TemplateBlock
 		$this->parsed_count++;
 		$parsed_content = $this->content;
 		foreach($this->blocks as $id=>$block){
-			// $id = $this->blocks_order[$i];
-			// $block = $this->blocks[$id];
-			// $parsed_content .= $this->_apply_vars($this->content_parts[$i]);
-			// $parsed_content .= $block->parse();
-			// $parsed_content = substr_replace($parsed_content, $block_content, $block->offset_start, $block->len);
-			// $parsed_content = substr_replace($parsed_content, '<tada>', $block->offset_start, $block->len);
-
 			$patt = "/<!-- BEGIN $id .*-->.*<!-- END $id -->/smUS";
 			if(preg_match($patt, $parsed_content, $m, PREG_OFFSET_CAPTURE)){
 				$offset = (int)$m[0][1];
@@ -72,6 +65,7 @@ class TemplateBlock
 				$parsed_content = substr_replace($parsed_content, $block->parse(), $offset, $len);
 			}
 		}
+
 		$parsed_content = $this->_apply_vars($parsed_content);
 
 		if($append) {
@@ -93,7 +87,7 @@ class TemplateBlock
 		return ($block = $this->_get_block_or_self($ID)) ? $block->vars : NULL;
 	}
 
-	function get_parsed_content(string $ID = NULL){
+	function get_parsed_content(string $ID = NULL): ?string {
 		return ($block = $this->_get_block_or_self($ID)) ? $block->parsed_content : NULL;
 	}
 
