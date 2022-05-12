@@ -58,7 +58,7 @@ class TemplateBlock
 		$this->parsed_count++;
 		$parsed_content = $this->content;
 		foreach($this->blocks as $id=>$block){
-			$patt = "/<!-- BEGIN $id .*-->.*<!-- END $id -->/smUS";
+			$patt = "/<!-- BEGIN $id .*-->.*<!-- END $id -->/smU";
 			if(preg_match($patt, $parsed_content, $m, PREG_OFFSET_CAPTURE)){
 				$offset = (int)$m[0][1];
 				$len = strlen($m[0][0]);
