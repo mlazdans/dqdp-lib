@@ -14,6 +14,7 @@ class Select extends Statement
 		$this->parts->fields = [];
 		$this->parts->from = [];
 		$this->parts->join = [];
+		$this->parts->joinlast = [];
 		$this->parts->where = new Condition;
 		$this->parts->groupby = [];
 		$this->parts->having = [];
@@ -108,6 +109,11 @@ class Select extends Statement
 		return $this;
 	}
 
+	function LeftJoinLast(string $table, $condition){
+		$this->parts->joinlast[] = new Join($table, $condition, Join::LEFT_OUTER_JOIN);
+		return $this;
+	}
+
 	function Where($condition){
 		$this->parts->where->add_condition($condition);
 		return $this;
@@ -152,6 +158,9 @@ class Select extends Statement
 	function vars(){
 		$vars = [];
 		foreach($this->parts->join as $j){
+			$vars = array_merge($vars, $j->vars());
+		}
+		foreach($this->parts->joinlast as $j){
 			$vars = array_merge($vars, $j->vars());
 		}
 		$vars = array_merge($vars, $this->parts->where->vars());
@@ -227,6 +236,9 @@ class Select extends Statement
 	protected function _join(){
 		if($this->parts->join){
 			$lines[] = join("\n", $this->parts->join);
+		}
+		if($this->parts->joinlast){
+			$lines[] = join("\n", $this->parts->joinlast);
 		}
 		return $lines??[];
 	}
