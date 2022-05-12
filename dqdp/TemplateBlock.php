@@ -243,14 +243,19 @@ class TemplateBlock
 	}
 
 	private function __find_blocks(){
+		// $m_WHOLE = 0;
+		// $m_BEGIN = 1;
+		// $m_ID = 2;
+		// $m_ATTRS = 3;
+		// $m_CONTENTS = 4;
+		// $m_END = 5;
 		$m_WHOLE = 0;
-		$m_BEGIN = 1;
-		$m_ID = 2;
-		$m_ATTRS = 3;
-		$m_CONTENTS = 4;
-		$m_END = 5;
+		$m_ID = 1;
+		$m_ATTRS = 2;
+		$m_CONTENTS = 3;
 
-		$patt = '/(<!-- BEGIN ([\S]+) (.*)-->)(.*)(<!-- END \2 -->)/smUS';
+		// $patt = '/(<!-- BEGIN ([\S]+) (.*)-->)(.*)(<!-- END \2 -->)/smUS';
+		$patt = '/<!-- BEGIN ([\S]+) (.*)-->(.*)<!-- END \1 -->/smU';
 
 		if(preg_match_all($patt, $this->content, $matches, PREG_OFFSET_CAPTURE | PREG_SET_ORDER) === false){
 			$err = array_flip(array_filter(get_defined_constants(true)['pcre'], function ($value) {
