@@ -60,7 +60,7 @@ class TemplateBlock
 		foreach($this->blocks as $id=>$block){
 			// No white-space check
 			// $patt = "/<!-- BEGIN $id .*-->.*<!-- END $id -->/smU";
-			$patt = "/\R?<!-- BEGIN $id .*-->.*<!-- END $id -->\R+?/smU";
+			$patt = "/\R?<!-- BEGIN $id .*-->.*<!-- END $id -->\R?/s";
 			if(preg_match($patt, $parsed_content, $m, PREG_OFFSET_CAPTURE)){
 				$offset = (int)$m[0][1];
 				$len = strlen($m[0][0]);
