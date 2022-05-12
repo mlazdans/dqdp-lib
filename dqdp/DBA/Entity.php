@@ -155,7 +155,9 @@ abstract class Entity implements EntityInterface {
 		}
 
 		foreach($defaults as $field=>$value){
-			if($DATA->exists($field)){
+			if(is_int($field)){
+				$sql->Where($value);
+			} elseif($DATA->exists($field)){
 				if(!is_null($DATA->{$field})){
 					# TODO: f-ija, kā build_sql
 					$sql->Where(["$prefix$field = ?", $DATA->{$field}]);
