@@ -67,7 +67,7 @@ class IBase extends AbstractDBA
 				$q = ibase_query($this->conn, (string)$args[0], ...$args[0]->vars());
 			}
 			// if(!$q){
-			// 	sqlr($args[0]);
+				// sqlr($args[0]);
 			// }
 		// } elseif((count($args) == 2) && is_resource($args[0]) && is_array($args[1])) {
 		// 	//$q = ibase_execute(...$args);
@@ -93,7 +93,7 @@ class IBase extends AbstractDBA
 			}
 
 			// if(!$q){
-			// 	printr($args);
+				// sqlr($args);
 			// }
 		}
 
