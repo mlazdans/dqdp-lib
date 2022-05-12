@@ -48,7 +48,7 @@ abstract class Entity implements EntityInterface {
 	}
 
 	function search(?iterable $filters = null){
-		return $this->get_trans()->Query($this->set_filters($this->select(), $filters));
+		return $this->get_trans()->query($this->set_filters($this->select(), $filters));
 	}
 
 	function save(iterable $DATA){
