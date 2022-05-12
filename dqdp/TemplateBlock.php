@@ -272,7 +272,11 @@ class TemplateBlock
 
 			if(isset($this->blocks[$id])){
 				$content_offset = (int)$item[$m_CONTENTS][1];
-				throw new InvalidArgumentException(sprintf("block already exists ($id), at %d near: '%s'", $item[$m_WHOLE][1], substr($this->content, $content_offset - 20, 40)));
+				throw new InvalidArgumentException(
+					sprintf("block already exists ($id), at %d near: '%s'",
+					$item[$m_WHOLE][1],
+					substr($this->content, $content_offset - 20, 40))
+				);
 			}
 
 			$Block = new TemplateBlock($this, $id, $item[$m_CONTENTS][0]);
