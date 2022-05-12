@@ -940,40 +940,53 @@ function format_debug($v, $depth = 0){
 
 # NOTE: dep on https://highlightjs.org/
 function sqlr(){
-	__output_wrapper(func_get_args(), function($v){
-		if(!is_climode())print '<code class="sql">';
+	if(!is_climode())print "<pre><code class=\"sql\">";
+
+	print ($t = debug_backtrace()) ? __back_trace_fmt($t[0]) : '';
+	__output_wrapper(function($v){
 		if($v instanceof dqdp\SQL\Statement){
-			print_r((string)$v);
+			print (string)$v;
 			if(method_exists($v, 'vars')){
-				print ("\n\n[Bind vars]\n");
-				print_r(format_debug($v->{'vars'}()));
+				print ("\n\n--[Bind vars]\n");
+				foreach($v->{'vars'}() as $k=>$var){
+					printf("--[%s] = %s\n", $k, format_debug($var));
+				}
 			}
 		} else {
 			print_r(format_debug($v));
 		}
-		if(!is_climode())print '</code>';
-	});
+	}, ...func_get_args());
+
+	if(!is_climode())print '</code></pre>';
 }
 
 function dumpr(){
-	__output_wrapper(func_get_args(), "var_dump");
+	__pre_wrapper('var_dump', ...func_get_args());
 }
 
 function printr(){
-	__output_wrapper(func_get_args(), "print_r");
+	__pre_wrapper('print_r', ...func_get_args());
 }
 
-function __output_wrapper($data, callable $func){
-	foreach($data as $v){
-		if(is_climode()){
-			$func($v);
-			print "\n";
-		} else {
-			print "<pre>";
-			$func($v);
-			print "</pre>";
-		}
+function __pre_wrapper(callable $func, ...$args){
+	if(!is_climode())print '<pre style="background: lightgrey; color: black">';
+
+	print ($t = debug_backtrace()) ? __back_trace_fmt($t[1]) : '';
+	__output_wrapper($func, ...$args);
+
+	if(!is_climode())print '</pre>';
+}
+
+function __output_wrapper(callable $func, ...$args){
+	$c = count($args);
+	for($i = 0; $i < $c; $i++){
+		$func($args[$i]);
+		if($i + 1 < $c)print "\n";
 	}
+}
+
+function __back_trace_fmt($t){
+	return sprintf("called '%s' in '%s' on line %d\n", $t['function'], $t['file'], $t['line']);
 }
 
 function printrr(){
