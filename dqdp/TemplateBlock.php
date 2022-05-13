@@ -64,7 +64,7 @@ class TemplateBlock
 			if(preg_match($patt, $parsed_content, $m, PREG_OFFSET_CAPTURE)){
 				$offset = (int)$m[0][1];
 				$len = strlen($m[0][0]);
-				$parsed_content = substr_replace($parsed_content, $block->parse(), $offset, $len);
+				$parsed_content = substr_replace($parsed_content, $block->parse($append), $offset, $len);
 			}
 		}
 
@@ -72,9 +72,9 @@ class TemplateBlock
 
 		if($append){
 			$this->parsed_content .= $parsed_content;
-			foreach($this->blocks as $object){
-				$object->reset();
-			}
+			// foreach($this->blocks as $object){
+			// 	$object->reset();
+			// }
 		} else {
 			$this->parsed_content = $parsed_content;
 		}
