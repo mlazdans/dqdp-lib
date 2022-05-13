@@ -951,6 +951,7 @@ function sqlr(){
 				foreach($v->{'vars'}() as $k=>$var){
 					printf("--[%s] = %s\n", $k, format_debug($var));
 				}
+				// printf("\n--Finished in: %.3f sec", $v->end_ts - $v->start_ts);
 			}
 		} else {
 			print_r(format_debug($v));
