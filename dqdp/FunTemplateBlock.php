@@ -8,17 +8,15 @@ use ParseError;
 class FunTemplateBlock
 {
 	private string $ID = '';
-	// private int $parsed_count = 0;
 	private ?int $offset_start = null;    // where block starts
 	private ?int $offset_end = null;      // where block ends
 	private ?int $len = null;             // block length
-	private bool $attr_disabled = false;
+	private bool $disabled = false;
 	/** @var FunTemplateBlock[] */
 	private array $blocks = [];
 	private array $vars = [];
 	private array $block_vars = [];
 	private string $content = '';
-	// private $parsed_content = '';         // XXX: ja uzliek type, tad baigi lēns!!!
 	private ?FunTemplateBlock $parent = null;
 	private $parser;
 
@@ -45,25 +43,16 @@ class FunTemplateBlock
 		throw new InvalidArgumentException("block not found ($ID)");
 	}
 
-	// function parse_block(string $ID, bool $append = false): string {
-	// 	return $this->get_block($ID)->parse($append);
-	// }
-
 	function set_parser(callable $func = null) {
 		$this->parser = $func;
 	}
 
 	function out(){
-		// print "$this->ID:out\n";
-
 		if($this->parser){
 			$this->parser->__invoke($this);
-		// } else {
-		// 	print "$this->ID:no parser\n";
 		}
 
-		if($this->attr_disabled){
-			// print "$this->ID:disabled\n";
+		if($this->disabled){
 			return;
 		}
 
@@ -81,7 +70,7 @@ class FunTemplateBlock
 	}
 
 	function parse(): string {
-		if($this->attr_disabled){
+		if($this->disabled){
 			return '';
 		}
 
@@ -100,66 +89,42 @@ class FunTemplateBlock
 		return $this->_apply_vars($parsed_content);
 	}
 
-	function get_vars(string $ID = NULL): ?array {
-		return ($block = $this->_get_block_or_self($ID)) ? $block->vars : NULL;
+	function get_vars(): array {
+		return $this->vars;
 	}
 
-	function get_parsed_content(string $ID = NULL): ?string {
-		return ($block = $this->_get_block_or_self($ID)) ? $block->parsed_content : NULL;
-	}
-
-	function get_var(string $var_id, string $ID = NULL){
-		if($block = $this->_get_block_or_self($ID)){
-			if(isset($block->vars[$var_id])) {
-				return $block->vars[$var_id];
-			} elseif($block->parent) {
-				return $block->parent->get_var($var_id);
-			}
+	function get_var(string $var_id){
+		if(isset($this->vars[$var_id])) {
+			return $this->vars[$var_id];
+		} elseif($this->parent) {
+			return $this->parent->get_var($var_id);
 		}
 
 		return NULL;
 	}
 
-	function set_var(string $var_id, $value, string $ID = NULL): FunTemplateBlock {
-		if($block = $this->_get_block_or_self($ID)){
-			$block->vars[$var_id] = $value;
+	function set_var(string $var_id, $value): FunTemplateBlock {
+		$this->vars[$var_id] = $value;
+
+		return $this;
+	}
+
+	function set_array(iterable $array): FunTemplateBlock {
+		foreach($array as $k=>$v){
+			$this->vars[$k] = $v;
 		}
 
 		return $this;
 	}
 
-	function set_array(iterable $array, string $ID = NULL): FunTemplateBlock {
-		if($block = $this->_get_block_or_self($ID)){
-			foreach($array as $k=>$v){
-				$block->vars[$k] = $v;
-			}
+	function set_except(array $exclude, array $data): FunTemplateBlock {
+		$diff = array_diff(array_keys($data), $exclude);
+		foreach($diff as $k){
+			$this->vars[$k] = $data[$k];
 		}
 
 		return $this;
 	}
-
-	function set_except(array $exclude, array $data, string $ID = NULL): FunTemplateBlock {
-		if($block = $this->_get_block_or_self($ID)){
-			$diff = array_diff(array_keys($data), $exclude);
-			foreach($diff as $k){
-				$block->vars[$k] = $data[$k];
-			}
-		}
-
-		return $this;
-	}
-
-	// function reset(string $ID = NULL): FunTemplateBlock {
-	// 	if($block = $this->_get_block_or_self($ID)){
-	// 		$block->parsed_content = '';
-	// 		$block->parsed_count = 0;
-	// 		foreach($block->blocks as $o){
-	// 			$o->reset();
-	// 		}
-	// 	}
-
-	// 	return $this;
-	// }
 
 	function enable_if(bool $cond, string $ID = NULL): FunTemplateBlock {
 		return $this->set_attribute('disabled', !$cond, $ID);
@@ -176,50 +141,11 @@ class FunTemplateBlock
 	function set_attribute(string $attribute, $value, string $ID = NULL): FunTemplateBlock {
 		if($block = $this->_get_block_or_self($ID)){
 			if($attribute == 'disabled'){
-				$block->attr_disabled = $value;
+				$block->disabled = $value;
 			}
 		}
 		return $this;
 	}
-
-	# TODO: test vai remove?
-	// function copy_block($ID_to, $ID_from){
-	// 	if(!($block_to = $this->get_block($ID_to))){
-	// 		return false;
-	// 	}
-
-	// 	if(!($block_from = $this->get_block($ID_from))){
-	// 		return false;
-	// 	}
-
-	// 	# tagat noskaidrosim, vai block_to nav zem block_from
-	// 	if($block_from->get_block_under($ID_to)){
-	// 		$this->error("block is a child of parent ($ID_from:$ID_to)");
-	// 		return false;
-	// 	}
-
-	// 	# paarkopeejam paareejos parametrus
-	// 	$block_to->vars = &$block_from->vars;
-	// 	$block_to->blocks = &$block_from->blocks;
-	// 	$block_to->block_vars = &$block_from->block_vars;
-	// 	$block_to->content = &$block_from->content;
-	// 	$block_to->parsed_content = &$block_from->parsed_content;
-	// 	$block_to->attributes = &$block_from->attributes;
-	// 	$block_from->parent = $block_to;
-
-	// 	//unset($block_from->parent->blocks[$ID_from]);
-
-	// 	return true;
-	// }
-
-	// function set_block_string(string $ID, string $content){
-	// 	if($block = $this->get_block($ID)){
-	// 		$block->parsed_content = $content;
-	// 		$block->parsed_count = 1;
-	// 	}
-
-	// 	return $this;
-	// }
 
 	function dump_blocks($pre = ''){
 		foreach($this->blocks as $block_id=>$object){
@@ -231,7 +157,7 @@ class FunTemplateBlock
 
 	function dump(){
 		$vars = [
-			'ID', 'attr_disabled', 'offset_start', 'offset_end', 'len',
+			'ID', 'disabled', 'offset_start', 'offset_end', 'len',
 			'vars', 'block_vars', 'blocks', 'content'
 		];
 
@@ -264,12 +190,6 @@ class FunTemplateBlock
 	}
 
 	private function __find_blocks(){
-		// $m_WHOLE = 0;
-		// $m_BEGIN = 1;
-		// $m_ID = 2;
-		// $m_ATTRS = 3;
-		// $m_CONTENTS = 4;
-		// $m_END = 5;
 		$m_WHOLE = 0;
 		$m_ID = 1;
 		$m_ATTRS = 2;
@@ -305,7 +225,7 @@ class FunTemplateBlock
 			$Block->offset_start = (int)$item[$m_WHOLE][1];
 			$Block->offset_end = $Block->offset_start + $Block->len;
 
-			$Block->attr_disabled = (strpos($item[$m_ATTRS][0], 'disabled') !== false);
+			$Block->disabled = (strpos($item[$m_ATTRS][0], 'disabled') !== false);
 
 			$this->blocks[$id] = $Block;
 
