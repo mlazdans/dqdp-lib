@@ -51,6 +51,17 @@ abstract class Entity implements EntityInterface {
 		return $this->get_trans()->query($this->set_filters($this->select(), $filters));
 	}
 
+	function count(?iterable $filters = null): int {
+		$sql = $this->set_filters($this->select(), $filters)
+		->ResetFields()
+		->ResetOrderBy()
+		->ResetJoinLast() // Reset LEFT JOINS
+		->Select("COUNT(*) sk")
+		->Rows(1);
+
+		return (int)($this->get_trans()->execute_single($sql)['sk']??0);
+	}
+
 	function save(iterable $DATA){
 		return $this->get_trans()->save($DATA, $this->getTable());
 	}
