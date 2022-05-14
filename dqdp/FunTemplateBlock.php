@@ -4,6 +4,7 @@ namespace dqdp;
 
 use InvalidArgumentException;
 use ParseError;
+use ReflectionFunction;
 
 class FunTemplateBlock
 {
@@ -189,12 +190,16 @@ class FunTemplateBlock
 
 	function dump(){
 		$vars = [
-			'ID', 'disabled', 'offset_start', 'offset_end', 'len',
+			'ID', 'disabled', 'offset_start', 'offset_end', 'len', 'parser',
 			'vars', 'block_vars', 'blocks', 'content'
 		];
 
 		foreach($vars as $k){
-			if($k == 'blocks'){
+			if(($k == 'parser') && isset($this->parser)){
+				$r = new ReflectionFunction($this->parser);
+				$l = sprintf("callable %s(%s) ", $r->getName(), join(", ", array_enfold($r->getParameters())));
+				$ret['parser'] = $l;
+			} else if($k == 'blocks'){
 				// $ret[$k] = '['.join(', ', array_keys($this->blocks)).']';
 				$ret[$k] = array_keys($this->blocks);
 				foreach($this->blocks as $id=>$block){
