@@ -2,6 +2,9 @@
 
 namespace dqdp\SQL;
 
+use BadMethodCallException;
+use InvalidArgumentException;
+
 class Select extends Statement
 {
 	protected $parts = null;
@@ -33,14 +36,15 @@ class Select extends Statement
 		$this->parts = (object)$pp;
 	}
 
+	# TODO: make native methods
 	function __call(string $name, array $arguments){
-		# Reset parts
 		if(strpos($name, 'Reset') === 0){
 			$part = strtolower(substr($name, 5));
 			if(isset($this->parts->{$part})){
 				$this->parts->{$part} = [];
 				return $this;
 			}
+			throw new BadMethodCallException($name);
 		}
 
 		return parent::__call($name, $arguments);
@@ -150,7 +154,7 @@ class Select extends Statement
 		} elseif($this->lex() == 'fbird'){
 			$lines = $this->parse_fbird();
 		} else {
-			trigger_error("Unknown SQL::\$lex: ".$this->lex(), E_USER_ERROR);
+			throw new InvalidArgumentException("Unknown SQL::\$lex: ".$this->lex());
 		}
 		return join("\n", $lines);
 	}
@@ -182,7 +186,7 @@ class Select extends Statement
 		} elseif(isset($this->rows)){
 			$lines[] = "LIMIT $this->rows";
 		} elseif(isset($this->offset)){
-			trigger_error("offset without rows", E_USER_ERROR);
+			throw new InvalidArgumentException("offset without rows");
 		}
 
 		return $lines;

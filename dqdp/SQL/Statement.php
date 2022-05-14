@@ -2,6 +2,7 @@
 
 namespace dqdp\SQL;
 
+use BadMethodCallException;
 use dqdp\SQL;
 
 abstract class Statement
@@ -54,22 +55,16 @@ abstract class Statement
 	}
 
 	function __call(string $name, array $arguments){
-		if(!str_ends($name, '_parser')){
-			return;
-		}
-
 		$section = strtolower(substr($name, 0, -7));
+		if(str_ends($name, '_parser') && method_exists($this, "_$section")){
+			$lines = [];
+			$this->merge_lines($lines, $this->before_lines($section));
+			$this->merge_lines($lines, $this->{"_$section"}(...$arguments));
+			$this->merge_lines($lines, $this->after_lines($section));
 
-		if(!method_exists($this, "_$section")){
-			trigger_error('Call to undefined method '.__CLASS__.'::'.$name.'() - parser _'.$section.'() not found', E_USER_ERROR);
-			return;
+			return $lines;
 		}
 
-		$lines = [];
-		$this->merge_lines($lines, $this->before_lines($section));
-		$this->merge_lines($lines, $this->{"_$section"}(...$arguments));
-		$this->merge_lines($lines, $this->after_lines($section));
-
-		return $lines;
+		throw new BadMethodCallException(sprintf("Call to undefined method %s::%s", __CLASS__, $name));
 	}
 }
