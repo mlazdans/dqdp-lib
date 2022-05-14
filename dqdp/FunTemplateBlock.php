@@ -2,6 +2,7 @@
 
 namespace dqdp;
 
+use Closure;
 use InvalidArgumentException;
 use ParseError;
 use ReflectionFunction;
@@ -202,7 +203,7 @@ class FunTemplateBlock
 
 		foreach($vars as $k){
 			if(($k == 'parser') && isset($this->parser)){
-				$r = new ReflectionFunction($this->parser);
+				$r = new ReflectionFunction(Closure::fromCallable($this->parser));
 				$l = sprintf("callable %s(%s) ", $r->getName(), join(", ", array_enfold($r->getParameters())));
 				$ret['parser'] = $l;
 			} else if($k == 'blocks'){
