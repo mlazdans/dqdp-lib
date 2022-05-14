@@ -20,6 +20,7 @@ class FunTemplateBlock
 	private string $content = '';
 	private ?FunTemplateBlock $parent = null;
 	private $parser;
+	private $parser_args;
 	private $before_out_parser;
 
 	function __construct(FunTemplateBlock $parent = NULL, string $ID, string $content){
@@ -51,8 +52,9 @@ class FunTemplateBlock
 		return $this;
 	}
 
-	function set_parser(callable $func = null): FunTemplateBlock {
+	function set_parser(callable $func = null, ...$args): FunTemplateBlock {
 		$this->parser = $func;
+		$this->parser_args = $args;
 
 		return $this;
 	}
@@ -70,13 +72,17 @@ class FunTemplateBlock
 	function out(){
 		// print "$this->ID:out\n";
 		if($this->before_out_parser){
-			if($this->before_out_parser->__invoke($this) === false){
+			// if($this->before_out_parser->__invoke($this) === false){
+			if(($this->before_out_parser)($this) === false){
 				return;
 			}
 		}
 
 		if($this->parser){
-			$this->parser->__invoke($this);
+			// $f = $this->parser;
+			($this->parser)($this, ...$this->parser_args);
+			// print gettype($this->parser).'\\';
+			// $this->parser->__invoke($this, ...$this->parser_args);
 		} else {
 			// print "$this->ID:no parser\n";
 			// print $this->parse();
