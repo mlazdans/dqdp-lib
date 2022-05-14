@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace dqdp;
 
@@ -6,7 +6,7 @@ class FunTemplate extends FunTemplateBlock
 {
 	var $mod_time;
 
-	function __construct($file_name){
+	function __construct(string $file_name){
 		if(!file_exists($file_name)){
 			$this->error("file not found ($file_name)", E_USER_ERROR);
 		}
