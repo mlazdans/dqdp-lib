@@ -45,22 +45,41 @@ class FunTemplateBlock
 
 	function set_parser(callable $func = null) {
 		$this->parser = $func;
+
+		return $this;
+	}
+
+	function get_parser() : ?callable {
+		return $this->parser;
+	}
+
+	function capture_out(){
+		ob_start();
+		$this->out();
+		return ob_get_clean();
 	}
 
 	function out(){
+		// print "$this->ID:out\n";
 		if($this->parser){
 			$this->parser->__invoke($this);
+		} else {
+			// print "$this->ID:no parser\n";
+			// print $this->parse();
+			// return;
 		}
 
 		if($this->disabled){
+			// print "$this->ID:disabled\n";
 			return;
 		}
 
 		$offset = 0;
 		foreach($this->blocks as $block){
-			// print "[aaa:$offset:$block->offset_start:";
-			$this->_apply_vars(substr($this->content, $offset, $block->offset_start - $offset));
-			// print ":aaa]\n";
+			$st = substr($this->content, $offset, $block->offset_start - $offset);
+			// print "<aaa:$offset:$block->offset_start:$st\n>\n";
+			print $this->_apply_vars($st);
+			// print "</aaa>\n";
 			$block->out();
 			$offset = $block->offset_end;
 		}
