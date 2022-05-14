@@ -19,6 +19,7 @@ class FunTemplateBlock
 	private string $content = '';
 	private ?FunTemplateBlock $parent = null;
 	private $parser;
+	private $before_out_parser;
 
 	function __construct(FunTemplateBlock $parent = NULL, string $ID, string $content){
 		$this->ID = $ID;
@@ -43,7 +44,13 @@ class FunTemplateBlock
 		throw new InvalidArgumentException("block not found ($ID)");
 	}
 
-	function set_parser(callable $func = null) {
+	function before_out(callable $func = null): FunTemplateBlock {
+		$this->before_out_parser = $func;
+
+		return $this;
+	}
+
+	function set_parser(callable $func = null): FunTemplateBlock {
 		$this->parser = $func;
 
 		return $this;
@@ -53,14 +60,20 @@ class FunTemplateBlock
 		return $this->parser;
 	}
 
-	function capture_out(){
-		ob_start();
-		$this->out();
-		return ob_get_clean();
-	}
+	// function capture_out(){
+	// 	ob_start();
+	// 	$this->out();
+	// 	return ob_get_clean();
+	// }
 
 	function out(){
 		// print "$this->ID:out\n";
+		if($this->before_out_parser){
+			if($this->before_out_parser->__invoke($this) === false){
+				return;
+			}
+		}
+
 		if($this->parser){
 			$this->parser->__invoke($this);
 		} else {
