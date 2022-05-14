@@ -1945,9 +1945,8 @@ function get_mime(string $buf){
 // 	}
 // }
 
-# TODO: remove ref, return data
-function hl(&$data, $kw)
-{
+# TODO: write tests
+function hl(string $data, string $kw): string {
 	//strip_script($data, $keys, $scripts);
 	$colors = array('white', 'white', 'black', 'white');
 	$bg = array('red', 'blue', 'yellow', 'magenta');
@@ -1983,6 +1982,7 @@ function hl(&$data, $kw)
 	}
 
 	//unstrip_script($data, $keys, $scripts);
+	return $data;
 } // hl
 
 # TODO: pārbaudīt vai tas nesakrīt ar translit
