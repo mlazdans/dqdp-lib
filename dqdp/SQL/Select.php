@@ -92,6 +92,7 @@ class Select extends Statement
 	}
 
 	function From($arg){
+		# TODO: alias optional
 		if(is_array($arg) && $arg[0] instanceof \dqdp\SQL\Select){
 			list($sql, $alias) = $arg;
 			$this->parts->from[] = "($sql) $alias";
