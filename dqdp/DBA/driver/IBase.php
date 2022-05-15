@@ -260,7 +260,7 @@ class IBase extends AbstractDBA
 			// 	// dumpr($db);
 			// }, $this);
 
-			if($result = $func($this, ...$args)){
+			if($result = $func($this)){
 				// printr("Commit!", $this->tr);
 				$this->commit();
 			// } else {
