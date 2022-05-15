@@ -980,9 +980,18 @@ function __pre_wrapper(callable $func, ...$args){
 
 function __output_wrapper(callable $func, ...$args){
 	$c = count($args);
-	for($i = 0; $i < $c; $i++){
-		if($i > 0)print "\n";
-		$func($args[$i]);
+	if(is_climode()){
+		for($i = 0; $i < $c; $i++){
+			if($i > 0)print "\n";
+			$func($args[$i]);
+		}
+	} else {
+		for($i = 0; $i < $c; $i++){
+			if($i > 0)print "\n";
+			ob_start();
+			$func($args[$i]);
+			print specialchars(ob_get_clean());
+		}
 	}
 }
 
