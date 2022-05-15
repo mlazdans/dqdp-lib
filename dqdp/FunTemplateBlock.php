@@ -170,6 +170,14 @@ class FunTemplateBlock
 		return $this->set_attribute('disabled', !$cond, $ID);
 	}
 
+	function enable_if_else(bool $cond, string $ID, string $ID_ELSE): FunTemplateBlock {
+		if($cond){
+			return $this->set_attribute('disabled', !$cond, $ID);
+		} else {
+			return $this->set_attribute('disabled', !$cond, $ID_ELSE);
+		}
+	}
+
 	function enable(string $ID = NULL): FunTemplateBlock {
 		return $this->set_attribute('disabled', false, $ID);
 	}
