@@ -24,7 +24,7 @@ class FunTemplate
 	private $parser_args;
 	private $before_out_parser;
 
-	function __construct(FunTemplate $parent = NULL, string $ID, string $content){
+	function __construct(string $ID, string $content, FunTemplate $parent = null){
 		$this->ID = $ID;
 		$this->parent = $parent;
 		$this->content = $content;
@@ -272,7 +272,7 @@ class FunTemplate
 				);
 			}
 
-			$Block = new FunTemplate($this, $id, $item[$m_CONTENTS][0]);
+			$Block = new FunTemplate($id, $item[$m_CONTENTS][0], $this);
 			$Block->len = strlen($item[$m_WHOLE][0]);
 			$Block->offset_start = (int)$item[$m_WHOLE][1];
 			$Block->offset_end = $Block->offset_start + $Block->len;
