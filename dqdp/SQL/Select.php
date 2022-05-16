@@ -149,6 +149,10 @@ class Select extends Statement
 		return $this;
 	}
 
+	function Page(int $page, int $items_per_page){
+		return $this->Offset(($page - 1) * $items_per_page)->Rows($items_per_page);
+	}
+
 	function parse(){
 		if($this->lex() == 'mysql'){
 			$lines = $this->parse_mysql();
