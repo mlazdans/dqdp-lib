@@ -8,6 +8,7 @@ class Insert extends Statement
 	protected $parts = null;
 	protected $table;
 	protected $vars;
+	protected $matching = [];
 
 	function Into($table){
 		$this->table = $table;
@@ -27,6 +28,11 @@ class Insert extends Statement
 
 	function Update(){
 		$this->on_duplicate_update = true;
+		return $this;
+	}
+
+	function Matching(array $column_list){
+		$this->matching = $column_list;
 		return $this;
 	}
 
@@ -94,6 +100,10 @@ class Insert extends Statement
 		}
 
 		$this->merge_lines($lines, $this->values_parser());
+
+		if($this->matching){
+			$lines[] = "MATCHING (".join(",", $this->matching).")";
+		}
 
 		return $lines;
 	}
