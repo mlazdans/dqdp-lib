@@ -1328,8 +1328,22 @@ function csv_find_value($map, $line, $field): ?string {
 	return null;
 }
 
+function get_server_schema(){
+	if(isset($_SERVER['HTTP_ORIGIN'])){
+		if(($pos = strpos($_SERVER['HTTP_ORIGIN'], "://")) !== false){
+			return substr($_SERVER['HTTP_ORIGIN'], 0, $pos);
+		}
+	}
+
+	return "http";
+}
+
+function get_server_protocol(){
+	return $_ENV['SERVER_PROTOCOL']??($_SERVER['SERVER_PROTOCOL']??'');
+}
+
 function __header(int $code, string $msg_header, string $msg_display = null): void {
-	$SERVER_PROTOCOL = $_ENV['SERVER_PROTOCOL']??($_SERVER['SERVER_PROTOCOL']??'');
+	$SERVER_PROTOCOL = get_server_protocol();
 
 	header("$SERVER_PROTOCOL $code $msg_header", true, $code);
 	if(!is_null($msg_display)){
