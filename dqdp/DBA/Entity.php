@@ -62,68 +62,10 @@ abstract class Entity implements EntityInterface {
 		return (int)($this->get_trans()->execute_single($sql)['sk']??0);
 	}
 
+	# TODO: insert un update
 	function save(iterable $DATA){
 		return $this->get_trans()->save($DATA, $this->getTable());
 	}
-
-	// function save(iterable $DATA){
-	// 	$sql_fields = (array)merge_only($this->Table->getFields(), $DATA);
-
-	// 	if(!is_array($this->PK)){
-	// 		$PK_val = get_prop($DATA, $this->PK);
-	// 		if(is_null($PK_val)){
-	// 			if($this->lex == 'fbird'){
-	// 				if($Gen = $this->Table->getGen()){
-	// 					$sql_fields[$this->PK] = function() use ($Gen) {
-	// 						return "NEXT VALUE FOR $Gen";
-	// 					};
-	// 				}
-	// 			} elseif($this->lex == 'mysql'){
-	// 			}
-	// 		} else {
-	// 			$sql_fields[$this->PK] = $PK_val;
-	// 		}
-	// 	}
-
-	// 	$sql = (new Insert)->Into($this->tableName)
-	// 		->Values($sql_fields)
-	// 		->Update();
-
-	// 	if($this->lex == 'fbird'){
-	// 		$PK_fields_str = is_array($this->PK) ? join(",", $this->PK) : $this->PK;
-	// 		$sql->after("values", "matching", "MATCHING ($PK_fields_str)")
-	// 			->after("values", "returning", "RETURNING $PK_fields_str");
-	// 	}
-
-	// 	sqlr($sql);
-	// 	if($q = $this->get_trans()->query($sql)){
-	// 		if($this->lex == 'fbird'){
-	// 			$retPK = $this->get_trans()->fetch($q);
-	// 			if(is_array($this->PK)){
-	// 				return $retPK;
-	// 			} else {
-	// 				return get_prop($retPK, $this->PK);
-	// 			}
-	// 		}
-
-	// 		if($this->lex == 'mysql'){
-	// 			if(is_array($this->PK)){
-	// 				foreach($this->PK as $k){
-	// 					$ret[] = get_prop($DATA, $k);
-	// 				}
-	// 				return $ret??[];
-	// 			} else {
-	// 				if(empty($sql_fields[$this->PK])){
-	// 					return mysql_last_id($this->get_trans());
-	// 				} else {
-	// 					return $sql_fields[$this->PK];
-	// 				}
-	// 			}
-	// 		}
-	// 	} else {
-	// 		return false;
-	// 	}
-	// }
 
 	function delete(){
 		$ID = func_get_arg(0);
@@ -136,20 +78,10 @@ abstract class Entity implements EntityInterface {
 		}
 
 		return $ret;
-		// return $this->ids_process("DELETE FROM $this->tableName WHERE $this->PK = ?", ...func_get_args());
 	}
 
 	function set_trans(AbstractDBA $dba){
 		$this->dba = $dba;
-
-		// if($dba instanceof IBase){
-		// 	$this->lex = 'fbird';
-		// 	// if(!is_array($this->PK)){
-		// 	// 	$this->PK = strtoupper($this->PK);
-		// 	// }
-		// } elseif($dba instanceof MySQL_PDO){
-		// 	$this->lex = 'mysql';
-		// }
 
 		return $this;
 	}
@@ -181,8 +113,9 @@ abstract class Entity implements EntityInterface {
 		return $sql;
 	}
 
-	# TODO: abstract out funkcionālo daļu
+	# TODO: abstract out filters funkcionālo daļu
 	# TODO: uz Select???
+	# TODO: vai vispār vajag atdalīt NULL filters? Varbūt visiem vajag NULL check?
 	protected function set_null_filters(Statement $sql, $DATA, array $fields, string $prefix = null): Statement {
 		$DATA = eoe($DATA);
 
@@ -298,45 +231,4 @@ abstract class Entity implements EntityInterface {
 
 		return $sql;
 	}
-
-	// function fetch($q){
-	// 	return $this->get_trans()->fetch($q);
-	// }
-
-	# TODO: savest kārtībā
-	// protected function ids_process(...$args){
-	// 	$sql = array_shift($args);
-	// 	$IDS = array_shift($args);
-	// 	if(!is_array($IDS)){
-	// 		$IDS = [$IDS];
-	// 	}
-
-	// 	if(!($smt = $this->get_trans()->prepare($sql))){
-	// 		return false;
-	// 	}
-
-	// 	$ret = true;
-	// 	foreach($IDS as $ID){
-	// 		$ret = $ret && $this->get_trans()->execute($smt, [$ID]);
-	// 		// $params = array_merge([$smt], $args, [$ID]);
-	// 		// $ret = $ret && call_user_func_array('ibase_execute', $params);
-	// 	}
-	// 	return $ret;
-	// }
-
-	// # TODO: šiem trans() te nevajadzētu būt?
-	// function new_trans(){
-	// 	$this->dba = $this->dba->trans();
-
-	// 	return $this;
-	// }
-
-	// function commit(...$args){
-	// 	return $this->dba->commit(...$args);
-	// }
-
-	// function rollback(...$args){
-	// 	return $this->dba->rollback(...$args);
-	// }
-	###
 }
