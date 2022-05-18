@@ -208,12 +208,14 @@ class FunTemplate
 
 	function dump(){
 		$vars = [
-			'ID', 'disabled', 'offset_start', 'offset_end', 'len', 'parser',
+			'ID', 'parent', 'disabled', 'offset_start', 'offset_end', 'len', 'parser',
 			'vars', 'block_vars', 'blocks', 'content'
 		];
 
 		foreach($vars as $k){
-			if(($k == 'parser') && isset($this->parser)){
+			if($k == 'parent'){
+				$ret['parent'] = $this->parent->ID??"<null>";
+			} elseif(($k == 'parser') && isset($this->parser)){
 				$r = new ReflectionFunction(Closure::fromCallable($this->parser));
 				$l = sprintf("callable %s(%s) ", $r->getName(), join(", ", array_enfold($r->getParameters())));
 				$ret['parser'] = $l;
