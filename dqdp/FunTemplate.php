@@ -191,7 +191,10 @@ class FunTemplate
 			if($attribute == 'disabled'){
 				$block->disabled = $value;
 			}
+		} else {
+			throw new InvalidArgumentException("block not found ($ID)");
 		}
+
 		return $this;
 	}
 
