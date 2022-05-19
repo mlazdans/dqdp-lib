@@ -23,7 +23,7 @@ CREATE TABLE fs (
 	fs_entered TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	fs_updated TIMESTAMP DEFAULT NULL,
 	PRIMARY KEY (fs_id),
-	UNIQUE (fs_depth, fs_name),
+	UNIQUE (fs_fsid, fs_fullname),
 	FOREIGN KEY (fs_fsid) REFERENCES fs (fs_id)
 );
 */
@@ -45,7 +45,7 @@ CREATE TABLE fs (
 	fs_entered timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
 	fs_updated timestamp(6) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(6),
 	PRIMARY KEY (fs_id),
-	UNIQUE (fs_depth, fs_name),
+	UNIQUE (fs_fsid, fs_fullname),
 	FOREIGN KEY (fs_fsid) REFERENCES fs (fs_id)
 );
 */
