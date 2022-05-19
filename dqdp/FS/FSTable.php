@@ -16,7 +16,8 @@ class FSTable extends AbstractTable {
 	}
 
 	function getGen(): ?string {
-		return 'FS';
+		return null;
+		// return 'FS';
 	}
 
 	function getFields(): array {
