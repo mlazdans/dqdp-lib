@@ -166,7 +166,7 @@ class IBase extends AbstractDBA
 	}
 
 	function close(): bool {
-		return ibase_close($this->conn);
+		return $this->conn ? ibase_close($this->conn) : false;
 	}
 
 	function prepare(){
