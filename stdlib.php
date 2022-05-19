@@ -343,6 +343,10 @@ function countries(){
 	];
 }
 
+function req(string $key, $default = ''){
+	return $_REQUEST[$key]??$default;
+}
+
 function get($key, $default = ''){
 	return isset($_GET[$key]) ? $_GET[$key] : $default;
 }
