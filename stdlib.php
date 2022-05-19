@@ -1350,8 +1350,8 @@ function __header(int $code, string $msg_header, string $msg_display = null): vo
 	$SERVER_PROTOCOL = get_server_protocol();
 
 	header("$SERVER_PROTOCOL $code $msg_header", true, $code);
-	if(!is_null($msg_display)){
-		print "<h1>$msg_display!</h1>";
+	if($msg_display){
+		print "<h1>$msg_display</h1>";
 	}
 }
 
