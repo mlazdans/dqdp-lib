@@ -32,6 +32,7 @@ class Imager
 	}
 
 	# filename, fd, blob, processor
+	# TODO: params class
 	function process_image($params){
 		$params = eo($params);
 		try {
