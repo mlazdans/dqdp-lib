@@ -2161,3 +2161,26 @@ function dig($domain, $type){
 
 	return $stdout[0];
 }
+
+function parse_query_string(string $qs): array {
+	$ret = [];
+	$pairs = explode('&', $qs);
+	foreach($pairs as $kv){
+		$parts = explode('=', $kv);
+		$k = isset($parts[0]) ? urldecode($parts[0]) : false;
+		$v = isset($parts[1]) ? urldecode($parts[1]) : false;
+
+		# Arrays
+		if(substr($k, -2) == '[]'){
+			$ka = substr($k, 0, -2);
+			if(empty($ret[$ka])){
+				$ret[$ka] = [];
+			}
+			$ret[$ka][] = $v;
+		} else {
+			$ret[$k] = $v;
+		}
+	}
+
+	return $ret;
+}
