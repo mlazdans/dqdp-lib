@@ -1,6 +1,4 @@
-<?php
-
-declare(strict_types = 1);
+<?php declare(strict_types = 1);
 
 namespace dqdp;
 
@@ -49,16 +47,16 @@ class FS implements DBA\TransactionInterface {
 		return $this->Ent->get_all($this->defaults_params($params));
 	}
 
-	function get_by_fullpath($path, $params = null){
+	function get_by_fullpath(string $path, $params = null): array {
 		$params = $this->defaults_params($params);
 		//$params["fs_fullpath_hash"] = $this->path($path);
 		$params->fs_fullpath = $this->path($path);
 
-		return $this->get_single($params);
+		return ($data = $this->get_single($params)) ? $data : [];
 	}
 
 	function read($path){
-		if($data = eo(ktolower($this->get_by_fullpath($path, ['get_contents'=>1, 'fs_type'=>0])))){
+		if($data = eo($this->get_by_fullpath($path, ['get_contents'=>1, 'fs_type'=>0]))){
 			return $data->fs_contents;
 		}
 
@@ -66,7 +64,7 @@ class FS implements DBA\TransactionInterface {
 	}
 
 	function write($path, $contents){
-		$exists = eo(ktolower($this->get_by_fullpath($path)));
+		$exists = eo($this->get_by_fullpath($path));
 		if($exists->fs_id){
 			if($exists->fs_type == 1){
 				return false;
@@ -153,7 +151,7 @@ class FS implements DBA\TransactionInterface {
 	}
 
 	function rmtree($path){
-		$max = ktolower($this->dirmax($path));
+		$max = $this->dirmax($path);
 		$ret = $this->Ent->delete(getbyk($max, 'fs_id'));
 
 		return $ret;
@@ -173,7 +171,8 @@ class FS implements DBA\TransactionInterface {
 		$parts = $this->explode_path($this->path($path));
 		foreach($parts as $i=>$p){
 			$fs_fullpath .= "$p/";
-			$exists = eo(ktolower($this->get_by_fullpath($fs_fullpath)));
+			// $exists = eo(($e = $this->get_by_fullpath($fs_fullpath)) ? ktolower($e) : []);
+			$exists = eo($this->get_by_fullpath($fs_fullpath));
 
 			if(!is_empty($exists)){
 				$fs_fsid = $exists->fs_id;
@@ -205,7 +204,7 @@ class FS implements DBA\TransactionInterface {
 			return false;
 		}
 
-		return getbyk(ktolower($data), 'fs_fullname');
+		return getbyk($data, 'fs_fullname');
 	}
 
 	function scandirraw($path, $params = null){
@@ -222,7 +221,7 @@ class FS implements DBA\TransactionInterface {
 		// }
 
 		$params = $this->defaults_params($params);
-		$params->fs_fsid = get_prop(ktolower($d), 'fs_id');
+		$params->fs_fsid = get_prop($d, 'fs_id');
 
 		return $this->get_all($params);
 	}
