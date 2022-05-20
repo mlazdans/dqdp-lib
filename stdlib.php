@@ -1427,7 +1427,7 @@ function print_time(float $start_time, float $end_time = null): string {
 }
 
 function print_nanotime(array $start_time, array $end_time = null, int $precision = 4): string {
-	if(is_null($end_time))$end_time = hrtime();
+	if(is_null($end_time))$end_time = hrtime(false);
 
 	list($s1, $ns1) = $start_time;
 	list($s2, $ns2) = $end_time;
