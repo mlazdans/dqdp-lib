@@ -62,6 +62,10 @@ class StdObject implements Iterator, Countable
 		return merge($this, $o);
 	}
 
+	function merge_only(array $only, $o){
+		return merge_only($only, $this, $o);
+	}
+
 	function count() : int {
 		return count(get_object_vars($this));
 		//return count($this->__stdo_keys);
