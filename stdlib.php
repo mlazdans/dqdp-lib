@@ -2184,3 +2184,17 @@ function parse_query_string(string $qs): array {
 
 	return $ret;
 }
+
+function rearrange_files_array(array $file_post): array {
+	$file_ary = [];
+	$file_count = count($file_post['name']);
+	$file_keys = array_keys($file_post);
+
+	for ($i=0; $i<$file_count; $i++) {
+		foreach ($file_keys as $key) {
+			$file_ary[$i][$key] = $file_post[$key][$i];
+		}
+	}
+
+	return $file_ary;
+}
