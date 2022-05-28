@@ -19,7 +19,7 @@ class FS implements DBA\TransactionInterface {
 		$this->Ent = new FS\Entity;
 	}
 
-	function set_trans(AbstractDBA $dba) {
+	function set_trans(AbstractDBA $dba): FS {
 		$this->Ent->set_trans($dba);
 
 		return $this;
