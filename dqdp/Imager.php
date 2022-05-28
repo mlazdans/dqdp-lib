@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace dqdp;
 
@@ -16,24 +16,26 @@ class Imager
 	function __construct(){
 		$this->im = new Imagick();
 		$this->set_root(".");
-		return $this;
 	}
 
-	function set_root($root){
+	function set_root($root): Imager {
 		$this->root = $root;
+
 		return $this;
 	}
 
 	# $max_w=NULL, $max_h=NULL, $format='webp', $quality=75
 	# $aspect_ver = W/H, $aspect_hor = W/H, autorotate=true
 	# $crop = false, frame = [], upscale = false
-	function add_config($config){
+	function add_config($config): Imager {
 		$this->config[] = eo($config);
+
+		return $this;
 	}
 
 	# filename, fd, blob, processor
 	# TODO: params class
-	function process_image($params){
+	function process_image($params): bool {
 		$params = eo($params);
 		try {
 			if($params->filename){
@@ -149,7 +151,7 @@ class Imager
 		return true;
 	}
 
-	function autorotate(Imagick $image){
+	function autorotate(Imagick $image): bool {
 		try {
 			switch ($image->getImageOrientation()) {
 				case Imagick::ORIENTATION_TOPLEFT:
