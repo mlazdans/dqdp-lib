@@ -10,6 +10,9 @@ use dqdp\DBA\AbstractDBA;
 // stat, utimes, chmod, chown, chgrp
 // Path names are case sensitive, components are separated with forward slash (/).
 
+# TODO: fs_type const
+# TODO: do not return content by default
+
 class FS implements DBA\TransactionInterface {
 	var $uid;
 	protected $Ent;
@@ -48,8 +51,7 @@ class FS implements DBA\TransactionInterface {
 	}
 
 	function get_by_fullpath(string $path, $params = null): array {
-		$params = $this->defaults_params($params);
-		//$params["fs_fullpath_hash"] = $this->path($path);
+		$params = eo($params);
 		$params->fs_fullpath = $this->path($path);
 
 		return ($data = $this->get_single($params)) ? $data : [];
@@ -118,42 +120,34 @@ class FS implements DBA\TransactionInterface {
 	}
 
 	function is_dir($path) : bool {
-		$params = $this->defaults_params();
-		$params->fs_type = 1;
-
-		return $this->get_by_fullpath($path, $params) ? true : false;
+		return $this->get_by_fullpath($path, ['fs_type'=>1]) ? true : false;
 	}
 
 	function file_exists($path) : bool {
-		$params = $this->defaults_params();
-		$params->fields = ["fs_fsid"];
-
-		return $this->get_by_fullpath($path, $params) ? true : false;
+		return $this->get_by_fullpath($path, ['fields'=>["fs_fsid"]]) ? true : false;
 	}
 
 	function rm($path){
+		# TODO: add default params!!!
 		$params = $this->defaults_params();
 		$params->fs_fullpath = $path;
-		$sql = "DELETE FROM fs WHERE fs_fullpath = ?";
 
-		return $this->get_trans()->query($sql, $path) ? true : false;
+		return $this->get_trans()->query("DELETE FROM fs WHERE fs_fullpath = ?", $path) ? true : false;
 	}
 
 	function dirmax($path){
-		$params = $this->defaults_params();
-		$params->get_dir_max = $this->path($path);
-		if($params->get_dir_max != '/'){
-			$params->get_dir_max .= '/';
+		$get_dir_max = $this->path($path);
+		if($get_dir_max != '/'){
+			$get_dir_max .= '/';
 		}
 
-		return $this->get_all($params);
+		return $this->get_all(['get_dir_max'=>$get_dir_max]);
 	}
 
 	function rmtree($path){
 		$max = $this->dirmax($path);
-		$ret = $this->Ent->delete(getbyk($max, 'fs_id'));
 
-		return $ret;
+		return $this->Ent->delete(getbyk($max, 'fs_id'));
 	}
 
 	private function explode_path($path){
@@ -207,9 +201,9 @@ class FS implements DBA\TransactionInterface {
 	}
 
 	function scandirraw($path, $params = null){
-		$d = $this->get_by_fullpath($this->path($path), $this->defaults_params());
+		$d = eo($this->get_by_fullpath($this->path($path)));
 
-		if(!$d){
+		if(is_empty($d)){
 			return false;
 		}
 
@@ -219,7 +213,7 @@ class FS implements DBA\TransactionInterface {
 		// 	$orderby = "$this->Table.fs_fullpath DESC";
 		// }
 
-		$params = $this->defaults_params($params);
+		$params = eo($params);
 		$params->fs_fsid = get_prop($d, 'fs_id');
 
 		return $this->get_all($params);
