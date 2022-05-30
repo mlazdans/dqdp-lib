@@ -186,7 +186,15 @@ class FunTemplate
 		return $this->set_attribute('disabled', true, $ID);
 	}
 
-	function set_attribute(string $attribute, $value, string $ID = NULL): FunTemplate {
+	function is_enabled(string $ID = NULL): bool {
+		return !$this->is_disabled($ID);
+	}
+
+	function is_disabled(string $ID = NULL): bool {
+		return $this->get_attribute('disabled', $ID);
+	}
+
+	function set_attribute(string $attribute, $value, string $ID = null): FunTemplate {
 		if($block = $this->_get_block_or_self($ID)){
 			if($attribute == 'disabled'){
 				$block->disabled = $value;
@@ -196,6 +204,16 @@ class FunTemplate
 		}
 
 		return $this;
+	}
+
+	function get_attribute(string $attribute, string $ID = null) {
+		if($block = $this->_get_block_or_self($ID)){
+			if($attribute == 'disabled'){
+				return $block->disabled;
+			}
+		} else {
+			throw new InvalidArgumentException("block not found ($ID)");
+		}
 	}
 
 	function dump_blocks($pre = ''){
