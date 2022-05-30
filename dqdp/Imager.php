@@ -108,8 +108,8 @@ class Imager
 			if($c->frame){
 				$c->frame = eo([
 					'bg'=>'black',
-					'w'=>$c->max_w,
-					'h'=>$c->max_h,
+					'w'=>(int)$c->max_w,
+					'h'=>(int)$c->max_h,
 				])->merge(is_scalar($c->frame) ? [] : $c->frame);
 			}
 
@@ -125,11 +125,14 @@ class Imager
 				}
 			}
 
+			$c->max_w = (int)$c->max_w;
+			$c->max_h = (int)$c->max_h;
+
 			try {
 				$I->cropThumbnailImage($c->max_w, $c->max_h);
 				if($frame = $c->frame){
 					$I->setImageBackgroundColor(new ImagickPixel($frame->bg));
-					$I->extentImage($frame->w, $frame->h, ($c->max_w - $frame->w)/2, ($c->max_h - $frame->h)/2);
+					$I->extentImage($frame->w, $frame->h, (int)(($c->max_w - $frame->w) / 2), (int)(($c->max_h - $frame->h) / 2));
 				}
 
 				if($params->processor){
