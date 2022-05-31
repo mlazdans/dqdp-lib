@@ -27,6 +27,7 @@ abstract class AbstractDBA
 	abstract function close(): bool;
 	abstract function escape($v): string;
 	abstract function save(iterable $DATA, AbstractTable $Table);
+	abstract function update($ID, iterable $DATA, AbstractTable $Table);
 	abstract function with_new_trans(callable $func, ...$args);
 
 	function set_default_fetch_function($func): AbstractDBA {

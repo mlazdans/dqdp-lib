@@ -10,5 +10,6 @@ interface EntityInterface extends TransactionInterface {
 	function get_single(?iterable $filters = null);
 	function search(?iterable $filters = null);
 	function save(iterable $DATA);
+	function update($ID, iterable $DATA);
 	function delete();
 }

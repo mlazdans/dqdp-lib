@@ -67,6 +67,10 @@ abstract class Entity implements EntityInterface {
 		return $this->get_trans()->save($DATA, $this->getTable());
 	}
 
+	function update($ID, iterable $DATA){
+		return $this->get_trans()->update($ID, $DATA, $this->getTable());
+	}
+
 	function delete(){
 		$ID = func_get_arg(0);
 		# TODO: multi field PK

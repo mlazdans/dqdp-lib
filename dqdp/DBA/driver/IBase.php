@@ -7,6 +7,7 @@ namespace dqdp\DBA\driver;
 use dqdp\DBA\AbstractDBA;
 use dqdp\DBA\AbstractTable;
 use dqdp\SQL\Insert;
+use dqdp\SQL\Update;
 
 require_once('ibaselib.php');
 
@@ -191,7 +192,7 @@ class IBase extends AbstractDBA
 		return ibase_escape($v);
 	}
 
-	function save(iterable $DATA, AbstractTable $Table){
+	private function get_sql_fields(iterable $DATA, AbstractTable $Table){
 		$sql_fields = (array)merge_only($Table->getFields(), $DATA);
 
 		$PK = $Table->getPK();
@@ -212,6 +213,40 @@ class IBase extends AbstractDBA
 			}
 		}
 
+		return $sql_fields;
+	}
+
+	# TODO:
+	// UPDATE target [[AS] alias]
+	// SET col = <value> [, col = <value> ...]
+	// [WHERE {<search-conditions> | CURRENT OF cursorname}]
+	// [PLAN <plan_items>]
+	// [ORDER BY <sort_items>]
+	// [ROWS m [TO n]]
+	// [RETURNING <returning_list> [INTO <variables>]]
+	// <returning_list> ::=
+	// <ret_value> [[AS] ret_alias] [, <ret_value> [[AS] ret_alias] ...]
+	// <ret_value> ::=
+	// colname
+	// | table_or_alias.colname
+	// | NEW.colname
+	// | OLD.colname
+	// | <value>
+	// <variables> ::= [:]varname [, [:]varname ...]
+	function update($ID, iterable $DATA, AbstractTable $Table){
+		$sql_fields = $this->get_sql_fields($DATA, $Table);
+		$sql = (new Update($Table->getName()))
+			->Set($sql_fields)
+			->Where([$Table->getPK().' = ?', $ID])
+		;
+
+		return $this->query($sql);
+	}
+
+	function save(iterable $DATA, AbstractTable $Table){
+		$PK = $Table->getPK();
+		$sql_fields = $this->get_sql_fields($DATA, $Table);
+
 		$sql = (new Insert)
 		->Into($Table->getName())
 		->Values($sql_fields);
@@ -219,7 +254,8 @@ class IBase extends AbstractDBA
 
 		$PK_fields_str = is_array($PK) ? join(",", $PK) : $PK;
 
-		if(!is_null($PK_val)){
+		// if(!is_null($PK_val)){
+		if(!is_null($sql_fields[$PK])){
 			$sql->Update()->after("values", "matching", "MATCHING ($PK_fields_str)");
 		}
 
