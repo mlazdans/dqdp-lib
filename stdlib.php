@@ -1167,11 +1167,11 @@ function ip_blacklisted($ip){
 
 	$iprev = ip_rev($ip);
 	foreach($dnsbl as $bl) {
-		# return 1 - not found; 0 - listed
-		# $c = "host -W 1 -t any $iprev.$bl";
-		$c = "host -W 1 $iprev.$bl";
-		$ret = exec($c, $o, $rv);
-		if(!$rv){
+		# return code 1 - not found; 0 - listed
+		# $c = "host -W 1 $iprev.$bl";
+
+		$c = "dig +short $iprev.$bl";
+		if(exec($c, $o, $rv)){
 			return true;
 		}
 	}
