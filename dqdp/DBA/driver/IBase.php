@@ -243,26 +243,21 @@ class IBase extends AbstractDBA
 		return $this->query($sql);
 	}
 
-	function save(iterable $DATA, AbstractTable $Table){
+	private function _get_insert_sql(iterable $DATA, AbstractTable $Table){
 		$PK = $Table->getPK();
+		$PK_fields_str = is_array($PK) ? join(",", $PK) : $PK;
+
 		$sql_fields = $this->get_sql_fields($DATA, $Table);
 
 		$sql = (new Insert)
 		->Into($Table->getName())
-		->Values($sql_fields);
-		// ->Update();
-
-		$PK_fields_str = is_array($PK) ? join(",", $PK) : $PK;
-
-		// if(!is_null($PK_val)){
-		if(!is_null($sql_fields[$PK])){
-			$sql->Update()->after("values", "matching", "MATCHING ($PK_fields_str)");
-		}
-
-		$sql
-		// ->after("values", "matching", "MATCHING ($PK_fields_str)")
+		->Values($sql_fields)
 		->after("values", "returning", "RETURNING $PK_fields_str");
 
+		return [$sql, $PK, $sql_fields, $PK_fields_str];
+	}
+
+	private function _insert_query(Insert $sql, $PK){
 		if($q = $this->query($sql)){
 			$retPK = $this->fetch($q);
 			if(is_array($PK)){
@@ -273,6 +268,22 @@ class IBase extends AbstractDBA
 		} else {
 			return false;
 		}
+	}
+
+
+	function insert(iterable $DATA, AbstractTable $Table){
+		list($sql, $PK) = $this->_get_insert_sql($DATA, $Table);
+		return $this->_insert_query($sql, $PK);
+	}
+
+	function save(iterable $DATA, AbstractTable $Table){
+		list($sql, $PK, $sql_fields, $PK_fields_str) = $this->_get_insert_sql($DATA, $Table);
+
+		if(!is_null($sql_fields[$PK])){
+			$sql->Update()->after("values", "matching", "MATCHING ($PK_fields_str)");
+		}
+
+		return $this->_insert_query($sql, $PK);
 	}
 
 	function with_new_trans(callable $func, ...$args){
