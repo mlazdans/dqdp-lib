@@ -1769,7 +1769,7 @@ function proc_exec(string $cmd, array $args = [], string $input = '', array $des
 	# Fix pipe-blocks
 	$temp_stdout = tempnam(sys_get_temp_dir(), substr(md5((string)rand()), 8));
 	$temp_stderr = tempnam(sys_get_temp_dir(), substr(md5((string)rand()), 8));
-	$temp_stdout = 'C:\Program Files\test';
+	// $temp_stdout = 'C:\Program Files\test';
 	// $process_cmd .= ' '.sprintf("1> %s", ($temp_stdout));
 	// $process_cmd .= ' '.sprintf("2> %s", ($temp_stderr));
 	$descriptorspec[1] = ['file', ($temp_stdout), 'w'];
