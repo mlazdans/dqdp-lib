@@ -6,6 +6,7 @@ namespace dqdp;
 
 use dqdp\DBA\AbstractDBA;
 use dqdp\DBA\EntityInterface;
+use Exception;
 
 /* Ibase
 CREATE TABLE SETTINGS
@@ -84,6 +85,14 @@ class Settings implements EntityInterface
 		$PARAMS->SET_CLASS = $this->CLASS; // part of PK, parent will take care
 
 		return $this->Ent->search($PARAMS);
+	}
+
+	function insert(iterable $DATA){
+		throw new Exception("Not implemented");
+	}
+
+	function update($ID, iterable $DATA){
+		throw new Exception("Not implemented");
 	}
 
 	function save(iterable $_){
