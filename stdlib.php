@@ -1460,8 +1460,18 @@ function print_nanotime(array $start_time, array $end_time = null, int $precisio
 	return join(" ", $print_time);
 }
 
-function print_memory($mem): string {
-	return number_format($mem / 1024 / 1024, 2, '.', '').'MB';
+function print_memory($mem, $precision = 2): string {
+	if(($GB = number_format($mem / 1024 / 1024 / 1024, $precision, '.', '')) > 1){
+		$ret = "$GB GB";
+	} elseif(($MB = number_format($mem / 1024 / 1024, $precision, '.', '')) > 1){
+		$ret = "$MB MB";
+	} elseif(($KB = number_format($mem / 1024, $precision, '.', '')) > 1){
+		$ret = "$KB KB";
+	} else {
+		$ret = (string)$mem;
+	}
+
+	return $ret;
 }
 
 function selected($v, $value): string {
