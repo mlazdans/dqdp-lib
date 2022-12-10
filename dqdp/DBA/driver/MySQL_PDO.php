@@ -235,4 +235,13 @@ class MySQL_PDO extends AbstractDBA
 
 		return $result;
 	}
+
+	function insert(iterable $DATA, AbstractTable $Table){
+		throw new Exception("TODO");
+	}
+
+	function update($ID, iterable $DATA, AbstractTable $Table){
+		throw new Exception("TODO");
+	}
+
 }
