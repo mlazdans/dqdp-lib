@@ -1501,11 +1501,15 @@ function boolcheckbox($NAME, $checked): string {
 	return join("\n", $ret);
 }
 
-function datediff($d1, $d2, $calc = 3600 * 24): float {
+function datediff(string $d1, string $d2, $calc = 3600 * 24): int|false {
 	$date1 = strtotime($d1);
 	$date2 = strtotime($d2);
 
-	return round(($date1 - $date2) / $calc);
+	if($date1 === false || $date2 === false || $calc == 0){
+		return false;
+	}
+
+	return (int)round(($date1 - $date2) / $calc);
 }
 
 function vardiem($int, $CURR_ID = 'EUR'){
