@@ -55,7 +55,7 @@ class Engine
 		}
 		self::$START_TIME = microtime(true);
 		ini_set('display_errors', '0'); // 1, ja iebūvētais
-		set_error_handler('dqdp\Engine::error_handler');
+		set_error_handler('dqdp\Engine::error_handler', error_reporting());
 		set_exception_handler('dqdp\Engine::exception_handler');
 		register_shutdown_function('dqdp\Engine::shutdown');
 		self::$REQ = eo();
