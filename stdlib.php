@@ -1508,7 +1508,7 @@ function datediff($d1, $d2, $calc = 3600 * 24): float {
 	return round(($date1 - $date2) / $calc);
 }
 
-function vardiem($int, $CURR_ID){
+function vardiem($int, $CURR_ID = 'EUR'){
 	return LV::vardiem($int, $CURR_ID);
 }
 
