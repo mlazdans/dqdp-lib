@@ -962,7 +962,8 @@ function sqlr(){
 		}
 	}, ...func_get_args());
 
-	if(!is_climode())print "</code></pre>\n";
+	if(!is_climode())print "</code></pre>";
+	print "\n";
 }
 
 function dumpr(){
@@ -979,7 +980,8 @@ function __pre_wrapper(callable $func, ...$args){
 	print ($t = debug_backtrace()) ? __back_trace_fmt($t[1])."\n\n" : '';
 	__output_wrapper($func, ...$args);
 
-	if(!is_climode())print "</pre>\n";
+	if(!is_climode())print "</pre>";
+	print "\n";
 }
 
 function __output_wrapper(callable $func, ...$args){
