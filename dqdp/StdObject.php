@@ -71,13 +71,12 @@ class StdObject implements Iterator, Countable
 		//return count($this->__stdo_keys);
 	}
 
-	function current() {
+	function current(): mixed {
 		return $this->{$this->key()};
 	}
 
-	function key() {
+	function key(): mixed {
 		return get_object_vars($this)[$this->__stdo_i]??null;
-		//return $this->__stdo_keys[$this->__stdo_i]??null;
 	}
 
 	function next(): void {
