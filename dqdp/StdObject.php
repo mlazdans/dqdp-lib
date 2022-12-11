@@ -1,12 +1,11 @@
-<?php
-
-declare(strict_types = 1);
+<?php declare(strict_types = 1);
 
 namespace dqdp;
 
 use Countable;
 use Iterator;
 
+#[\AllowDynamicProperties]
 class StdObject implements Iterator, Countable
 {
 	private $__stdo_debug = false;
