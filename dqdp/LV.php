@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace dqdp;
 
@@ -54,7 +54,7 @@ class LV
 		return trim($rez);
 	} // __vardiem_chunk
 
-	private static function __beigas($int, $b1 = 's', $b2 = 'i')
+	private static function __beigas(int $int, $b1 = 's', $b2 = 'i')
 	{
 		$dec = floor($int / 10);
 		return (($dec % 10 != 1) && ($int % 10 == 1) ? $b1 : $b2);
@@ -62,7 +62,7 @@ class LV
 	} // __beigas
 
 	# beigas tūkstošiem
-	private static function __beigasK($int)
+	private static function __beigasK(int $int)
 	{
 		$dec = floor($int / 10);
 		return (($dec % 10 != 1) && ($int % 10 == 1) ? 'tis' : 'ši');
@@ -74,11 +74,12 @@ class LV
 		# TODO: citām lokālēm atdalītājs var būt cits, piemēram, ","
 		list($part1, $part2) = explode(".", sprintf("%f", $float));
 		$chunks = str_split(strrev($part1), 3);
+		$part1 = (int)$part1;
 
 		$rez = '';
 		$c = count($chunks) - 1;
 		do {
-			$cip = strrev($chunks[$c]);
+			$cip = (int)strrev($chunks[$c]);
 			$rez .= LV::__vardiem_chunk($chunks[$c]).' ';
 			if($c == 1)
 				$rez .= LV::karta($c).LV::__beigasK($cip).' ';
@@ -91,7 +92,7 @@ class LV
 
 		$rez = $rez ? $rez : 'nulle';
 
-		$part2 = ('0.'.$part2) * 100;
+		$part2 = (int)(('0.'.$part2) * 100);
 
 		if($CURR_ID == 'EUR'){
 			return $rez.' euro '.round($part2, 2).' cent'.LV::__beigas($part2);
