@@ -2,8 +2,8 @@
 
 namespace dqdp;
 
-use dqdp\DBA;
 use dqdp\DBA\DBA;
+use dqdp\DBA\TransactionInterface;
 
 // write, read to/from file descriptor
 // mkdir, rmdir, creat, unlink, link, symlink
@@ -13,7 +13,7 @@ use dqdp\DBA\DBA;
 # TODO: fs_type const
 # TODO: do not return content by default
 
-class FS implements DBA\TransactionInterface {
+class FS implements TransactionInterface {
 	var $uid;
 	protected $Ent;
 
