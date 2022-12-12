@@ -4,14 +4,14 @@ declare(strict_types = 1);
 
 namespace dqdp\DBA\driver;
 
-use dqdp\DBA\AbstractDBA;
-use dqdp\DBA\AbstractTable;
+use dqdp\DBA\DBA;
+use dqdp\DBA\Table;
 use dqdp\DBA\DBAException;
 use dqdp\SQL\Insert;
 use Exception;
 use PDO;
 
-class MySQL_PDO extends AbstractDBA
+class MySQL_PDO extends DBA
 {
 	var ?PDO $conn;
 	protected $transactionCounter = 0;
@@ -186,7 +186,7 @@ class MySQL_PDO extends AbstractDBA
 		return trim($this->conn->quote($v), "'");
 	}
 
-	function save(iterable $DATA, AbstractTable $Table){
+	function save(iterable $DATA, Table $Table){
 		$sql_fields = (array)merge_only($Table->getFields(), $DATA);
 
 		$PK = $Table->getPK();
@@ -236,11 +236,11 @@ class MySQL_PDO extends AbstractDBA
 		return $result;
 	}
 
-	function insert(iterable $DATA, AbstractTable $Table){
+	function insert(iterable $DATA, Table $Table){
 		throw new Exception("TODO");
 	}
 
-	function update($ID, iterable $DATA, AbstractTable $Table){
+	function update($ID, iterable $DATA, Table $Table){
 		throw new Exception("TODO");
 	}
 

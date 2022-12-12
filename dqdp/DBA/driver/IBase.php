@@ -4,14 +4,14 @@ declare(strict_types = 1);
 
 namespace dqdp\DBA\driver;
 
-use dqdp\DBA\AbstractDBA;
-use dqdp\DBA\AbstractTable;
+use dqdp\DBA\DBA;
+use dqdp\DBA\Table;
 use dqdp\SQL\Insert;
 use dqdp\SQL\Update;
 
 require_once('ibaselib.php');
 
-class IBase extends AbstractDBA
+class IBase extends DBA
 {
 	var $conn;
 	var $tr;
@@ -192,7 +192,7 @@ class IBase extends AbstractDBA
 		return ibase_escape($v);
 	}
 
-	private function get_sql_fields(iterable $DATA, AbstractTable $Table){
+	private function get_sql_fields(iterable $DATA, Table $Table){
 		$sql_fields = (array)merge_only($Table->getFields(), $DATA);
 
 		$PK = $Table->getPK();
@@ -233,7 +233,7 @@ class IBase extends AbstractDBA
 	// | OLD.colname
 	// | <value>
 	// <variables> ::= [:]varname [, [:]varname ...]
-	function update($ID, iterable $DATA, AbstractTable $Table){
+	function update($ID, iterable $DATA, Table $Table){
 		$sql_fields = $this->get_sql_fields($DATA, $Table);
 		$sql = (new Update($Table->getName()))
 			->Set($sql_fields)
@@ -243,7 +243,7 @@ class IBase extends AbstractDBA
 		return $this->query($sql);
 	}
 
-	private function _insert_query(iterable $DATA, AbstractTable $Table, $update = false){
+	private function _insert_query(iterable $DATA, Table $Table, $update = false){
 		$PK = $Table->getPK();
 		$PK_fields_str = is_array($PK) ? join(",", $PK) : $PK;
 
@@ -274,11 +274,11 @@ class IBase extends AbstractDBA
 	}
 
 
-	function insert(iterable $DATA, AbstractTable $Table){
+	function insert(iterable $DATA, Table $Table){
 		return $this->_insert_query($DATA, $Table, false);
 	}
 
-	function save(iterable $DATA, AbstractTable $Table){
+	function save(iterable $DATA, Table $Table){
 		return $this->_insert_query($DATA, $Table, true);
 	}
 
@@ -294,7 +294,7 @@ class IBase extends AbstractDBA
 
 		$this->new_trans(...$args);
 		try {
-			// register_shutdown_function(function(AbstractDBA $db){
+			// register_shutdown_function(function(DBA $db){
 			// 	printr("Shut!", $this->tr);
 			// 	if($db->tr){
 			// 		printr("Shut - rollback!", $this->tr);

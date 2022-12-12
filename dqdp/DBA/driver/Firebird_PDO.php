@@ -4,14 +4,14 @@ declare(strict_types = 1);
 
 namespace dqdp\DBA\driver;
 
-use dqdp\DBA\AbstractDBA;
-use dqdp\DBA\AbstractTable;
+use dqdp\DBA\DBA;
+use dqdp\DBA\Table;
 use dqdp\DBA\DBAException;
 use dqdp\SQL\Insert;
 use PDO;
 use PDOStatement;
 
-class Firebird_PDO extends AbstractDBA
+class Firebird_PDO extends DBA
 {
 	var PDO $conn;
 	protected $transactionCounter = 0;
@@ -170,7 +170,7 @@ class Firebird_PDO extends AbstractDBA
 		return trim($this->conn->quote($v), "'");
 	}
 
-	function save(iterable $DATA, AbstractTable $Table){
+	function save(iterable $DATA, Table $Table){
 		$sql_fields = (array)merge_only($Table->getFields(), $DATA);
 
 		$PK = $Table->getPK();

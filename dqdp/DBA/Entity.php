@@ -8,8 +8,8 @@ use dqdp\SQL\Select;
 use dqdp\SQL\Statement;
 
 abstract class Entity implements EntityInterface {
-	public AbstractTable $Table;
-	protected AbstractDBA $dba;
+	public Table $Table;
+	protected DBA $dba;
 	// TODO: get rid off
 	protected string $tableName;
 	protected $PK;
@@ -88,13 +88,13 @@ abstract class Entity implements EntityInterface {
 		return $ret;
 	}
 
-	function set_trans(AbstractDBA $dba){
+	function set_trans(DBA $dba){
 		$this->dba = $dba;
 
 		return $this;
 	}
 
-	function get_trans(): AbstractDBA {
+	function get_trans(): DBA {
 		return $this->dba;
 	}
 

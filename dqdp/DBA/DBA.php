@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace dqdp\DBA;
 
-abstract class AbstractDBA
+abstract class DBA
 {
 	# TODO: static?
 	protected $fetch_function = 'fetch_assoc';
@@ -26,26 +26,26 @@ abstract class AbstractDBA
 	abstract function affected_rows(): int;
 	abstract function close(): bool;
 	abstract function escape($v): string;
-	abstract function save(iterable $DATA, AbstractTable $Table);
-	abstract function insert(iterable $DATA, AbstractTable $Table);
-	abstract function update($ID, iterable $DATA, AbstractTable $Table);
+	abstract function save(iterable $DATA, Table $Table);
+	abstract function insert(iterable $DATA, Table $Table);
+	abstract function update($ID, iterable $DATA, Table $Table);
 	abstract function with_new_trans(callable $func, ...$args);
 
-	function set_default_fetch_function($func): AbstractDBA {
+	function set_default_fetch_function($func): static {
 		$this->fetch_function = $func;
 
 		return $this;
 	}
 
-	function set_fetch_case(string $case){
+	function set_fetch_case(string $case): void {
 		$this->fetch_case = $case;
 	}
 
-	function fetch(){
+	function fetch(): mixed {
 		return $this->{$this->fetch_function}(...func_get_args());
 	}
 
-	function fetch_all(){
+	function fetch_all(): array {
 		while($r = $this->fetch(...func_get_args())){
 			$ret[] = $r;
 		}

@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace dqdp;
 
-use dqdp\DBA\AbstractDBA;
+use dqdp\DBA\DBA;
 use dqdp\DBA\EntityInterface;
 use Exception;
 
@@ -127,13 +127,13 @@ class Settings implements EntityInterface
 		// $params->SET_KEY = $ID;
 	}
 
-	function set_trans(AbstractDBA $dba) {
+	function set_trans(DBA $dba) {
 		$this->Ent->set_trans($dba);
 
 		return $this;
 	}
 
-	function get_trans(): AbstractDBA {
+	function get_trans(): DBA {
 		return $this->Ent->get_trans();
 	}
 

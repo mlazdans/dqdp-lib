@@ -4,9 +4,9 @@ declare(strict_types = 1);
 
 namespace dqdp\Settings;
 
-use dqdp\DBA\AbstractTable;
+use dqdp\DBA\Table;
 
-class SettingsTable extends AbstractTable {
+class SettingsTable extends Table {
 	function getName(): string {
 		return 'settings';
 	}
