@@ -406,8 +406,8 @@ function redirect_referer(string $default = "/"): void {
 
 
 function floatpoint($val): float {
-	$val = preg_replace('/[^0-9,\.\-]/', '', $val);
-	return (float)str_replace(',', '.', $val);
+	$val = preg_replace('/[^0-9,\.\-]/', '', (string)$val);
+	return (float)str_replace(',', '.', (string)$val);
 }
 
 function to_float($data){
@@ -426,7 +426,7 @@ function money_conv($data): float {
 	return floatpoint($data);
 }
 
-function money_round($data){
+function money_round($data): string {
 	return number_format(money_conv($data), 2, '.', '');
 }
 
