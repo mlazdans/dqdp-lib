@@ -10,10 +10,6 @@ abstract class Entity implements EntityInterface {
 	protected DBA $dba;
 	protected $PK;
 
-	function getTable() {
-		return $this->Table;
-	}
-
 	function __construct(){
 		$this->PK = $this->Table->getPK();
 	}
@@ -59,15 +55,15 @@ abstract class Entity implements EntityInterface {
 
 	# TODO: insert un update
 	function save(iterable $DATA){
-		return $this->get_trans()->save($DATA, $this->getTable());
+		return $this->get_trans()->save($DATA, $this->Table);
 	}
 
 	function update($ID, iterable $DATA){
-		return $this->get_trans()->update($ID, $DATA, $this->getTable());
+		return $this->get_trans()->update($ID, $DATA, $this->Table);
 	}
 
 	function insert(iterable $DATA){
-		return $this->get_trans()->insert($DATA, $this->getTable());
+		return $this->get_trans()->insert($DATA, $this->Table);
 	}
 
 	function delete(){
