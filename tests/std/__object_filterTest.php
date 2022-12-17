@@ -12,8 +12,8 @@ class __object_filterTest extends TestCase
 		return !is_null($i);
 	}
 
-	function f_strl3($i){
-		return strlen($i)>3;
+	function f_strl3(mixed $i){
+		return is_string($i) && (strlen($i) > 3);
 	}
 
 	# Nodublē objektu, lai pārbaudītu vai f-ija to nav izmainījusi
@@ -149,7 +149,7 @@ class __object_filterTest extends TestCase
 		$b = $this->adup($a, 'f_strl3');
 		$this->assertEquals($b, $a);
 
-		$a = ['a'=>['b'=>[1213123]]];
+		$a = ['a'=>['b'=>["1213123"]]];
 		$b = $this->adup($a, 'f_strl3');
 		$this->assertEquals($b, $a);
 	}
