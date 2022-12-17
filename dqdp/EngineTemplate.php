@@ -2,8 +2,9 @@
 
 namespace dqdp;
 
-abstract class PHPTemplate
+abstract class EngineTemplate extends PHPTemplate
 {
+	abstract static function out(string $MODULE_DATA): void;
 	// var array $Vars = [];
 
 	// function __construct(protected string $File){

@@ -25,8 +25,7 @@ class Engine
 	static public $MODULES_ROOT;
 	static public $MODULES;
 	static public $ROUTES;
-	static public $TEMPLATE;
-	static public $TEMPLATE_FILE;
+	static public ?EngineTemplate $TEMPLATE = null;
 	static public $MOD_REWRITE;
 
 	static function get_config($k = null){
@@ -50,6 +49,7 @@ class Engine
 	}
 
 	static function init(){
+		ob_start();
 		if(empty(self::$SYS_ROOT) || !file_exists(self::$SYS_ROOT)){
 			trigger_error('self::$SYS_ROOT not set', E_USER_ERROR);
 		}
@@ -374,9 +374,8 @@ class Engine
 		}
 
 		try {
-			if(self::$TEMPLATE_FILE){
-				self::$TEMPLATE->set('MODULE_DATA', $MODULE_DATA);
-				self::$TEMPLATE->include(self::$TEMPLATE_FILE);
+			if(self::$TEMPLATE){
+				self::$TEMPLATE->out($MODULE_DATA);
 			} else {
 				print $MODULE_DATA;
 			}
