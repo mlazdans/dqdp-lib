@@ -2,43 +2,87 @@
 
 namespace dqdp\DBA;
 
+use dqdp\DBA\interfaces\DBAInterface;
+use dqdp\DBA\interfaces\EntityInterface;
+use dqdp\SQL\Insert;
 use dqdp\SQL\Select;
 use dqdp\SQL\Statement;
 
 abstract class Entity implements EntityInterface {
-	public Table $Table;
-	protected DBA $dba;
+	protected DBAInterface $dba;
+	protected $Table;
 	protected $PK;
 
 	function __construct(){
-		$this->PK = $this->Table->getPK();
+		$this->Table = $this->getTableName();
+		$this->PK = $this->getPK();
 	}
+
+	protected abstract function getTableName(): string;
+	protected abstract function getDataType(): string;
+	protected abstract function getCollectionType(): string;
+	protected abstract function getPK(): array|string;
+	protected abstract function getGen(): ?string;
 
 	protected function select(): Select {
-		return (new Select("$this->Table.*"))->From($this->Table);
+		return (new Select($this->getTableName().".*"))->From($this->getTableName());
 	}
 
-	function get($ID, ?iterable $filters = null){
+	function get($ID, ?iterable $filters = null): ?DataObject {
 		$filters = eoe($filters);
 
 		$filters->{$this->PK} = $ID;
 
-		return $this->get_single($filters);
+		return $this->getSingle($filters);
 	}
 
-	function get_all(?iterable $filters = null): array {
-		if($q = $this->search($filters)){
-			return $this->get_trans()->fetch_all($q);
+	// function get_all(string $CollectionClass, ?iterable $filters = null): DataCollection {
+	function getAll(?iterable $filters = null): ?DataCollection {
+		if($q = $this->query($filters)){
+			// while($r = $this->get_trans()->fetch_object($q)){
+			while($r = $this->fetch($q)){
+				$ret[] = $r;
+				// $ret[] = $r;
+				// if($this->Table instanceof DataMapperInterface){
+					// $ret[] = $this->Table->fromDBObject($r);
+				// } else {
+				// 	$ret[] = $r;
+				// }
+			}
+
+			return new ($this->getCollectionType())($ret);
+			// return $this->get_trans()->fetch_all($q);
 		}
 	}
 
-	function get_single(?iterable $filters = null){
-		if($q = $this->search($filters)){
-			return $this->get_trans()->fetch($q);
-		}
+	# TODO: QueryClass
+	function fetch(): ?DataObject {
+		$q = func_get_arg(0);
+		$data = $this->get_trans()->fetch_object($q);
+		return $data ? ($this->getDataType())::fromDBObject($data) : null;
+		// return ($this->getDataType())::fromDBObject($this->get_trans()->fetch_object($q));
+		// return (new $this->getDataType())($this->fromDBObject($this->get_trans()->fetch_object($q)));
+		// if($this->Table instanceof DataMapperInterface){
+			// return $this->Table->fromDBObject($this->get_trans()->fetch_object($q));
+		// } else {
+		// 	return $this->get_trans()->fetch_object($q);
+		// }
 	}
 
-	function search(?iterable $filters = null){
+	function getSingle(?iterable $filters = null): ?DataObject {
+		if($q = $this->query($filters)){
+			return $this->fetch($q);
+			// if(isset($this->Mapper)){
+			// 	return $this->Mapper->fromDBObject($this->get_trans()->fetch_object($q));
+			// } else {
+			// 	return $this->get_trans()->fetch_object($q);
+			// }
+		}
+
+		return null;
+	}
+
+	function query(?iterable $filters = null){
 		return $this->get_trans()->query($this->set_filters($this->select(), $filters));
 	}
 
@@ -54,20 +98,75 @@ abstract class Entity implements EntityInterface {
 	}
 
 	# TODO: insert un update
-	function save(iterable $DATA){
-		return $this->get_trans()->save($DATA, $this->Table);
+	function save(DataObject $DATA){
+		return $this->_insert_query($DATA, true);
+		// return $this->get_trans()->save($DATA, $this->Table);
 	}
 
-	function update($ID, iterable $DATA){
+	function update($ID, DataObject $DATA){
 		return $this->get_trans()->update($ID, $DATA, $this->Table);
 	}
 
-	function insert(iterable $DATA){
+	function insert(DataObject $DATA){
 		return $this->get_trans()->insert($DATA, $this->Table);
 	}
 
-	function delete(){
-		$ID = func_get_arg(0);
+	private function _insert_query(DataObject $DATA, $update = false): mixed {
+		$PK = $this->getPK();
+		$TableName = $this->getTableName();
+		$PK_fields_str = is_array($PK) ? join(",", $PK) : $PK;
+
+		$DB_DATA = $DATA->toDBObject();
+
+		$sql_fields = $this->get_sql_fields($DB_DATA);
+
+		$sql = (new Insert)
+		->Into($TableName)
+		->Values($sql_fields);
+
+		if($update){
+			if(!prop_exists($sql_fields, $PK)){
+				$sql->Update()->after("values", "matching", "MATCHING ($PK_fields_str)");
+			}
+		}
+
+		# TODO: refactor out
+		$sql->after("values", "returning", "RETURNING $PK_fields_str");
+
+		if($q = $this->get_trans()->query($sql)){
+			$retPK = $this->get_trans()->fetch_object($q);
+			if(is_array($PK)){
+				return $retPK;
+			} else {
+				return get_prop($retPK, $PK);
+			}
+		}
+
+		return null;
+	}
+
+	# TODO: refactor out, rename
+	private function get_sql_fields(object|array $DATA){
+		$PK = $this->getPK();
+		if(is_array($PK)){
+		} else {
+			if(prop_exists($DATA, $PK)){
+				$DATA[$PK] = get_prop($DATA, $PK);
+			} else {
+				if($Gen = $this->getGen()){
+					set_prop($DATA, $PK, function() use ($Gen) {
+						return "NEXT VALUE FOR $Gen";
+					});
+				}
+			}
+		}
+
+		return $DATA;
+	}
+
+
+	function delete($ID){
+		// $ID = func_get_arg(0);
 		# TODO: multi field PK
 		# TODO: dqdp\SQL\Statement
 		$prep = $this->get_trans()->prepare("DELETE FROM $this->Table WHERE $this->PK = ?");
@@ -79,13 +178,13 @@ abstract class Entity implements EntityInterface {
 		return $ret;
 	}
 
-	function set_trans(DBA $dba){
+	function set_trans(DBAInterface $dba){
 		$this->dba = $dba;
 
 		return $this;
 	}
 
-	function get_trans(): DBA {
+	function get_trans(): DBAInterface {
 		return $this->dba;
 	}
 
