@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 
-use dqdp\DBA\DBA;
+use dqdp\DBA\interfaces\DBAInterface;
 use dqdp\SQL\Select;
 
 require_once("stdlib.php");
@@ -189,17 +189,26 @@ function ibase_get_meta($database, $params = null){
 	return ibase_isql_exec(__ibase_isql_args($params, ['-x']));
 }
 
-function ibase_strip_rdb($data){
-	__object_walk_ref($data, function(&$item, &$k){
-		if((strpos($k, 'RDB$') === 0) || (strpos($k, 'SEC$') === 0)){
-			$k = trim(substr($k, 4));
-			if(is_string($item)){
-				$item = trim($item);
-			}
+function ibase_strip_rdb(array|object &$data) {
+	__object_walk($data, function(&$item, &$k, &$parent){
+		if(!(is_string($k) || $k instanceof Stringable)){
+			return;
 		}
-	});
 
-	return $data;
+		if((strpos($k, 'RDB$') !== 0) && (strpos($k, 'SEC$') !== 0)){
+			return;
+		}
+
+		unset_prop($parent, $k);
+
+		$k = trim(substr($k, 4));
+
+		if(is_string($item) || $item instanceof Stringable){
+			$item = trim($item);
+		}
+
+		set_prop($parent, $k, $item);
+	});
 }
 
 function ibase_pathinfo(string $DB_PATH){
@@ -238,11 +247,11 @@ function ibase_quote($data){
 }
 
 # TODO: Zemāk esošajām f-ijām lietot Firebird lib
-function ibase_get_current_user(DBA $db){
+function ibase_get_current_user(DBAInterface $db){
 	return ($u = ibase_get_users($db, ["CURRENT_USER"=>true])) ? $u[0] : $u;
 }
 
-function ibase_get_users(DBA $db, ?iterable $F = null): array {
+function ibase_get_users(DBAInterface $db, ?iterable $F = null): array {
 	$F = eoe($F);
 
 	$sql = (new Select)
@@ -261,27 +270,40 @@ function ibase_get_users(DBA $db, ?iterable $F = null): array {
 	}
 
 	if(!($q = $db->query($sql))){
-		return false;
+		return null;
 	}
 
-	return ibase_strip_rdb($db->fetch_all($q));
+	while($r = $db->fetch_object($q)){
+		ibase_strip_rdb($r);
+		$ret[] = $r;
+	}
+
+	// $ret2 = ibase_strip_rdb($ret);
+	// return ibase_strip_rdb($ret??[]);
+	// return ibase_strip_rdb($db->fetch_all($q));
+	return $ret??[];
 }
 
-function ibase_get_current_role(DBA $db): string {
-	return trim(get_prop($db->execute_single('SELECT CURRENT_ROLE AS RLE FROM RDB$DATABASE'), 'RLE'));
+function ibase_get_current_role(DBAInterface $db): string {
+	return trim(get_prop(
+		$db->fetch_array($db->query('SELECT CURRENT_ROLE AS RLE FROM RDB$DATABASE'))
+	, 'RLE'));
 }
 
-function ibase_get_object_types(DBA $db): array {
+function ibase_get_object_types(DBAInterface $db): array {
 	$sql = 'SELECT RDB$TYPE, RDB$TYPE_NAME FROM RDB$TYPES WHERE RDB$FIELD_NAME=\'RDB$OBJECT_TYPE\'';
-	$data = ibase_strip_rdb($db->execute($sql));
-	foreach($data as $r){
+	// $data = ibase_strip_rdb($db->execute($sql));
+	$q = $db->query($sql);
+	// foreach($data as $r){
+	while($r = $db->fetch_object($q)){
+		ibase_strip_rdb($r);
 		$ret[$r->TYPE] = $r->TYPE_NAME;
 	}
 
 	return $ret??[];
 }
 
-function ibase_get_privileges(DBA $db, $PARAMS = null): array {
+function ibase_get_privileges(DBAInterface $db, $PARAMS = null): array {
 	$ret = [];
 
 	if(is_scalar($PARAMS)){
@@ -306,7 +328,7 @@ function ibase_get_privileges(DBA $db, $PARAMS = null): array {
 	}
 
 	while($r = $db->fetch_object($q)){
-		$r = ibase_strip_rdb($r);
+		ibase_strip_rdb($r);
 
 		$k = $r->USER;
 		if($r->USER_TYPE == 13){

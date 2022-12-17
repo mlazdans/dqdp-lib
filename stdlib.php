@@ -6,6 +6,7 @@ use dqdp\StdObject;
 use PHPMailer\PHPMailer\PHPMailer;
 
 require_once("qblib.php");
+require_once("objflib.php");
 
 final class dqdp {
 	static public $DATE_FORMAT = 'd.m.Y';
@@ -512,136 +513,6 @@ function compacto($data) {
 	});
 }
 
-function __object_walk($data, callable $func, $i = null){
-	if(is_array($data)){
-		foreach($data as $k=>$v){
-			__object_walk($v, $func, $k);
-		}
-	} elseif($data instanceof stdClass || $data instanceof Traversable) {
-		foreach(get_object_vars($data) as $k=>$v){
-			__object_walk($v, $func, $k);
-		}
-	} else {
-		$func($data, $i);
-	}
-}
-
-function __object_walk_ref(&$data, callable $func, &$i = null){
-	if(is_array($data)){
-		foreach($data as $k=>&$v){
-			$oldK = $k;
-			__object_walk_ref($v, $func, $k);
-			if($oldK !== $k){
-				$data[$k] = $data[$oldK];
-				unset($data[$oldK]);
-			}
-		}
-	} elseif($data instanceof stdClass || $data instanceof Traversable) {
-		foreach(get_object_vars($data) as $k=>$v){
-			$oldK = $k;
-			__object_walk_ref($data->{$k}, $func, $k);
-			if($oldK !== $k){
-				$data->{$k} = $data->{$oldK};
-				unset($data->{$oldK});
-			}
-		}
-	} else {
-		$func($data, $i);
-	}
-}
-
-/**
- * Nebūtu slikti izdomāt veidu, kā ērtāk apstrādāt obj un array pašā $func
- * Pagaidām $func dabū tikai ne-(obj|arr)
- * Tas palīdzētu tādām f-ijām, kas čeko [] vai empty object
- */
-function __object_filter($data, callable $func, $i = null){
-	if(is_array($data)){
-		foreach($data as $k=>$v){
-			$v2 = __object_filter($v, $func, $k);
-			if(is_null($v2)){
-				unset($data[$k]);
-			} else {
-				$data[$k] = $v2;
-			}
-		}
-		return $data;
-	} elseif($data instanceof stdClass || $data instanceof Traversable) {
-		$d = clone $data;
-		foreach(get_object_vars($d) as $k=>$v){
-			$v2 = __object_filter($v, $func, $k);
-			if(is_null($v2)){
-				unset($d->{$k});
-			} else {
-				$d->{$k} = $v2;
-			}
-		}
-		return $d;
-	} else {
-		if($v = $func($data, $i)){
-			return $data;
-		}
-	}
-}
-/*
-function __object_filterk($data, $func, $i = null){
-	if(is_array($data)){
-		foreach($data as $k=>$v){
-			if($v2 = __object_filter($v, $func, $k)){
-				$data[$k] = $v2;
-			} else {
-				unset($data[$k]);
-			}
-		}
-		return $data;
-	} elseif(is_object($data)) {
-		$d = clone $data;
-		foreach(get_object_vars($d) as $k=>$v){
-			if($v2 = __object_filter($v, $func, $k)){
-				$d->{$k} = $v2;
-			} else {
-				unset($d->{$k});
-			}
-		}
-		return $d;
-	} else {
-		return $func($data, $i);
-	}
-}
-*/
-
-function __object_map($data, callable $func, $i = null){
-	if(is_array($data)){
-		foreach($data as $k=>$v){
-			$data[$k] = __object_map($v, $func, $k);
-		}
-		return $data;
-	} elseif($data instanceof stdClass || $data instanceof Traversable){
-		$d = clone $data;
-		foreach(get_object_vars($data) as $k=>$v){
-			$d->{$k} = __object_map($v, $func, $k);
-		}
-		return $d;
-	} else {
-		return $func((string)$data, $i);
-	}
-}
-
-// TODO: bool carry should return immediately
-function __object_reduce($data, callable $func, $carry = null, $i = null){
-	if(is_array($data)){
-		foreach($data as $k=>$v){
-			$carry = __object_reduce($v, $func, $carry, $k);
-		}
-	} elseif($data instanceof stdClass || $data instanceof Traversable) {
-		$carry = __object_reduce(get_object_vars($data), $func, $carry, $i);
-	} else {
-		$carry = $func($carry, $data, $i);
-	}
-
-	return $carry;
-}
-
 function utf2win($data){
 	return __object_map($data, function($item){
 		return mb_convert_encoding($item, 'ISO-8859-13', 'UTF-8');
@@ -709,8 +580,12 @@ function rawurldec($data){
 ##
 
 function specialchars($data){
-	return __object_map($data, function(string $item){
-		return htmlspecialchars($item, ENT_COMPAT | ENT_HTML401, '', false);
+	return __object_map($data, function($item){
+		if(is_string($item) || $item instanceof Stringable){
+			return htmlspecialchars((string)$item, ENT_COMPAT | ENT_HTML401, '', false);
+		} else {
+			return $item;
+		}
 	});
 }
 
@@ -924,8 +799,10 @@ function __query($query_string = '', $format = '', $delim = '&amp;', $allowed = 
 # TODO: tas nestrādā, kā plānots
 function format_debug($v, $depth = 0){
 	$vars = __object_map($v, function($item) use ($depth){
-		if(is_scalar($item) && mb_detect_encoding($item)){
+		if((is_string($item) || $item instanceof Stringable) && mb_detect_encoding($item)){
 			return mb_substr($item, 0, 1024).(mb_strlen($item) > 1024 ? '...' : '');
+		} elseif(is_scalar($item)){
+			return $item;
 		} elseif(is_null($item)) {
 			return "NULL";
 		} elseif(is_resource($item)) {
@@ -962,7 +839,8 @@ function sqlr(){
 		}
 	}, ...func_get_args());
 
-	if(!is_climode())print "</code></pre>";
+	print is_climode() ? "-------------------------------------------------\n" : "</code></pre>";
+
 	print "\n";
 }
 
@@ -977,10 +855,10 @@ function printr(){
 function __pre_wrapper(callable $func, ...$args){
 	if(!is_climode())print '<pre style="background: lightgrey; color: black">';
 
-	print ($t = debug_backtrace()) ? __back_trace_fmt($t[1])."\n\n" : '';
+	print ($t = debug_backtrace()) ? __back_trace_fmt($t[1])."\n------------------------------------------------------------------------------\n" : '';
 	__output_wrapper($func, ...$args);
 
-	if(!is_climode())print "</pre>";
+	print is_climode() ? "\n------------------------------------------------------------------------------\n" : "</pre>";
 	print "\n";
 }
 
@@ -1554,18 +1432,31 @@ function kdsort(&$a){
 	}
 }
 
-function __merge($o1, $o2, array $fields = null){
+function __merge(mixed $o1, mixed $o2, array $fields = null): mixed {
 	if(is_null($o1) && is_null($o2)){
 		return null;
 	}
 
-	if($o2 instanceof stdClass || $o2 instanceof Traversable){
-		$a2 = get_object_vars($o2);
-	} elseif(is_array($o2)){
+	if(is_array($o2) || $o2 instanceof ArrayAccess){
 		$a2 = $o2;
+	} elseif($o2 instanceof stdClass || $o2 instanceof Traversable){
+		$a2 = get_object_vars($o2);
 	} else {
 		return $o2;
 	}
+
+	// if($o2 instanceof stdClass || $o2 instanceof Traversable){
+	// 	$a2 = get_object_vars($o2);
+	// } elseif(is_array($o2)){
+	// 	$a2 = $o2;
+	// } else {
+	// 	return $o2;
+	// 	// if(is_array($o1)){
+	// 	// 	return (array)$o2;
+	// 	// } else {
+	// 	// 	return $o2;
+	// 	// }
+	// }
 
 	if($fields){
 		foreach($a2 as $k=>$v){
@@ -1575,22 +1466,32 @@ function __merge($o1, $o2, array $fields = null){
 		}
 	}
 
-	if($o1 instanceof stdClass || $o1 instanceof Traversable){
-		foreach($a2 as $k=>$v)$o1->{$k} = merge($o1->{$k}??null, $v);
-	} elseif(is_array($o1)){
+	if(is_array($o1)){
 		foreach($a2 as $k=>$v)$o1[$k] = merge($o1, $v);
+	} elseif($o1 instanceof ArrayAccess){
+		foreach($a2 as $k=>$v)$o1[$k] = merge($o1[$k]??null, $v);
+	} elseif($o1 instanceof stdClass || $o1 instanceof Traversable){
+		foreach($a2 as $k=>$v)$o1->{$k} = merge($o1->{$k}??null, $v);
 	} else {
 		return $o2;
 	}
 
+	// if($o1 instanceof stdClass || $o1 instanceof Traversable){
+	// 	foreach($a2 as $k=>$v)$o1->{$k} = merge($o1->{$k}??null, $v);
+	// } elseif(is_array($o1)){
+	// 	foreach($a2 as $k=>$v)$o1[$k] = merge($o1, $v);
+	// } else {
+	// 	return $o2;
+	// }
+
 	return $o1;
 }
 
-function merge($o1, $o2){
+function merge(mixed $o1, mixed $o2){
 	return __merge($o1, $o2);
 }
 
-function merge_only(array $fields, $o1, $o2 = null){
+function merge_only(array $fields, mixed $o1, mixed $o2 = null){
 	if(is_null($o2)){
 		$o2 = $o1;
 		$o1 = is_array($o2) ? [] : (is_object($o2) ? new stdClass : $o1);
@@ -1880,7 +1781,7 @@ function options_select(iterable $data, string $vk, string $lk, $selected = null
 	return join("", $ret??[]);
 }
 
-function array_search_k(array $arr, $k, $v){
+function array_search_k(array|object $arr, $k, $v){
 	foreach($arr as $i=>$item){
 		if(is_object($item)){
 			$cmpv = $item->{$k}??null;
@@ -2073,23 +1974,45 @@ function str_limiter($str, $limit, $append){
 	return $str;
 }
 
-function get_prop($o, $k){
-	if(is_object($o)){
-		if(property_exists($o, $k)){
-			return $o->{$k};
-		}
-	} elseif(is_array($o)){
-		if(key_exists($k, $o)){
-			return $o[$k];
-		}
+function prop_exists(array|object $o, $k): bool {
+	if(is_array($o)){
+		return key_exists($k, $o);
+	} elseif($o instanceof ArrayAccess){
+		return $o->offsetExists($k);
+	} elseif(is_object($o)){
+		return property_exists($o, $k);
+	} else {
+		throw new InvalidArgumentException("Expected array|object|ArrayAccess, found: ".gettype($o));
 	}
 }
 
-function set_prop(&$o, $k, $v){
-	if(is_object($o)){
-		return $o->{$k} = $v;
-	} elseif(is_array($o)){
-		return $o[$k] = $v;
+function get_prop(array|object $o, $k): mixed {
+	if(is_array($o) || $o instanceof ArrayAccess){
+		return $o[$k];
+	} elseif(is_object($o)){
+		return $o->{$k};
+	} else {
+		throw new InvalidArgumentException("Expected array|object|ArrayAccess, found: ".gettype($o));
+	}
+}
+
+function unset_prop(array|object &$o, $k): void {
+	if(is_array($o) || $o instanceof ArrayAccess){
+		unset($o[$k]);
+	} elseif(is_object($o)){
+		unset($o->{$k});
+	} else {
+		throw new InvalidArgumentException("Expected array|object|ArrayAccess, found: ".gettype($o));
+	}
+}
+
+function set_prop(array|object &$o, $k, $v): void {
+	if(is_array($o) || $o instanceof ArrayAccess){
+		$o[$k] = $v;
+	} elseif(is_object($o)){
+		$o->{$k} = $v;
+	} else {
+		throw new InvalidArgumentException("Expected array|object|ArrayAccess, found: ".gettype($o));
 	}
 }
 
@@ -2097,9 +2020,13 @@ function str_ends($haystack, $needle) {
 	return 0 === substr_compare($haystack, $needle, -strlen($needle));
 }
 
-function ktolower($data){
-	__object_walk_ref($data, function(&$item, &$k){
-		$k = strtolower($k);
+function ktolower(array|object $data): mixed {
+	__object_walk($data, function(&$item, &$k, &$parent){
+		$new_k = strtolower($k);
+		if(strcmp($new_k, $k) !== 0){
+			unset_prop($parent, $k);
+			set_prop($parent, $new_k, $item);
+		}
 	});
 
 	return $data;
@@ -2109,7 +2036,7 @@ function array_flatten(array $a): array {
 	return flatten($a);
 }
 
-function flatten($o): array {
+function flatten(array|object $o): array {
 	__object_walk($o, function($i) use (&$ret){
 		$ret[] = $i;
 	});
@@ -2117,9 +2044,9 @@ function flatten($o): array {
 	return $ret??[];
 }
 
-function getbyk($o, $k){
-	return flatten(__object_filter($o, function($item, $i) use ($k){
-		return $i === $k;
+function getbyk(array|object $o, string|int $k): mixed {
+	return flatten(__object_filter($o, function($item, $inner_k) use ($k){
+		return $inner_k === $k;
 	}));
 }
 
@@ -2213,4 +2140,16 @@ function rearrange_files_array(array $file_post): array {
 	}
 
 	return $file_ary;
+}
+
+function is_dqdp_statement($args): bool {
+	return (count($args) == 1) && $args[0] instanceof \dqdp\SQL\Statement;
+}
+
+function get_class_public_vars(string $className){
+	return get_class_vars($className);
+}
+
+function get_object_public_vars(object $o){
+	return get_object_vars($o);
 }
