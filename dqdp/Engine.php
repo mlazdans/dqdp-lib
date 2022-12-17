@@ -317,6 +317,7 @@ class Engine
 
 	static function exception_handler($e) {
 		self::__error_handler(0, sprintf("Uncaught Exception(%s)", get_class($e)), $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTrace());
+		error_log("Uncaught Exception: ".$e);
 	}
 
 	static function error_handler_msgformat($errtype, $errstr, $errfile, $errline){
