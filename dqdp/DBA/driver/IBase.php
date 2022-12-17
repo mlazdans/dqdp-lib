@@ -1,58 +1,70 @@
-<?php
-
-declare(strict_types = 1);
+<?php declare(strict_types = 1);
 
 namespace dqdp\DBA\driver;
 
-use dqdp\DBA\DBA;
-use dqdp\DBA\Table;
-use dqdp\SQL\Insert;
-use dqdp\SQL\Update;
+require_once('stdlib.php');
+
+use dqdp\DBA\interfaces\DBAInterface;
 
 require_once('ibaselib.php');
 
-class IBase extends DBA
+class IBase implements DBAInterface
 {
-	var $conn;
-	var $tr;
+	private $conn;
+	private $tr;
 
 	static public $FETCH_FLAGS = IBASE_TEXT;
 
-	function connect_params($params){
-		$database = $params['database'] ?? '';
-		$username = $params['username'] ?? '';
-		$password = $params['password'] ?? '';
-		$charset = $params['charset'] ?? 'utf8';
-		$buffers = $params['buffers'] ?? 0;
-		$dialect = $params['dialect'] ?? 0;
-		$role = $params['role'] ?? '';
+	function __construct(
+		readonly ?string $database = '',
+		readonly ?string $username = '',
+		readonly ?string $password = '',
+		readonly ?string $charset = '',
+		readonly ?int $buffers = 0,
+		readonly ?int $dialect = 0,
+		readonly ?string $role = '',
+		readonly ?int $sync = 0
+		)
+	{
 
-		return $this->connect($database, $username, $password, $charset, $buffers, $dialect, $role);
 	}
 
-	function connect(){
-		$this->conn = ibase_connect(...func_get_args());
+	function get_conn(): mixed {
+		return $this->conn;
+	}
+
+	function connect(): static {
+		$this->conn = ibase_connect(
+			$this->database,
+			$this->username,
+			$this->password,
+			$this->charset,
+			$this->buffers,
+			$this->dialect,
+			$this->role,
+			$this->sync
+		);
 
 		return $this;
 	}
 
-	private function __execute($f, ...$args){
-		$q = $this->query(...$args);
+	// private function __execute($f, ...$args){
+	// 	$q = $this->query(...$args);
 
-		if($q && is_resource($q)){
-			$data = $this->$f($q);
-		}
+	// 	if($q && is_resource($q)){
+	// 		$data = $this->$f($q);
+	// 	}
 
-		return isset($data) ? $data : $q;
-	}
+	// 	return isset($data) ? $data : $q;
+	// }
 
-	function execute(){
-		return $this->__execute("fetch_all", ...func_get_args());
-	}
+	// function execute(){
+	// 	return $this->__execute("fetch_all", ...func_get_args());
+	// }
 
-	function execute_single(){
-		return $this->__execute("fetch", ...func_get_args());
-	}
+	// function execute_single(){
+	// 	return $this->__execute("fetch_object", ...func_get_args());
+	// }
 
 	function execute_prepared(){
 		return ibase_execute(...func_get_args());
@@ -61,7 +73,7 @@ class IBase extends DBA
 	function query() {
 		$args = func_get_args();
 
-		if($this->is_dqdp_statement($args)){
+		if(is_dqdp_statement($args)){
 			if($this->tr){
 				$q = ibase_query($this->conn, $this->tr, (string)$args[0], ...$args[0]->vars());
 			} else {
@@ -112,30 +124,40 @@ class IBase extends DBA
 		return $q;
 	}
 
-	private function __fetch(callable $func, ...$args){
+	private function __fetch(callable $func, ...$args): mixed {
 		if(!isset($args[1])){
 			$args[1] = self::$FETCH_FLAGS;
 		}
 
-		if($this->fetch_case === 'lower'){
-			if($d = $func(...$args)){
-				if(is_array($d)){
-					return array_change_key_case($d, CASE_LOWER);
-				}
-			}
+		// if($this->fetch_case === 'lower'){
+		// 	if($d = $func(...$args)){
+		// 		if(is_array($d)){
+		// 			return array_change_key_case($d, CASE_LOWER);
+		// 		}
+		// 	}
 
-			return $d;
-		} else {
-			return $func(...$args);
+		// 	return $d;
+		// } else {
+		// 	return $func(...$args);
+		// }
+
+		if($r = $func(...$args)){
+			return $r;
 		}
+
+		return null;
 	}
 
-	function fetch_assoc(){
-		return $this->__fetch('ibase_fetch_assoc', ...func_get_args());
+	function fetch_array(...$args): array|null {
+		return $this->__fetch("ibase_fetch_row", ...$args);
 	}
 
-	function fetch_object(){
-		return $this->__fetch('ibase_fetch_object', ...func_get_args());
+	function fetch_assoc(...$args): array|null {
+		return $this->__fetch("ibase_fetch_assoc", ...$args);
+	}
+
+	function fetch_object(...$args): object|null {
+		return $this->__fetch("ibase_fetch_object", ...$args);
 	}
 
 	function new_trans(): self {
@@ -173,7 +195,7 @@ class IBase extends DBA
 	function prepare(){
 		$args = func_get_args();
 
-		if($this->is_dqdp_statement($args)){
+		if(is_dqdp_statement($args)){
 			if($this->tr){
 				return ibase_prepare($this->conn, $this->tr, (string)$args[0]);
 			} else {
@@ -192,29 +214,29 @@ class IBase extends DBA
 		return ibase_escape($v);
 	}
 
-	private function get_sql_fields(iterable $DATA, Table $Table){
-		$sql_fields = (array)merge_only($Table->getFields(), $DATA);
+	// private function get_sql_fields(iterable $DATA, TableInterface $Table){
+	// 	$sql_fields = (array)merge_only($Table->getFields(), $DATA);
 
-		$PK = $Table->getPK();
-		if(is_array($PK)){
-		} else {
-			if($this->fetch_case === 'lower'){
-				$PK = strtolower($PK);
-			}
-			$PK_val = get_prop($DATA, $PK);
-			if(is_null($PK_val)){
-				if($Gen = $Table->getGen()){
-					$sql_fields[$PK] = function() use ($Gen) {
-						return "NEXT VALUE FOR $Gen";
-					};
-				}
-			} else {
-				$sql_fields[$PK] = $PK_val;
-			}
-		}
+	// 	$PK = $Table->getPK();
+	// 	if(is_array($PK)){
+	// 	} else {
+	// 		if($this->fetch_case === 'lower'){
+	// 			$PK = strtolower($PK);
+	// 		}
+	// 		$PK_val = get_prop($DATA, $PK);
+	// 		if(is_null($PK_val)){
+	// 			if($Gen = $Table->getGen()){
+	// 				$sql_fields[$PK] = function() use ($Gen) {
+	// 					return "NEXT VALUE FOR $Gen";
+	// 				};
+	// 			}
+	// 		} else {
+	// 			$sql_fields[$PK] = $PK_val;
+	// 		}
+	// 	}
 
-		return $sql_fields;
-	}
+	// 	return $sql_fields;
+	// }
 
 	# TODO:
 	// UPDATE target [[AS] alias]
@@ -233,56 +255,57 @@ class IBase extends DBA
 	// | OLD.colname
 	// | <value>
 	// <variables> ::= [:]varname [, [:]varname ...]
-	function update($ID, iterable $DATA, Table $Table){
-		$sql_fields = $this->get_sql_fields($DATA, $Table);
-		$sql = (new Update($Table->getName()))
-			->Set($sql_fields)
-			->Where([$Table->getPK().' = ?', $ID])
-		;
+	// function update($ID, iterable $DATA, TableInterface $Table){
+	// 	$sql_fields = $this->get_sql_fields($DATA, $Table);
+	// 	$sql = (new Update($Table->getName()))
+	// 		->Set($sql_fields)
+	// 		->Where([$Table->getPK().' = ?', $ID])
+	// 	;
 
-		return $this->query($sql);
-	}
+	// 	return $this->query($sql);
+	// }
 
-	private function _insert_query(iterable $DATA, Table $Table, $update = false){
-		$PK = $Table->getPK();
-		$PK_fields_str = is_array($PK) ? join(",", $PK) : $PK;
+	// Returns PK or null
+	// private function _insert_query(iterable $DATA, TableInterface $Table, $update = false): mixed {
+	// 	$PK = $Table->getPK();
+	// 	$PK_fields_str = is_array($PK) ? join(",", $PK) : $PK;
 
-		$sql_fields = $this->get_sql_fields($DATA, $Table);
+	// 	$sql_fields = $this->get_sql_fields($DATA, $Table);
 
-		$sql = (new Insert)
-		->Into($Table->getName())
-		->Values($sql_fields);
+	// 	$sql = (new Insert)
+	// 	->Into($Table->getName())
+	// 	->Values($sql_fields);
 
-		if($update){
-			if(!is_null($sql_fields[$PK])){
-				$sql->Update()->after("values", "matching", "MATCHING ($PK_fields_str)");
-			}
-		}
+	// 	if($update){
+	// 		if(!is_null($sql_fields[$PK])){
+	// 			$sql->Update()->after("values", "matching", "MATCHING ($PK_fields_str)");
+	// 		}
+	// 	}
 
-		$sql->after("values", "returning", "RETURNING $PK_fields_str");
+	// 	$sql->after("values", "returning", "RETURNING $PK_fields_str");
 
-		if($q = $this->query($sql)){
-			$retPK = $this->fetch($q);
-			if(is_array($PK)){
-				return $retPK;
-			} else {
-				return get_prop($retPK, $PK);
-			}
-		} else {
-			return false;
-		}
-	}
+	// 	if($q = $this->query($sql)){
+	// 		$retPK = $this->fetch_object($q);
+	// 		if(is_array($PK)){
+	// 			return $retPK;
+	// 		} else {
+	// 			return get_prop($retPK, $PK);
+	// 		}
+	// 	}
+
+	// 	return null;
+	// }
 
 
-	function insert(iterable $DATA, Table $Table){
-		return $this->_insert_query($DATA, $Table, false);
-	}
+	// function insert(iterable $DATA, TableInterface $Table): mixed {
+	// 	return $this->_insert_query($DATA, $Table, false);
+	// }
 
-	function save(iterable $DATA, Table $Table){
-		return $this->_insert_query($DATA, $Table, true);
-	}
+	// function save(iterable $DATA, TableInterface $Table): mixed {
+	// 	return $this->_insert_query($DATA, $Table, true);
+	// }
 
-	function with_new_trans(callable $func, ...$args){
+	function with_new_trans(callable $func, ...$args): mixed {
 		// printr("New trans!", $this->tr);
 		$tr = $this->tr;
 		// if($this->tr){
