@@ -28,7 +28,7 @@ abstract class AbstractEntity implements EntityInterface {
 		return (new Select($this->getTableName().".*"))->From($this->getTableName());
 	}
 
-	function get($ID, ?iterable $filters = null): ?iterable {
+	function get($ID, ?iterable $filters = null): mixed {
 		$filters = eoe($filters);
 
 		$filters->{$this->PK} = $ID;
@@ -37,11 +37,13 @@ abstract class AbstractEntity implements EntityInterface {
 	}
 
 	// function get_all(string $CollectionClass, ?iterable $filters = null): DataCollection {
-	function getAll(?iterable $filters = null): ?DataCollection {
+	function getAll(?iterable $filters = null): mixed {
+		$col = new ($this->getCollectionType());
 		if($q = $this->query($filters)){
 			// while($r = $this->get_trans()->fetch_object($q)){
 			while($r = $this->fetch($q)){
-				$ret[] = $r;
+				// $ret[] = $r;
+				$col[] = $r;
 				// $ret[] = $r;
 				// if($this->Table instanceof DataMapperInterface){
 					// $ret[] = $this->Table->fromDBObject($r);
@@ -50,17 +52,20 @@ abstract class AbstractEntity implements EntityInterface {
 				// }
 			}
 
-			return new ($this->getCollectionType())($ret);
+			return $col;
+			// return $ret;
+			// return new ($this->getCollectionType())($ret);
 			// return $this->get_trans()->fetch_all($q);
 		}
 	}
 
 	# TODO: QueryClass
-	function fetch(): ?iterable {
+	function fetch(): mixed {
 		$q = func_get_arg(0);
+		// return $this->get_trans()->fetch_assoc($q);
+		// return $data ? ($this->getDataType())::fromDBObject($data) : null;
 		$data = $this->get_trans()->fetch_object($q);
 		return $data ? ($this->getDataType())::fromDBObject($data) : null;
-		// return ($this->getDataType())::fromDBObject($this->get_trans()->fetch_object($q));
 		// return (new $this->getDataType())($this->fromDBObject($this->get_trans()->fetch_object($q)));
 		// if($this->Table instanceof DataMapperInterface){
 			// return $this->Table->fromDBObject($this->get_trans()->fetch_object($q));
@@ -69,7 +74,7 @@ abstract class AbstractEntity implements EntityInterface {
 		// }
 	}
 
-	function getSingle(?iterable $filters = null): ?iterable {
+	function getSingle(?iterable $filters = null): mixed {
 		if($q = $this->query($filters)){
 			return $this->fetch($q);
 			// if(isset($this->Mapper)){
@@ -98,25 +103,25 @@ abstract class AbstractEntity implements EntityInterface {
 	}
 
 	# TODO: insert un update
-	function save(iterable $DATA){
+	function save(array|object $DATA){
 		return $this->_insert_query($DATA, true);
 		// return $this->get_trans()->save($DATA, $this->Table);
 	}
 
-	function update($ID, iterable $DATA){
+	function update($ID, array|object $DATA){
 		return $this->get_trans()->update($ID, $DATA, $this->Table);
 	}
 
-	function insert(iterable $DATA){
+	function insert(array|object $DATA){
 		return $this->get_trans()->insert($DATA, $this->Table);
 	}
 
-	private function _insert_query(iterable $DATA, $update = false): mixed {
+	private function _insert_query(array|object $DATA, $update = false): mixed {
 		$PK = $this->getPK();
 		$TableName = $this->getTableName();
 		$PK_fields_str = is_array($PK) ? join(",", $PK) : $PK;
 
-		$DB_DATA = $DATA->toDBObject();
+		// $DB_DATA = $DATA->toDBObject();
 
 		$sql_fields = $this->get_sql_fields($DB_DATA);
 

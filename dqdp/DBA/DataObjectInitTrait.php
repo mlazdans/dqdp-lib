@@ -6,7 +6,7 @@ use InvalidArgumentException;
 use ReflectionProperty;
 
 trait DataObjectInitTrait {
-	function initPoperty($v, $k): void {
+	function initPoperty(string|int $k, mixed $v): void {
 		if(is_null($v)){
 			$this->{$k} = null;
 			return;
@@ -27,9 +27,5 @@ trait DataObjectInitTrait {
 				$this->{$k} = $v;
 				return;
 		};
-	}
-
-	static function withDefaults(): static {
-		return new static(get_class_public_vars(static::class));
 	}
 }

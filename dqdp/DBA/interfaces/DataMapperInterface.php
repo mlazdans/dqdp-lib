@@ -5,8 +5,8 @@ use stdClass;
 
 interface DataMapperInterface {
 	function __construct(?iterable $data, ?iterable $defaults = null);
-	function initPoperty($v, $k);
+	// function initPoperty($v, $k);
 	function toDBObject(): stdClass;
-	static function withDefaults(): iterable;
-	static function fromDBObject(stdClass $o): iterable;
+	// static function withDefaults(): iterable;
+	static function fromDBObject(array|object $o): iterable;
 }

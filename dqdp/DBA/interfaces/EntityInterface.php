@@ -3,16 +3,16 @@
 namespace dqdp\DBA\interfaces;
 
 interface EntityInterface extends TransactionInterface {
-	function get($ID, ?iterable $filters = null): ?iterable;
-	function getAll(?iterable $filters = null): ?iterable;
-	function getSingle(?iterable $filters = null): ?iterable;
+	function get($ID, ?iterable $filters = null): mixed;
+	function getAll(?iterable $filters = null): mixed;
+	function getSingle(?iterable $filters = null): mixed;
 
 	function query(?iterable $filters = null);
-	function fetch(): ?iterable;
+	function fetch(): mixed;
 
-	function insert(iterable $DATA);
-	function update($ID, iterable $DATA);
-	function save(iterable $DATA);
+	function insert(array|object $DATA);
+	function update($ID, array|object $DATA);
+	function save(array|object $DATA);
 	function delete($ID);
 
 	// function insert(iterable $DATA, TableInterface $Table);

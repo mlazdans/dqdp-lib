@@ -3,12 +3,17 @@
 namespace dqdp\DBA;
 
 use ArrayIterator;
-use dqdp\DBA\interfaces\DataMapperInterface;
 use IteratorAggregate;
 use stdClass;
 use Traversable;
 
 abstract class AbstractDataObject implements IteratorAggregate {
+	# NOTE: must be defined in child, to be in scope
+	abstract function initPoperty(string|int $k, mixed $v): void;
+	abstract function toDBObject(): stdClass;
+	abstract static function fromDBObject(array|object $o): AbstractDataObject;
+
+	function __construct(array|object|null $data = null, array|object|null $defaults = null){
 		if(empty($data)){
 			return $this;
 		}
@@ -16,9 +21,9 @@ abstract class AbstractDataObject implements IteratorAggregate {
 		$properties = get_class_public_vars(static::class);
 		foreach($properties as $k=>$class_default){
 			if(prop_exists($data, $k)){
-				$this->initPoperty(get_prop($data, $k), $k);
+				$this->initPoperty($k, get_prop($data, $k));
 			} elseif($defaults !== null && prop_exists($defaults, $k)){
-				$this->initPoperty(get_prop($defaults, $k), $k);
+				$this->initPoperty($k, get_prop($defaults, $k));
 			}
 		}
 	}
@@ -27,15 +32,19 @@ abstract class AbstractDataObject implements IteratorAggregate {
 		return new ArrayIterator($this);
 	}
 
-	protected static function fromDBObjectFactory(string $class, iterable $map, stdClass $o): DataObject {
+	static function withDefaults(): static {
+		return new static(get_class_public_vars(static::class));
+	}
+
+	protected static function fromDBObjectFactory(iterable $map, array|object $o): AbstractDataObject {
 		$params = [];
 		foreach($map as $k=>$v){
-			if(isset($o->{$k})){
-				$params[$map[$k]] = $o->{$k};
+			if(prop_exists($o, $k)){
+				$params[$v] = get_prop($o, $k);
 			}
 		}
 
-		return new $class($params);
+		return new static($params);
 	}
 
 	protected function toDBObjectFactory(iterable $map): stdClass {
