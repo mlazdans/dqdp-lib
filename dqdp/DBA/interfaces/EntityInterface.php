@@ -2,20 +2,17 @@
 
 namespace dqdp\DBA\interfaces;
 
-use dqdp\DBA\DataCollection;
-use dqdp\DBA\DataObject;
-
 interface EntityInterface extends TransactionInterface {
-	function get($ID, ?iterable $filters = null): ?DataObject;
-	function getAll(?iterable $filters = null): ?DataCollection;
-	function getSingle(?iterable $filters = null): ?DataObject;
+	function get($ID, ?iterable $filters = null): ?iterable;
+	function getAll(?iterable $filters = null): ?iterable;
+	function getSingle(?iterable $filters = null): ?iterable;
 
 	function query(?iterable $filters = null);
-	function fetch(): ?DataObject;
+	function fetch(): ?iterable;
 
-	function insert(DataObject $DATA);
-	function update($ID, DataObject $DATA);
-	function save(DataObject $DATA);
+	function insert(iterable $DATA);
+	function update($ID, iterable $DATA);
+	function save(iterable $DATA);
 	function delete($ID);
 
 	// function insert(iterable $DATA, TableInterface $Table);

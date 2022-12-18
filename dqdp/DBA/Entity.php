@@ -28,7 +28,7 @@ abstract class Entity implements EntityInterface {
 		return (new Select($this->getTableName().".*"))->From($this->getTableName());
 	}
 
-	function get($ID, ?iterable $filters = null): ?DataObject {
+	function get($ID, ?iterable $filters = null): ?iterable {
 		$filters = eoe($filters);
 
 		$filters->{$this->PK} = $ID;
@@ -56,7 +56,7 @@ abstract class Entity implements EntityInterface {
 	}
 
 	# TODO: QueryClass
-	function fetch(): ?DataObject {
+	function fetch(): ?iterable {
 		$q = func_get_arg(0);
 		$data = $this->get_trans()->fetch_object($q);
 		return $data ? ($this->getDataType())::fromDBObject($data) : null;
@@ -69,7 +69,7 @@ abstract class Entity implements EntityInterface {
 		// }
 	}
 
-	function getSingle(?iterable $filters = null): ?DataObject {
+	function getSingle(?iterable $filters = null): ?iterable {
 		if($q = $this->query($filters)){
 			return $this->fetch($q);
 			// if(isset($this->Mapper)){
@@ -98,20 +98,20 @@ abstract class Entity implements EntityInterface {
 	}
 
 	# TODO: insert un update
-	function save(DataObject $DATA){
+	function save(iterable $DATA){
 		return $this->_insert_query($DATA, true);
 		// return $this->get_trans()->save($DATA, $this->Table);
 	}
 
-	function update($ID, DataObject $DATA){
+	function update($ID, iterable $DATA){
 		return $this->get_trans()->update($ID, $DATA, $this->Table);
 	}
 
-	function insert(DataObject $DATA){
+	function insert(iterable $DATA){
 		return $this->get_trans()->insert($DATA, $this->Table);
 	}
 
-	private function _insert_query(DataObject $DATA, $update = false): mixed {
+	private function _insert_query(iterable $DATA, $update = false): mixed {
 		$PK = $this->getPK();
 		$TableName = $this->getTableName();
 		$PK_fields_str = is_array($PK) ? join(",", $PK) : $PK;
@@ -125,7 +125,7 @@ abstract class Entity implements EntityInterface {
 		->Values($sql_fields);
 
 		if($update && $PK_fields_str){
-				$sql->Update()->after("values", "matching", "MATCHING ($PK_fields_str)");
+			$sql->Update()->after("values", "matching", "MATCHING ($PK_fields_str)");
 		}
 
 		# TODO: refactor out
