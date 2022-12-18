@@ -1982,7 +1982,7 @@ function prop_exists(array|object|null $o, string|int $k): bool {
 	} elseif($o instanceof ArrayAccess){
 		return $o->offsetExists($k);
 	} elseif(is_object($o)){
-		return property_exists($o, $k);
+		return is_int($k) ? property_exists($o, (string)$k) : property_exists($o, $k);
 	} else {
 		throw new InvalidArgumentException("Expected array|object|ArrayAccess, found: ".gettype($o));
 	}
