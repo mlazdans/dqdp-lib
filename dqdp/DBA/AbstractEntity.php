@@ -8,7 +8,7 @@ use dqdp\SQL\Insert;
 use dqdp\SQL\Select;
 use dqdp\SQL\Statement;
 
-abstract class Entity implements EntityInterface {
+abstract class AbstractEntity implements EntityInterface {
 	protected DBAInterface $dba;
 	protected $Table;
 	protected $PK;

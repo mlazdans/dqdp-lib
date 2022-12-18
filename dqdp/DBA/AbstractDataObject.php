@@ -8,8 +8,7 @@ use IteratorAggregate;
 use stdClass;
 use Traversable;
 
-abstract class DataObject implements DataMapperInterface, IteratorAggregate {
-	function __construct(?iterable $data = null, ?iterable $defaults = null){
+abstract class AbstractDataObject implements IteratorAggregate {
 		if(empty($data)){
 			return $this;
 		}

@@ -4,5 +4,5 @@ namespace dqdp\DBA;
 
 use dqdp\Collection;
 
-abstract class DataCollection extends Collection {
+abstract class AbstractDataCollection extends Collection {
 }
