@@ -4,6 +4,7 @@ namespace dqdp\DBA;
 
 use InvalidArgumentException;
 use ReflectionProperty;
+use stdClass;
 
 trait DataObjectInitTrait {
 	function initPoperty(string|int $k, mixed $v): void {
@@ -28,4 +29,31 @@ trait DataObjectInitTrait {
 				return;
 		};
 	}
+
+	static function withDefaults(): static {
+		return new static(get_class_public_vars(static::class));
+	}
+
+	static function fromDBObjectFactory(iterable $map, array|object $o): AbstractDataObject {
+		$params = [];
+		foreach($map as $k=>$v){
+			if(prop_exists($o, $k)){
+				$params[$v] = get_prop($o, $k);
+			}
+		}
+
+		return new static($params);
+	}
+
+	static function toDBObjectFactory(AbstractDataObject $self, iterable $map): stdClass {
+		$ret = new stdClass;
+		foreach($map as $k=>$v){
+			if(isset($self->{$k})){
+				$ret->{$v} = $self->{$k};
+			}
+		}
+
+		return $ret;
+	}
+
 }

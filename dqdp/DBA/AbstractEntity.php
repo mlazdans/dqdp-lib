@@ -4,6 +4,7 @@ namespace dqdp\DBA;
 
 use dqdp\DBA\interfaces\DBAInterface;
 use dqdp\DBA\interfaces\EntityInterface;
+use dqdp\DBA\interfaces\ORMInterface;
 use dqdp\SQL\Insert;
 use dqdp\SQL\Select;
 use dqdp\SQL\Statement;
@@ -19,8 +20,6 @@ abstract class AbstractEntity implements EntityInterface {
 	}
 
 	protected abstract function getTableName(): string;
-	protected abstract function getDataType(): string;
-	protected abstract function getCollectionType(): string;
 	protected abstract function getPK(): array|string;
 	protected abstract function getGen(): ?string;
 
@@ -38,7 +37,12 @@ abstract class AbstractEntity implements EntityInterface {
 
 	// function get_all(string $CollectionClass, ?iterable $filters = null): DataCollection {
 	function getAll(?iterable $filters = null): mixed {
-		$col = new ($this->getCollectionType());
+		if($this instanceof ORMInterface){
+			$col = new ($this->getCollectionType());
+		} else {
+			$col = [];
+		}
+
 		if($q = $this->query($filters)){
 			// while($r = $this->get_trans()->fetch_object($q)){
 			while($r = $this->fetch($q)){
@@ -64,8 +68,17 @@ abstract class AbstractEntity implements EntityInterface {
 		$q = func_get_arg(0);
 		// return $this->get_trans()->fetch_assoc($q);
 		// return $data ? ($this->getDataType())::fromDBObject($data) : null;
-		$data = $this->get_trans()->fetch_object($q);
-		return $data ? ($this->getDataType())::fromDBObject($data) : null;
+		if($data = $this->get_trans()->fetch_object($q)){
+			if($this instanceof ORMInterface){
+				return $this->fromDBObject($data);
+				// return ($this->getDataType())::fromDBObject($data);
+			} else {
+				return $data;
+			}
+		} else {
+			return null;
+		}
+		// return $data ? ($this->getDataType())::fromDBObject($data) : null;
 		// return (new $this->getDataType())($this->fromDBObject($this->get_trans()->fetch_object($q)));
 		// if($this->Table instanceof DataMapperInterface){
 			// return $this->Table->fromDBObject($this->get_trans()->fetch_object($q));
@@ -121,9 +134,11 @@ abstract class AbstractEntity implements EntityInterface {
 		$TableName = $this->getTableName();
 		$PK_fields_str = is_array($PK) ? join(",", $PK) : $PK;
 
-		// $DB_DATA = $DATA->toDBObject();
-
-		$sql_fields = $this->get_sql_fields($DB_DATA);
+		if($this instanceof ORMInterface){
+			$sql_fields = $this->get_sql_fields($this->toDBObject($DATA));
+		} else {
+			$sql_fields = $this->get_sql_fields($DATA);
+		}
 
 		$sql = (new Insert)
 		->Into($TableName)

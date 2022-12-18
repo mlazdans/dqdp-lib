@@ -10,8 +10,8 @@ use Traversable;
 abstract class AbstractDataObject implements IteratorAggregate {
 	# NOTE: must be defined in child, to be in scope
 	abstract function initPoperty(string|int $k, mixed $v): void;
-	abstract function toDBObject(): stdClass;
-	abstract static function fromDBObject(array|object $o): AbstractDataObject;
+	// abstract function toDBObject(): stdClass;
+	// abstract static function fromDBObject(array|object $o): AbstractDataObject;
 
 	function __construct(array|object|null $data = null, array|object|null $defaults = null){
 		if(empty($data)){
@@ -32,29 +32,29 @@ abstract class AbstractDataObject implements IteratorAggregate {
 		return new ArrayIterator($this);
 	}
 
-	static function withDefaults(): static {
-		return new static(get_class_public_vars(static::class));
-	}
+	// static function withDefaults(): static {
+	// 	return new static(get_class_public_vars(static::class));
+	// }
 
-	protected static function fromDBObjectFactory(iterable $map, array|object $o): AbstractDataObject {
-		$params = [];
-		foreach($map as $k=>$v){
-			if(prop_exists($o, $k)){
-				$params[$v] = get_prop($o, $k);
-			}
-		}
+	// static function fromDBObjectFactory(iterable $map, array|object $o): AbstractDataObject {
+	// 	$params = [];
+	// 	foreach($map as $k=>$v){
+	// 		if(prop_exists($o, $k)){
+	// 			$params[$v] = get_prop($o, $k);
+	// 		}
+	// 	}
 
-		return new static($params);
-	}
+	// 	return new static($params);
+	// }
 
-	protected function toDBObjectFactory(iterable $map): stdClass {
-		$ret = new stdClass;
-		foreach($map as $k=>$v){
-			if(isset($this->{$k})){
-				$ret->{$v} = $this->{$k};
-			}
-		}
+	// function toDBObjectFactory(iterable $map): stdClass {
+	// 	$ret = new stdClass;
+	// 	foreach($map as $k=>$v){
+	// 		if(isset($this->{$k})){
+	// 			$ret->{$v} = $this->{$k};
+	// 		}
+	// 	}
 
-		return $ret;
-	}
+	// 	return $ret;
+	// }
 }
