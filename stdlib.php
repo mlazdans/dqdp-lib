@@ -1988,7 +1988,7 @@ function prop_exists(array|object|null $o, string|int $k): bool {
 	}
 }
 
-function get_prop(array|object|null $o, string|int $k): mixed {
+function &get_prop(array|object|null $o, string|int $k): mixed {
 	if(is_null($o)){
 		return null;
 	} elseif(is_array($o) || $o instanceof ArrayAccess){
