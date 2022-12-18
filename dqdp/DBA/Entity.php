@@ -124,10 +124,8 @@ abstract class Entity implements EntityInterface {
 		->Into($TableName)
 		->Values($sql_fields);
 
-		if($update){
-			if(!prop_exists($sql_fields, $PK)){
+		if($update && $PK_fields_str){
 				$sql->Update()->after("values", "matching", "MATCHING ($PK_fields_str)");
-			}
 		}
 
 		# TODO: refactor out
