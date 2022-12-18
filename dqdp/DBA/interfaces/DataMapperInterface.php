@@ -6,10 +6,9 @@ use dqdp\DBA\DataObject;
 use stdClass;
 
 interface DataMapperInterface {
-	static function withDefaults(): DataObject;
-	// static function fromIterable(array|object $O, array|object $DO = null): DataObject;
-	static function fromIterable(array|object $O): DataObject;
-	static function fromDBObject(stdClass $o): DataObject;
-	function init(): DataObject;
+	function __construct(?iterable $data, ?iterable $defaults = null);
+	function initPoperty($v, $k);
 	function toDBObject(): stdClass;
+	static function withDefaults(): DataObject;
+	static function fromDBObject(stdClass $o): DataObject;
 }

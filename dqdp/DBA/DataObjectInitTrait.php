@@ -29,30 +29,6 @@ trait DataObjectInitTrait {
 		};
 	}
 
-	// function initFromIterable(array|object $O, array|object $DO = null): void {
-	// 	$properties = get_class_public_vars(static::class);
-	// 	foreach($properties as $k=>$class_default){
-	// 		if(prop_exists($O, $k)){
-	// 			$this->initPoperty(get_prop($O, $k), $k);
-	// 		} elseif($DO !== null && prop_exists($DO, $k)){
-	// 			$this->initPoperty(get_prop($DO, $k), $k);
-	// 		}
-	// 	}
-	// }
-	static function fromIterable(array|object $DATA): static {
-		$O = new static;
-		$properties = get_class_public_vars(static::class);
-		foreach($properties as $k=>$class_default){
-			if(prop_exists($DATA, $k)){
-				$O->initPoperty(get_prop($DATA, $k), $k);
-			// } elseif($DO !== null && prop_exists($DO, $k)){
-			// 	$this->initPoperty(get_prop($DO, $k), $k);
-			}
-		}
-
-		return $O->init();
-	}
-
 	static function withDefaults(): static {
 		$O = new static;
 		$properties = get_class_public_vars(static::class);
