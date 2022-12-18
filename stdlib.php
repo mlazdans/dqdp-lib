@@ -1981,6 +1981,8 @@ function prop_exists(array|object|null $o, string|int $k): bool {
 		return key_exists($k, $o);
 	} elseif($o instanceof ArrayAccess){
 		return $o->offsetExists($k);
+	// } elseif($o instanceof Generator){
+	// 	throw new InvalidArgumentException("Generators does not support ArrayAccess");
 	} elseif(is_object($o)){
 		return is_int($k) ? property_exists($o, (string)$k) : property_exists($o, $k);
 	} else {
@@ -1993,6 +1995,8 @@ function &get_prop(array|object|null $o, string|int $k): mixed {
 		return null;
 	} elseif(is_array($o) || $o instanceof ArrayAccess){
 		return $o[$k];
+	// } elseif($o instanceof Generator){
+	// 	throw new InvalidArgumentException("Generators does not support ArrayAccess");
 	} elseif(is_object($o)){
 		return $o->{$k};
 	} else {
@@ -2003,6 +2007,8 @@ function &get_prop(array|object|null $o, string|int $k): mixed {
 function unset_prop(array|object &$o, string|int $k): void {
 	if(is_array($o) || $o instanceof ArrayAccess){
 		unset($o[$k]);
+	// } elseif($o instanceof Generator){
+	// 	throw new InvalidArgumentException("Generators does not support ArrayAccess");
 	} elseif(is_object($o)){
 		unset($o->{$k});
 	} else {
@@ -2013,6 +2019,8 @@ function unset_prop(array|object &$o, string|int $k): void {
 function set_prop(array|object &$o, string|int $k, mixed $v): void {
 	if(is_array($o) || $o instanceof ArrayAccess){
 		$o[$k] = $v;
+	// } elseif($o instanceof Generator){
+	// 	throw new InvalidArgumentException("Generators does not support ArrayAccess");
 	} elseif(is_object($o)){
 		$o->{$k} = $v;
 	} else {
