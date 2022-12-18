@@ -3,11 +3,12 @@
 namespace dqdp;
 
 use ArrayAccess;
+use Countable;
 use Generator;
 use InvalidArgumentException;
 use Iterator;
 
-class MultiIterator implements Iterator, ArrayAccess {
+class MultiIterator implements Iterator, ArrayAccess, Countable {
 	private $data = null;
 
 	function __construct(array|object|null $data = null){
@@ -125,5 +126,9 @@ class MultiIterator implements Iterator, ArrayAccess {
 		// } elseif($this->data instanceof Generator) {
 		// 	return $this->data->valid();
 		// }
+	}
+
+	function count(): int {
+		return count($this->data);
 	}
 }
