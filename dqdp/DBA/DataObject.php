@@ -9,7 +9,7 @@ use stdClass;
 use Traversable;
 
 abstract class DataObject implements DataMapperInterface, IteratorAggregate {
-	function __construct(?iterable $data, ?iterable $defaults = null){
+	function __construct(?iterable $data = null, ?iterable $defaults = null){
 		if(empty($data)){
 			return $this;
 		}

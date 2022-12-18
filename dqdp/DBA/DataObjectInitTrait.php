@@ -30,12 +30,6 @@ trait DataObjectInitTrait {
 	}
 
 	static function withDefaults(): static {
-		$O = new static;
-		$properties = get_class_public_vars(static::class);
-		foreach($properties as $k=>$class_default){
-			$O->initPoperty($class_default, $k);
-		}
-
-		return $O->init();
+		return new static(get_class_public_vars(static::class));
 	}
 }
