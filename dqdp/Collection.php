@@ -2,7 +2,5 @@
 
 namespace dqdp;
 
-use Iterator;
-
-abstract class Collection extends MultiIterator implements Iterator {
+abstract class Collection extends MultiIterator {
 }
