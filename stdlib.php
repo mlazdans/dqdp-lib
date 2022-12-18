@@ -1974,8 +1974,10 @@ function str_limiter($str, $limit, $append){
 	return $str;
 }
 
-function prop_exists(array|object $o, string|int $k): bool {
-	if(is_array($o)){
+function prop_exists(array|object|null $o, string|int $k): bool {
+	if(is_null($o)){
+		return false;
+	} elseif(is_array($o)){
 		return key_exists($k, $o);
 	} elseif($o instanceof ArrayAccess){
 		return $o->offsetExists($k);
@@ -1986,8 +1988,10 @@ function prop_exists(array|object $o, string|int $k): bool {
 	}
 }
 
-function get_prop(array|object $o, string|int $k): mixed {
-	if(is_array($o) || $o instanceof ArrayAccess){
+function get_prop(array|object|null $o, string|int $k): mixed {
+	if(is_null($o)){
+		return null;
+	} elseif(is_array($o) || $o instanceof ArrayAccess){
 		return $o[$k];
 	} elseif(is_object($o)){
 		return $o->{$k};
