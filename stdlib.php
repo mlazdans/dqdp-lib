@@ -1974,7 +1974,7 @@ function str_limiter($str, $limit, $append){
 	return $str;
 }
 
-function prop_exists(array|object $o, $k): bool {
+function prop_exists(array|object $o, string|int $k): bool {
 	if(is_array($o)){
 		return key_exists($k, $o);
 	} elseif($o instanceof ArrayAccess){
@@ -1986,7 +1986,7 @@ function prop_exists(array|object $o, $k): bool {
 	}
 }
 
-function get_prop(array|object $o, $k): mixed {
+function get_prop(array|object $o, string|int $k): mixed {
 	if(is_array($o) || $o instanceof ArrayAccess){
 		return $o[$k];
 	} elseif(is_object($o)){
@@ -1996,7 +1996,7 @@ function get_prop(array|object $o, $k): mixed {
 	}
 }
 
-function unset_prop(array|object &$o, $k): void {
+function unset_prop(array|object &$o, string|int $k): void {
 	if(is_array($o) || $o instanceof ArrayAccess){
 		unset($o[$k]);
 	} elseif(is_object($o)){
@@ -2006,7 +2006,7 @@ function unset_prop(array|object &$o, $k): void {
 	}
 }
 
-function set_prop(array|object &$o, $k, $v): void {
+function set_prop(array|object &$o, string|int $k, mixed $v): void {
 	if(is_array($o) || $o instanceof ArrayAccess){
 		$o[$k] = $v;
 	} elseif(is_object($o)){
