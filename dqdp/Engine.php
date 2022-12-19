@@ -389,6 +389,7 @@ class Engine
 					println($msg);
 				}
 			}
+			print $MODULE_DATA;
 		}
 	}
 }
