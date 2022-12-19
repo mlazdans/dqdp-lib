@@ -19,7 +19,7 @@ abstract class API {
 			return false;
 		}
 
-		if(self::$SID && !isset($data['SID'])){
+		if(static_prop_is_initialized(self::class, 'SID')){
 			$data['SID'] = self::$SID;
 		}
 
