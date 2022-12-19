@@ -1,12 +1,12 @@
-<?php
-
-declare(strict_types = 1);
+<?php declare(strict_types = 1);
 
 namespace dqdp;
 
-use dqdp\DBA\DBA;
-use dqdp\DBA\EntityInterface;
+use dqdp\DBA\interfaces\DBAInterface;
+use dqdp\DBA\interfaces\EntityInterface;
+use dqdp\Settings\SettingsType;
 use Exception;
+use TypeError;
 
 /* Ibase
 CREATE TABLE SETTINGS
@@ -47,8 +47,8 @@ CREATE TABLE settings
 class Settings implements EntityInterface
 {
 	var $CLASS;
-	protected $DB_STRUCT;
-	protected $DATA = [];
+	protected array $DB_STRUCT = [];
+	protected array $DATA = [];
 	protected $Ent;
 
 	function __construct($class){
@@ -57,16 +57,16 @@ class Settings implements EntityInterface
 	}
 
 	# Interface f-ns
-	function get($ID, $params = null){
-		$params = eoe($params);
+	function get($ID, ?iterable $filters = null): mixed {
+		$params = eoe($filters);
 		$params->SET_KEY = $ID;
 
-		return $this->fetch($this->search($params));
+		return $this->fetch($this->query($params));
 	}
 
-	function get_all($params = null){
+	function getAll(?iterable $filters = null): mixed {
 		$ret = array_fill_keys(array_keys($this->DB_STRUCT), null);
-		$q = $this->search($params);
+		$q = $this->query($filters);
 		while($r = $this->fetch($q)){
 			$ret = merge($ret, $r);
 		}
@@ -74,70 +74,77 @@ class Settings implements EntityInterface
 		return $ret;
 	}
 
-	function get_single($params = null){
-		if($q = $this->search($params)){
+	function getSingle(?iterable $filters = null): mixed {
+		if($q = $this->query($filters)){
 			return $this->fetch($q);
 		}
 	}
 
-	function search($PARAMS = null){
-		$PARAMS = eoe($PARAMS);
+	function query(?iterable $filters = null){
+		$PARAMS = eoe($filters);
 		$PARAMS->SET_CLASS = $this->CLASS; // part of PK, parent will take care
 
-		return $this->Ent->search($PARAMS);
+		return $this->Ent->query($PARAMS);
 	}
 
-	function insert(iterable $DATA){
+	function insert(array|object $DATA){
 		throw new Exception("Not implemented");
 	}
 
-	function update($ID, iterable $DATA){
+	function update($ID, array|object $DATA){
 		throw new Exception("Not implemented");
 	}
 
-	function save(iterable $_){
-		$DATA = eoe($this->DATA);
+	function save(array|object $_){
+		// $ST = new SettingsType();
+		// $ST->class = $this->CLASS;
+		// dumpr($ST, $this->DATA, $this->DB_STRUCT);
+		// die;
 
 		$ret = true;
 		foreach($this->DB_STRUCT as $k=>$v){
-			if($DATA->exists($k)){
-				$v = strtoupper($v);
-				$DB_DATA = eo([
-					'SET_CLASS'=>$this->CLASS,
-					'SET_KEY'=>strtoupper($k),
-				]);
-
-				if($v == 'SERIALIZE'){
-					$DB_DATA->{"SET_$v"} = serialize($DATA->{$k});
-				} else {
-					$DB_DATA->{"SET_$v"} = $DATA->{$k};
-				}
-
-				$ret = $ret && $this->Ent->save($DB_DATA);
+			if(!isset($this->DATA[$k])){
+				continue;
 			}
+
+			// $v = strtoupper($v);
+			$params = [
+				'class'=>$this->CLASS,
+				'key'=>strtoupper($k),
+			];
+
+			if($v == 'serialize'){
+				$params[$v] = serialize($this->DATA[$k]);
+			} else {
+				$params[$v] = $this->DATA[$k];
+			}
+
+			$ST = new SettingsType($params);
+			dumpr($ST);
+
+			$ret = $ret && $this->Ent->save($ST);
 		}
 
 		return $ret;
 	}
 
 	# TODO: entity multi key delete
-	function delete(){
+	function delete($ID){
 		trigger_error("Not implemented", E_USER_ERROR);
 		// list($k) = func_get_args();
 		// $params->SET_KEY = $ID;
 	}
 
-	function set_trans(DBA $dba) {
+	function set_trans(DBAInterface $dba) {
 		$this->Ent->set_trans($dba);
 
 		return $this;
 	}
 
-	function get_trans(): DBA {
+	function get_trans(): DBAInterface {
 		return $this->Ent->get_trans();
 	}
 
-	# Settings f-ns
 	function set_struct(array $struct){
 		$this->DB_STRUCT = $struct;
 
@@ -175,27 +182,25 @@ class Settings implements EntityInterface
 		return $this;
 	}
 
-	protected function fetch(...$args){
+	function fetch(...$args): mixed {
 		list($q) = $args;
-		if(!($r = $this->get_trans()->fetch($q))){
-			return false;
+		if(!($r = $this->get_trans()->fetch_object($q))){
+			return null;
 		}
 
-		$dbs = $this->DB_STRUCT;
-		if(!isset($dbs[$r->SET_KEY])){
-			trigger_error("Undefined variable: $r->SET_KEY");
-			return false;
+		if(!isset($this->DB_STRUCT[$r->SET_KEY])){
+			throw new TypeError("Undefined struct entry: $r->SET_KEY");
 		}
 
-		$v = strtoupper($dbs[$r->SET_KEY]);
-		if($v == 'SERIALIZE'){
+		$v = strtoupper($this->DB_STRUCT[$r->SET_KEY]);
+
+		if($v == 'serialize'){
 			$ret[$r->SET_KEY] = unserialize($r->{"SET_$v"});
 		} else {
 			$ret[$r->SET_KEY] = $r->{"SET_$v"};
 		}
 
-		# TODO: respektēt default f
-		return $ret??(object)[];
+		return $ret;
 	}
 
 }
