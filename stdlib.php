@@ -2178,3 +2178,7 @@ function get_class_public_vars(string $className){
 function get_object_public_vars(object $o){
 	return get_object_vars($o);
 }
+
+function static_prop_is_initialized(string $className, string|int $k): bool {
+	return (new ReflectionClass($className))->getProperty($k)->isInitialized();
+}
