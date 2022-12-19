@@ -5,54 +5,55 @@ namespace dqdp;
 use dqdp\DBA\interfaces\DBAInterface;
 use dqdp\DBA\interfaces\EntityInterface;
 use dqdp\Settings\SettingsType;
+use dqdp\Settings\SetType;
 use Exception;
 use TypeError;
 
 /* Ibase
 CREATE TABLE SETTINGS
 (
-  SET_CLASS VARCHAR(64) NOT NULL,
+  SET_DOMAIN VARCHAR(64) NOT NULL,
   SET_KEY VARCHAR(64) NOT NULL,
   SET_INT INTEGER,
   SET_BOOLEAN SMALLINT,
   SET_FLOAT DOUBLE PRECISION,
-  SET_STRING TEXT,
+  SET_STRING VARCHAR(128),
   SET_DATE TIMESTAMP,
   SET_BINARY BLOB SUB_TYPE 0,
   SET_SERIALIZE TEXT,
+  SET_TEXT TEXT,
   ENTERED TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UPDATED TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT PK_SETTINGS PRIMARY KEY (SET_CLASS,SET_KEY)
+  CONSTRAINT PK_SETTINGS PRIMARY KEY (SET_DOMAIN,SET_KEY)
 );
 */
 
 /* MySQL
 CREATE TABLE settings
 (
-  SET_CLASS VARCHAR(64) NOT NULL,
+  SET_DOMAIN VARCHAR(64) NOT NULL,
   SET_KEY VARCHAR(64) NOT NULL,
   SET_INT INTEGER,
   SET_BOOLEAN SMALLINT,
   SET_FLOAT DOUBLE,
-  SET_STRING TEXT,
+  SET_STRING VARCHAR(128),
   SET_DATE TIMESTAMP,
   SET_BINARY BLOB,
   SET_SERIALIZE TEXT,
+  SET_TEXT TEXT,
   ENTERED TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UPDATED TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT PK_SETTINGS PRIMARY KEY (SET_CLASS,SET_KEY)
+  CONSTRAINT PK_SETTINGS PRIMARY KEY (SET_DOMAIN,SET_KEY)
 );
 */
 
 class Settings implements EntityInterface
 {
-	var $CLASS;
 	protected array $DB_STRUCT = [];
 	protected array $DATA = [];
 	protected $Ent;
 
-	function __construct($class){
-		$this->CLASS = $class;
+	function __construct(public string $domain){
 		$this->Ent = new Settings\Entity;
 	}
 
@@ -61,7 +62,7 @@ class Settings implements EntityInterface
 		$params = eoe($filters);
 		$params->SET_KEY = $ID;
 
-		return $this->fetch($this->query($params));
+		return $this->fetch($this->query($params))[$ID];
 	}
 
 	function getAll(?iterable $filters = null): mixed {
@@ -82,7 +83,7 @@ class Settings implements EntityInterface
 
 	function query(?iterable $filters = null){
 		$PARAMS = eoe($filters);
-		$PARAMS->SET_CLASS = $this->CLASS; // part of PK, parent will take care
+		$PARAMS->SET_DOMAIN = $this->domain; // part of PK, parent will take care
 
 		return $this->Ent->query($PARAMS);
 	}
@@ -95,7 +96,7 @@ class Settings implements EntityInterface
 		throw new Exception("Not implemented");
 	}
 
-	function save(array|object $_){
+	function save(array|object|null $_ = null){
 		// $ST = new SettingsType();
 		// $ST->class = $this->CLASS;
 		// dumpr($ST, $this->DATA, $this->DB_STRUCT);
@@ -103,26 +104,25 @@ class Settings implements EntityInterface
 
 		$ret = true;
 		foreach($this->DB_STRUCT as $k=>$v){
-			if(!isset($this->DATA[$k])){
+			if(!prop_exists($this->DATA, $k)){
 				continue;
 			}
 
 			// $v = strtoupper($v);
 			$params = [
-				'class'=>$this->CLASS,
-				'key'=>strtoupper($k),
+				'domain'=>$this->domain,
+				'key'=>$k,
 			];
 
-			if($v == 'serialize'){
-				$params[$v] = serialize($this->DATA[$k]);
-			} else {
-				$params[$v] = $this->DATA[$k];
+			switch($v) {
+				case SetType::serialize:
+					$params[$v->value] = serialize($this->DATA[$k]);
+					break;
+				default:
+					$params[$v->value] = $this->DATA[$k];
 			}
 
-			$ST = new SettingsType($params);
-			dumpr($ST);
-
-			$ret = $ret && $this->Ent->save($ST);
+			$ret = $ret && $this->Ent->save(new SettingsType($params));
 		}
 
 		return $ret;
@@ -135,7 +135,7 @@ class Settings implements EntityInterface
 		// $params->SET_KEY = $ID;
 	}
 
-	function set_trans(DBAInterface $dba) {
+	function set_trans(DBAInterface $dba): static {
 		$this->Ent->set_trans($dba);
 
 		return $this;
@@ -145,38 +145,41 @@ class Settings implements EntityInterface
 		return $this->Ent->get_trans();
 	}
 
-	function set_struct(array $struct){
+	# TODO: separate class for struct
+	function set_struct(array $struct): static {
 		$this->DB_STRUCT = $struct;
 
 		return $this;
 	}
 
-	function unset($k){
+	function unset(string|int $k): static {
 		unset($this->DATA[$k]);
 
 		return $this;
 	}
 
-	function reset(){
-		$this->DATA = [];
+	// function reset(){
+	// 	$this->DATA = [];
 
-		return $this;
-	}
+	// 	return $this;
+	// }
 
 	# $k = key | arr | obj
-	function set($k, $v = null){
+	function set(string|int $k, mixed $v = null): static {
 		if(is_array($k)){
 			$this->set_array($k);
 		} elseif(is_object($k)){
 			$this->set_array(get_object_vars($k));
-		} else {
+		} elseif(isset($this->DB_STRUCT[$k])) {
 			$this->DATA[$k] = $v;
+		} else {
+			throw new TypeError("Undefined struct entry: $k");
 		}
 
 		return $this;
 	}
 
-	function set_array($new_data){
+	function set_array(array $new_data): static {
 		$this->DATA = array_merge($this->DATA, $new_data);
 
 		return $this;
@@ -184,23 +187,21 @@ class Settings implements EntityInterface
 
 	function fetch(...$args): mixed {
 		list($q) = $args;
-		if(!($r = $this->get_trans()->fetch_object($q))){
+
+		if(!($r = $this->Ent->fetch($q))){
 			return null;
 		}
 
-		if(!isset($this->DB_STRUCT[$r->SET_KEY])){
-			throw new TypeError("Undefined struct entry: $r->SET_KEY");
+		if(!isset($this->DB_STRUCT[$r->key])){
+			throw new TypeError("Undefined struct entry: $r->key");
 		}
 
-		$v = strtoupper($this->DB_STRUCT[$r->SET_KEY]);
-
-		if($v == 'serialize'){
-			$ret[$r->SET_KEY] = unserialize($r->{"SET_$v"});
-		} else {
-			$ret[$r->SET_KEY] = $r->{"SET_$v"};
+		switch($v = $this->DB_STRUCT[$r->key]){
+			case SetType::serialize:
+				return [$r->key => unserialize($r->{$v->value})];
+			default:
+				return [$r->key => $r->{$v->value}];
 		}
-
-		return $ret;
 	}
 
 }
