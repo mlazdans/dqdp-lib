@@ -5,6 +5,7 @@ namespace dqdp\DBA\driver;
 require_once('stdlib.php');
 
 use dqdp\DBA\interfaces\DBAInterface;
+use dqdp\DBA\Types\IbaseConnectParams;
 
 require_once('ibaselib.php');
 
@@ -15,18 +16,7 @@ class IBase implements DBAInterface
 
 	static public $FETCH_FLAGS = IBASE_TEXT;
 
-	function __construct(
-		readonly ?string $database = '',
-		readonly ?string $username = '',
-		readonly ?string $password = '',
-		readonly ?string $charset = '',
-		readonly ?int $buffers = 0,
-		readonly ?int $dialect = 0,
-		readonly ?string $role = '',
-		readonly ?int $sync = 0
-		)
-	{
-
+	function __construct(private IbaseConnectParams $params){
 	}
 
 	function get_conn(): mixed {
@@ -35,14 +25,14 @@ class IBase implements DBAInterface
 
 	function connect(): static {
 		$this->conn = ibase_connect(
-			$this->database,
-			$this->username,
-			$this->password,
-			$this->charset,
-			$this->buffers,
-			$this->dialect,
-			$this->role,
-			$this->sync
+			$this->params->database,
+			$this->params->username,
+			$this->params->password,
+			$this->params->charset,
+			$this->params->buffers,
+			$this->params->dialect,
+			$this->params->role,
+			$this->params->sync
 		);
 
 		return $this;
