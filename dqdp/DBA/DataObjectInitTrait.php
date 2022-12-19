@@ -48,7 +48,7 @@ trait DataObjectInitTrait {
 	static function toDBObjectFactory(AbstractDataObject $self, iterable $map): stdClass {
 		$ret = new stdClass;
 		foreach($map as $k=>$v){
-			if(isset($self->{$k})){
+			if(prop_exists($self, $k) && prop_is_initialized($self, $k)){
 				$ret->{$v} = $self->{$k};
 			}
 		}
