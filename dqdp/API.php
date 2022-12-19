@@ -4,17 +4,17 @@ namespace dqdp;
 
 abstract class API {
 	static string $URL;
-	static $KEY;
-	static $SID;
-	static $RAW_RESPONSE_DATA;
+	static string $KEY;
+	static string $SID;
+	static string $RAW_RESPONSE_DATA;
 
 	abstract static function set_host(string $host): void;
 
-	static function decode_response(string $data){
+	static function decode_response(string $data): mixed {
 		return json_decode(self::$RAW_RESPONSE_DATA = $data);
 	}
 
-	static function post(string $url, array $data = []){
+	static function post(string $url, array $data = []): mixed {
 		if(($ch = curl_init()) === false){
 			return false;
 		}
@@ -34,11 +34,11 @@ abstract class API {
 	}
 
 	# TODO: remove
-	static function set_sid($SID){
+	static function set_sid(string $SID): void {
 		self::$SID = $SID;
 	}
 
-	static function set_key($KEY){
+	static function set_key(string $KEY): void {
 		self::$SID = $KEY;
 	}
 }
