@@ -1974,6 +1974,7 @@ function str_limiter($str, $limit, $append){
 	return $str;
 }
 
+# TODO: remove throws?
 function prop_exists(array|object|null $o, string|int $k): bool {
 	if(is_null($o)){
 		return false;
@@ -1985,6 +1986,18 @@ function prop_exists(array|object|null $o, string|int $k): bool {
 	// 	throw new InvalidArgumentException("Generators does not support ArrayAccess");
 	} elseif(is_object($o)){
 		return is_int($k) ? property_exists($o, (string)$k) : property_exists($o, $k);
+	} else {
+		throw new InvalidArgumentException("Expected array|object|ArrayAccess, found: ".gettype($o));
+	}
+}
+
+function prop_is_initialized(array|object|null $o, string|int $k): bool {
+	if(is_null($o)){
+		return false;
+	} elseif(is_array($o)){
+		return key_exists($k, $o);
+	} elseif(is_object($o)){
+		return (new ReflectionClass($o))->getProperty($k)->isInitialized($o);
 	} else {
 		throw new InvalidArgumentException("Expected array|object|ArrayAccess, found: ".gettype($o));
 	}
