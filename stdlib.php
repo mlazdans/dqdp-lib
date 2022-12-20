@@ -1781,7 +1781,7 @@ function options_select(iterable $data, string $vk, string $lk, $selected = null
 	return join("", $ret??[]);
 }
 
-function array_search_k(array|object $arr, $k, $v){
+function array_search_k(array|object $arr, $k, $v): mixed {
 	foreach($arr as $i=>$item){
 		if(is_object($item)){
 			$cmpv = $item->{$k}??null;
