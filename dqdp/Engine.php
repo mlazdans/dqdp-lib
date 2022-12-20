@@ -233,10 +233,13 @@ class Engine
 	}
 	*/
 
-	static function __msg(string $key, $msg = null){
+	static function __msg(string $key, string $msg = null){
 		if(is_climode() && $msg){
-			$io = in_array($key, ['ERR', 'DEBUG']) ? STDERR : STDOUT;
-			fprintf($io, "[%s] %s\n", $key, translit($msg));
+			// $io = in_array($key, ['ERR', 'DEBUG']) ? STDERR : STDOUT;
+			// fprintf($io, "[%s] %s\n", $key, translit($msg));
+			// printr("ddddd", $msg);
+			# NOTE: fprintf() does some bufferings!
+			printf("[%s] %s\n", $key, translit($msg));
 		}
 
 		if($msg === null){
@@ -381,6 +384,7 @@ class Engine
 				print $MODULE_DATA;
 			}
 		} catch(\Error $ex){
+			print $MODULE_DATA;
 			self::exception_handler($ex);
 			println("Fatal error:");
 			foreach(self::$MSG as $k=>$m){
@@ -389,7 +393,6 @@ class Engine
 					println($msg);
 				}
 			}
-			print $MODULE_DATA;
 		}
 	}
 }
