@@ -7,8 +7,20 @@ require_once("stdlib.php");
 
 function ibase_field_types(){
 	return [
-		7=>'SMALLINT', 8=>'INTEGER', 9=>'QUAD', 10=>'FLOAT', 11=>'D_FLOAT', 12=>'DATE', 13=>'TIME',
-		14=>'CHAR', 16=>'INT64', 27=>'DOUBLE', 35=>'TIMESTAMP', 37=>'VARCHAR', 40=>'CSTRING', 261=>'BLOB'
+		7=>'SMALLINT',
+		8=>'INTEGER',
+		9=>'QUAD',
+		10=>'FLOAT',
+		11=>'D_FLOAT',
+		12=>'DATE',
+		13=>'TIME',
+		14=>'CHAR',
+		16=>'INT64',
+		27=>'DOUBLE',
+		35=>'TIMESTAMP',
+		37=>'VARCHAR',
+		40=>'CSTRING',
+		261=>'BLOB'
 	];
 }
 
