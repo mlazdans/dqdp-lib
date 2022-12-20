@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 
-use dqdp\DBA\interfaces\DBAInterface;
+use dqdp\DBA\driver\IBase;
 use dqdp\SQL\Select;
 
 require_once("stdlib.php");
@@ -259,11 +259,11 @@ function ibase_quote($data){
 }
 
 # TODO: Zemāk esošajām f-ijām lietot Firebird lib
-function ibase_get_current_user(DBAInterface $db){
+function ibase_get_current_user(Ibase $db){
 	return ($u = ibase_get_users($db, ["CURRENT_USER"=>true])) ? $u[0] : $u;
 }
 
-function ibase_get_users(DBAInterface $db, ?iterable $F = null): array {
+function ibase_get_users(Ibase $db, ?iterable $F = null): array {
 	$F = eoe($F);
 
 	$sql = (new Select)
@@ -296,13 +296,13 @@ function ibase_get_users(DBAInterface $db, ?iterable $F = null): array {
 	return $ret??[];
 }
 
-function ibase_get_current_role(DBAInterface $db): string {
+function ibase_get_current_role(Ibase $db): string {
 	return trim(get_prop(
 		$db->fetch_assoc($db->query('SELECT CURRENT_ROLE AS RLE FROM RDB$DATABASE'))
 	, 'RLE'));
 }
 
-function ibase_get_object_types(DBAInterface $db): array {
+function ibase_get_object_types(Ibase $db): array {
 	$sql = 'SELECT RDB$TYPE, RDB$TYPE_NAME FROM RDB$TYPES WHERE RDB$FIELD_NAME=\'RDB$OBJECT_TYPE\'';
 	// $data = ibase_strip_rdb($db->execute($sql));
 	$q = $db->query($sql);
@@ -315,7 +315,7 @@ function ibase_get_object_types(DBAInterface $db): array {
 	return $ret??[];
 }
 
-function ibase_get_privileges(DBAInterface $db, $PARAMS = null): array {
+function ibase_get_privileges(Ibase $db, $PARAMS = null): array {
 	$ret = [];
 
 	if(is_scalar($PARAMS)){
