@@ -233,7 +233,7 @@ class Engine
 	}
 	*/
 
-	static function __msg(string $key, string $msg = null){
+	static function __msg(string $key, string|array $msg = null){
 		if(is_climode() && $msg){
 			// $io = in_array($key, ['ERR', 'DEBUG']) ? STDERR : STDOUT;
 			// fprintf($io, "[%s] %s\n", $key, translit($msg));
@@ -254,19 +254,19 @@ class Engine
 		}
 	}
 
-	static function debug_msg($msg = null){
+	static function debug_msg(string|array $msg = null){
 		return self::__msg("DEBUG", $msg);
 	}
 
-	static function warn_msg($msg = null){
+	static function warn_msg(string|array $msg = null){
 		return self::__msg("WARN", $msg);
 	}
 
-	static function err_msg($msg = null){
+	static function err_msg(string|array $msg = null){
 		return self::__msg("ERR", $msg);
 	}
 
-	static function info_msg($msg = null){
+	static function info_msg(string|array $msg = null){
 		return self::__msg("INFO", $msg);
 	}
 
