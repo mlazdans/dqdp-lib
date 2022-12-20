@@ -37,30 +37,31 @@ abstract class AbstractEntity implements EntityInterface {
 
 	// function get_all(string $CollectionClass, ?iterable $filters = null): DataCollection {
 	function getAll(?iterable $filters = null): mixed {
+		if(!($q = $this->query($filters))){
+			return null;
+		}
+
 		if($this instanceof ORMInterface){
 			$col = new ($this->getCollectionType());
 		} else {
 			$col = [];
 		}
-
-		if($q = $this->query($filters)){
-			// while($r = $this->get_trans()->fetch_object($q)){
-			while($r = $this->fetch($q)){
-				// $ret[] = $r;
-				$col[] = $r;
-				// $ret[] = $r;
-				// if($this->Table instanceof DataMapperInterface){
-					// $ret[] = $this->Table->fromDBObject($r);
-				// } else {
-				// 	$ret[] = $r;
-				// }
-			}
-
-			return $col;
-			// return $ret;
-			// return new ($this->getCollectionType())($ret);
-			// return $this->get_trans()->fetch_all($q);
+		// while($r = $this->get_trans()->fetch_object($q)){
+		while($r = $this->fetch($q)){
+			// $ret[] = $r;
+			$col[] = $r;
+			// $ret[] = $r;
+			// if($this->Table instanceof DataMapperInterface){
+				// $ret[] = $this->Table->fromDBObject($r);
+			// } else {
+			// 	$ret[] = $r;
+			// }
 		}
+
+		return $col;
+		// return $ret;
+		// return new ($this->getCollectionType())($ret);
+		// return $this->get_trans()->fetch_all($q);
 	}
 
 	# TODO: QueryClass
