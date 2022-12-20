@@ -12,14 +12,14 @@ class Varchar {
 		$this->length = $length;
 
 		if(isset($value)){
-			$this->value = (string)$value;
+			$this->value = trim((string)$value);
 			if(mb_strlen($this->value) > $length){
 				throw new VarcharLengthException($length, mb_strlen($this->value));
 			}
 		}
 	}
 
-	function __toString(){
+	function __toString(): string {
 		return $this->value;
 	}
 }
