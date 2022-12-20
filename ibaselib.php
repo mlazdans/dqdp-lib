@@ -382,3 +382,28 @@ function ibase_get_privileges(Ibase $db, $PARAMS = null): array {
 
 	return $ret;
 }
+
+function get_table_fields(IBase $db, $table): mixed {
+	$table = strtoupper($table);
+	$sql = 'SELECT rf.*,
+		f.RDB$FIELD_SUB_TYPE,
+		f.RDB$FIELD_TYPE,
+		f.RDB$FIELD_LENGTH,
+		f.RDB$CHARACTER_LENGTH,
+		f.RDB$FIELD_PRECISION
+	FROM RDB$RELATION_FIELDS rf
+	JOIN RDB$FIELDS f ON f.RDB$FIELD_NAME = rf.RDB$FIELD_SOURCE
+	WHERE rf.RDB$RELATION_NAME = ?
+	ORDER BY rf.RDB$FIELD_POSITION';
+
+	if(!($q = $db->query($sql, $table))){
+		return null;
+	}
+
+	while($r = $db->fetch_object($q)){
+		ibase_strip_rdb($r);
+		$ret[] = $r;
+	}
+
+	return $ret??[];
+}
