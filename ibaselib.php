@@ -286,7 +286,7 @@ function ibase_get_users(DBAInterface $db, ?iterable $F = null): array {
 
 function ibase_get_current_role(DBAInterface $db): string {
 	return trim(get_prop(
-		$db->fetch_array($db->query('SELECT CURRENT_ROLE AS RLE FROM RDB$DATABASE'))
+		$db->fetch_assoc($db->query('SELECT CURRENT_ROLE AS RLE FROM RDB$DATABASE'))
 	, 'RLE'));
 }
 
