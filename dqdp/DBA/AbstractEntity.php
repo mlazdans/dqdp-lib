@@ -20,7 +20,7 @@ abstract class AbstractEntity implements EntityInterface {
 	}
 
 	protected abstract function getTableName(): string;
-	protected abstract function getPK(): array|string;
+	protected abstract function getPK(): array|string|null;
 	protected abstract function getGen(): ?string;
 
 	protected function select(): Select {
