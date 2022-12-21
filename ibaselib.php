@@ -1,5 +1,7 @@
 <?php declare(strict_types = 1);
 
+# TODO: in future use dqdp\FireBird\*; !!
+
 use dqdp\DBA\driver\IBase;
 use dqdp\SQL\Select;
 
@@ -435,4 +437,19 @@ function ibase_get_pk(IBase $db, string $table): string|array|null {
 	} else {
 		return $ret;
 	}
+}
+
+function ibase_get_table_info(IBase $db, string $table): ?stdClass {
+	$sql = 'SELECT * FROM RDB$RELATIONS AS relations WHERE relations.RDB$SYSTEM_FLAG = 0 AND relations.RDB$RELATION_NAME = ?';
+
+	if(!($q = $db->query($sql, $table))){
+		return null;
+	}
+
+	if($r = $db->fetch_object($q)){
+		ibase_strip_rdb($r);
+		return $r;
+	}
+
+	return null;
 }
