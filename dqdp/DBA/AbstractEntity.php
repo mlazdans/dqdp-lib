@@ -8,6 +8,7 @@ use dqdp\DBA\interfaces\ORMInterface;
 use dqdp\SQL\Insert;
 use dqdp\SQL\Select;
 use dqdp\SQL\Statement;
+use InvalidArgumentException;
 
 abstract class AbstractEntity implements EntityInterface {
 	protected DBAInterface $dba;
@@ -28,6 +29,10 @@ abstract class AbstractEntity implements EntityInterface {
 	}
 
 	function get($ID, ?iterable $filters = null): mixed {
+		if(is_null($this->PK)){
+			throw new InvalidArgumentException("PRIMARY KEY not defined for $this->Table");
+		}
+
 		$filters = eoe($filters);
 
 		$filters->{$this->PK} = $ID;
@@ -133,6 +138,7 @@ abstract class AbstractEntity implements EntityInterface {
 	private function _insert_query(array|object $DATA, $update = false): mixed {
 		$PK = $this->getPK();
 		$TableName = $this->getTableName();
+		# TODO: check null
 		$PK_fields_str = is_array($PK) ? join(",", $PK) : $PK;
 
 		if($this instanceof ORMInterface){
