@@ -383,7 +383,7 @@ function ibase_get_privileges(Ibase $db, $PARAMS = null): array {
 	return $ret;
 }
 
-function get_table_fields(IBase $db, $table): mixed {
+function get_table_fields(IBase $db, string $table): mixed {
 	$table = strtoupper($table);
 	$sql = 'SELECT rf.*,
 		f.RDB$FIELD_SUB_TYPE,
@@ -406,4 +406,33 @@ function get_table_fields(IBase $db, $table): mixed {
 	}
 
 	return $ret??[];
+}
+
+function ibase_get_pk(IBase $db, string $table): string|array|null {
+	$sql ='SELECT
+		ix.RDB$INDEX_NAME AS INDEX_NAME,
+		sg.RDB$FIELD_NAME AS FIELD_NAME,
+		rc.RDB$RELATION_NAME AS TABLE_NAME
+	FROM
+		RDB$INDICES ix
+		JOIN RDB$RELATION_CONSTRAINTS rc ON rc.RDB$INDEX_NAME = ix.RDB$INDEX_NAME
+		LEFT JOIN RDB$INDEX_SEGMENTS sg ON ix.RDB$INDEX_NAME = sg.RDB$INDEX_NAME
+	WHERE
+		rc.RDB$CONSTRAINT_TYPE = \'PRIMARY KEY\' AND rc.RDB$RELATION_NAME = ?';
+
+	if(!($q = $db->query($sql, $table))){
+		return null;
+	}
+
+	while($r = $db->fetch_object($q)){
+		$ret[] = trim($r->FIELD_NAME);
+	}
+
+	if(!isset($ret)){
+		return null;
+	} elseif(count($ret) == 1){
+		return $ret[0];
+	} else {
+		return $ret;
+	}
 }
