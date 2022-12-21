@@ -1962,7 +1962,7 @@ function substitute(string $str){
 		$str);
 }
 
-function join_paths($a) {
+function join_paths(array $a): string {
 	return join(DIRECTORY_SEPARATOR, $a);
 }
 
