@@ -290,23 +290,27 @@ abstract class AbstractEntity implements EntityInterface {
 
 	protected function set_filters(Statement $sql, ?iterable $filters = null): Statement {
 		$filters = eoe($filters);
-		if(is_array($this->PK)){
-		} else {
-			//if($filters->exists($this->PK) && is_empty($filters->{$this->PK})){
-			if($filters->exists($this->PK) && is_null($filters->{$this->PK})){
-				trigger_error("Illegal PRIMARY KEY value for $this->PK", E_USER_ERROR);
-				return $sql;
+		if($this->PK){
+			if(is_array($this->PK)){
+			} else {
+				//if($filters->exists($this->PK) && is_empty($filters->{$this->PK})){
+				if($filters->exists($this->PK) && is_null($filters->{$this->PK})){
+					trigger_error("Illegal PRIMARY KEY value for $this->PK", E_USER_ERROR);
+					return $sql;
+				}
 			}
 		}
 
-		foreach(array_enfold($this->PK) as $k){
-			if($filters->exists($k) && !is_null($filters->{$k})){
-				$sql->Where(["$this->Table.$k = ?", $filters->{$k}]);
+		if($this->PK){
+			foreach(array_enfold($this->PK) as $k){
+				if($filters->exists($k) && !is_null($filters->{$k})){
+					$sql->Where(["$this->Table.$k = ?", $filters->{$k}]);
+				}
 			}
 		}
 
 		# TODO: multi field PK
-		if(!is_array($this->PK)){
+		if($this->PK && !is_array($this->PK)){
 			$k = $this->PK."S";
 			if($filters->exists($k)){
 				if(is_array($filters->{$k})){
