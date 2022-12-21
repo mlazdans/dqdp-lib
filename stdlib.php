@@ -839,7 +839,7 @@ function sqlr(){
 		}
 	}, ...func_get_args());
 
-	print is_climode() ? "-------------------------------------------------\n" : "</code></pre>";
+	print is_climode() ? "\n-------------------------------------------------\n" : "</code></pre>";
 
 	print "\n";
 }
