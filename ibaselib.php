@@ -386,7 +386,6 @@ function ibase_get_privileges(Ibase $db, $PARAMS = null): array {
 }
 
 function get_table_fields(IBase $db, string $table): mixed {
-	$table = strtoupper($table);
 	$sql = 'SELECT rf.*,
 		f.RDB$FIELD_SUB_TYPE,
 		f.RDB$FIELD_TYPE,
