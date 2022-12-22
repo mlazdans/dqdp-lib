@@ -1996,13 +1996,13 @@ function prop_exists(array|object|null $o, string|int $k): bool {
 	}
 }
 
-function prop_is_initialized(array|object|null $o, string|int $k): bool {
+function prop_initialized(array|object|null $o, string|int $k): bool {
 	if(is_null($o)){
 		return false;
 	} elseif(is_array($o)){
 		return key_exists($k, $o);
 	} elseif(is_object($o)){
-		return (new ReflectionClass($o))->getProperty($k)->isInitialized($o);
+		return (new ReflectionObject($o))->getProperty($k)->isInitialized($o);
 	} else {
 		throw new InvalidArgumentException("Expected array|object|ArrayAccess, found: ".gettype($o));
 	}
@@ -2198,6 +2198,6 @@ function get_object_public_vars(object $o){
 	return get_object_vars($o);
 }
 
-function static_prop_is_initialized(string $className, string|int $k): bool {
+function static_prop_initialized(string $className, string|int $k): bool {
 	return (new ReflectionClass($className))->getProperty($k)->isInitialized();
 }
