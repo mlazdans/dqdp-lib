@@ -40,79 +40,17 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 		return $this->getSingle($filters);
 	}
 
-	// function get_all(string $CollectionClass, ?iterable $filters = null): DataCollection {
-	// function getAll(?iterable $filters = null): mixed {
-	// 	if(!($q = $this->query($filters))){
-	// 		return null;
-	// 	}
-
-	// 	if($this instanceof ORMInterface){
-	// 		$col = new ($this->getCollectionType());
-	// 	} else {
-	// 		$col = [];
-	// 	}
-	// 	// while($r = $this->get_trans()->fetch_object($q)){
-	// 	while($r = $this->fetch($q)){
-	// 		// $ret[] = $r;
-	// 		$col[] = $r;
-	// 		// $ret[] = $r;
-	// 		// if($this->Table instanceof DataMapperInterface){
-	// 			// $ret[] = $this->Table->fromDBObject($r);
-	// 		// } else {
-	// 		// 	$ret[] = $r;
-	// 		// }
-	// 	}
-
-	// 	return $col;
-	// 	// return $ret;
-	// 	// return new ($this->getCollectionType())($ret);
-	// 	// return $this->get_trans()->fetch_all($q);
-	// }
-
-	# TODO: QueryClass
 	function fetch($q): mixed {
 		if($data = $this->get_trans()->fetch_object($q)){
 			return $data;
-			// if($this instanceof ORMInterface){
-			// 	return $this->fromDBObject($data);
-			// 	// return ($this->getDataType())::fromDBObject($data);
-			// } else {
-			// 	return $data;
-			// }
 		} else {
 			return null;
 		}
 	}
-	// function fetch($q): mixed {
-	// 	// return $this->get_trans()->fetch_assoc($q);
-	// 	// return $data ? ($this->getDataType())::fromDBObject($data) : null;
-	// 	if($data = $this->get_trans()->fetch_object($q)){
-	// 		if($this instanceof ORMInterface){
-	// 			return $this->fromDBObject($data);
-	// 			// return ($this->getDataType())::fromDBObject($data);
-	// 		} else {
-	// 			return $data;
-	// 		}
-	// 	} else {
-	// 		return null;
-	// 	}
-	// 	// return $data ? ($this->getDataType())::fromDBObject($data) : null;
-	// 	// return (new $this->getDataType())($this->fromDBObject($this->get_trans()->fetch_object($q)));
-	// 	// if($this->Table instanceof DataMapperInterface){
-	// 		// return $this->Table->fromDBObject($this->get_trans()->fetch_object($q));
-	// 	// } else {
-	// 	// 	return $this->get_trans()->fetch_object($q);
-	// 	// }
-	// }
 
 	function getSingle(?iterable $filters = null): mixed {
 		if($q = $this->query($filters)){
 			return $this->fetch($q);
-			// if(isset($this->Mapper)){
-			// 	return $this->Mapper->fromDBObject($this->get_trans()->fetch_object($q));
-			// } else {
-			// 	return $this->get_trans()->fetch_object($q);
-			// }
 		}
 
 		return null;
@@ -153,11 +91,6 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 		# TODO: check null
 		$PK_fields_str = is_array($PK) ? join(",", $PK) : $PK;
 
-		// if($this instanceof ORMInterface){
-		// 	$sql_fields = $this->get_sql_fields($this->toDBObject($DATA));
-		// } else {
-		// 	$sql_fields = $this->get_sql_fields($DATA);
-		// }
 		$sql_fields = $this->get_sql_fields($DATA);
 
 		$sql = (new Insert)
