@@ -829,8 +829,12 @@ function sqlr(){
 			print (string)$v;
 			if(method_exists($v, 'vars')){
 				print ("\n\n--[Bind vars]\n");
-				foreach($v->{'vars'}() as $k=>$var){
+				if(count($v->vars())){
+					foreach($v->vars() as $k=>$var){
 					printf("--[%s] = %s\n", $k, format_debug($var));
+				}
+				} else {
+					print "-- none --";
 				}
 				// printf("\n--Finished in: %.3f sec", $v->end_ts - $v->start_ts);
 			}
