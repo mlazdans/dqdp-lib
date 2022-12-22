@@ -45,7 +45,11 @@ trait DataObjectInitTrait {
 		return new static(get_class_public_vars(static::class));
 	}
 
-	static function fromDBObjectFactory(iterable $map, array|object $o): AbstractDataObject {
+	static function fromDBObjectFactory(iterable $map, array|object|null $o): ?AbstractDataObject {
+		if(is_null($o)){
+			return null;
+		}
+
 		$params = [];
 		foreach($map as $k=>$v){
 			if(prop_exists($o, $k)){
