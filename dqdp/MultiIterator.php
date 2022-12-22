@@ -41,7 +41,7 @@ class MultiIterator implements Iterator, ArrayAccess, Countable {
 	}
 
 	function &offsetGet(mixed $k): mixed {
-		return get_prop($this->data, $k);
+		return get_prop_ref($this->data, $k);
 		// if(is_array($this->data)){
 		// 	return $this->data[$offset];
 		// } elseif($this->data instanceof Generator) {
