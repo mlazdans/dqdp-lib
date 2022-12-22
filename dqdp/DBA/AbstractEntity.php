@@ -4,13 +4,13 @@ namespace dqdp\DBA;
 
 use dqdp\DBA\interfaces\DBAInterface;
 use dqdp\DBA\interfaces\EntityInterface;
-use dqdp\DBA\interfaces\ORMInterface;
+use dqdp\DBA\interfaces\TransactionInterface;
 use dqdp\SQL\Insert;
 use dqdp\SQL\Select;
 use dqdp\SQL\Statement;
 use InvalidArgumentException;
 
-abstract class AbstractEntity implements EntityInterface {
+abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 	protected DBAInterface $dba;
 	protected $Table;
 	protected $PK;
@@ -41,57 +41,69 @@ abstract class AbstractEntity implements EntityInterface {
 	}
 
 	// function get_all(string $CollectionClass, ?iterable $filters = null): DataCollection {
-	function getAll(?iterable $filters = null): mixed {
-		if(!($q = $this->query($filters))){
-			return null;
-		}
+	// function getAll(?iterable $filters = null): mixed {
+	// 	if(!($q = $this->query($filters))){
+	// 		return null;
+	// 	}
 
-		if($this instanceof ORMInterface){
-			$col = new ($this->getCollectionType());
-		} else {
-			$col = [];
-		}
-		// while($r = $this->get_trans()->fetch_object($q)){
-		while($r = $this->fetch($q)){
-			// $ret[] = $r;
-			$col[] = $r;
-			// $ret[] = $r;
-			// if($this->Table instanceof DataMapperInterface){
-				// $ret[] = $this->Table->fromDBObject($r);
-			// } else {
-			// 	$ret[] = $r;
-			// }
-		}
+	// 	if($this instanceof ORMInterface){
+	// 		$col = new ($this->getCollectionType());
+	// 	} else {
+	// 		$col = [];
+	// 	}
+	// 	// while($r = $this->get_trans()->fetch_object($q)){
+	// 	while($r = $this->fetch($q)){
+	// 		// $ret[] = $r;
+	// 		$col[] = $r;
+	// 		// $ret[] = $r;
+	// 		// if($this->Table instanceof DataMapperInterface){
+	// 			// $ret[] = $this->Table->fromDBObject($r);
+	// 		// } else {
+	// 		// 	$ret[] = $r;
+	// 		// }
+	// 	}
 
-		return $col;
-		// return $ret;
-		// return new ($this->getCollectionType())($ret);
-		// return $this->get_trans()->fetch_all($q);
-	}
+	// 	return $col;
+	// 	// return $ret;
+	// 	// return new ($this->getCollectionType())($ret);
+	// 	// return $this->get_trans()->fetch_all($q);
+	// }
 
 	# TODO: QueryClass
-	function fetch(): mixed {
-		$q = func_get_arg(0);
-		// return $this->get_trans()->fetch_assoc($q);
-		// return $data ? ($this->getDataType())::fromDBObject($data) : null;
+	function fetch($q): mixed {
 		if($data = $this->get_trans()->fetch_object($q)){
-			if($this instanceof ORMInterface){
-				return $this->fromDBObject($data);
-				// return ($this->getDataType())::fromDBObject($data);
-			} else {
-				return $data;
-			}
+			return $data;
+			// if($this instanceof ORMInterface){
+			// 	return $this->fromDBObject($data);
+			// 	// return ($this->getDataType())::fromDBObject($data);
+			// } else {
+			// 	return $data;
+			// }
 		} else {
 			return null;
 		}
-		// return $data ? ($this->getDataType())::fromDBObject($data) : null;
-		// return (new $this->getDataType())($this->fromDBObject($this->get_trans()->fetch_object($q)));
-		// if($this->Table instanceof DataMapperInterface){
-			// return $this->Table->fromDBObject($this->get_trans()->fetch_object($q));
-		// } else {
-		// 	return $this->get_trans()->fetch_object($q);
-		// }
 	}
+	// function fetch($q): mixed {
+	// 	// return $this->get_trans()->fetch_assoc($q);
+	// 	// return $data ? ($this->getDataType())::fromDBObject($data) : null;
+	// 	if($data = $this->get_trans()->fetch_object($q)){
+	// 		if($this instanceof ORMInterface){
+	// 			return $this->fromDBObject($data);
+	// 			// return ($this->getDataType())::fromDBObject($data);
+	// 		} else {
+	// 			return $data;
+	// 		}
+	// 	} else {
+	// 		return null;
+	// 	}
+	// 	// return $data ? ($this->getDataType())::fromDBObject($data) : null;
+	// 	// return (new $this->getDataType())($this->fromDBObject($this->get_trans()->fetch_object($q)));
+	// 	// if($this->Table instanceof DataMapperInterface){
+	// 		// return $this->Table->fromDBObject($this->get_trans()->fetch_object($q));
+	// 	// } else {
+	// 	// 	return $this->get_trans()->fetch_object($q);
+	// 	// }
+	// }
 
 	function getSingle(?iterable $filters = null): mixed {
 		if($q = $this->query($filters)){
@@ -106,20 +118,20 @@ abstract class AbstractEntity implements EntityInterface {
 		return null;
 	}
 
-	function query(?iterable $filters = null){
+	function query(?iterable $filters = null): mixed {
 		return $this->get_trans()->query($this->set_filters($this->select(), $filters));
 	}
 
-	function count(?iterable $filters = null): int {
-		$sql = $this->set_filters($this->select(), $filters)
-		->ResetFields()
-		->ResetOrderBy()
-		->ResetJoinLast() // Reset LEFT JOINS
-		->Select("COUNT(*) sk")
-		->Rows(1);
+	// function count(?iterable $filters = null): int {
+	// 	$sql = $this->set_filters($this->select(), $filters)
+	// 	->ResetFields()
+	// 	->ResetOrderBy()
+	// 	->ResetJoinLast() // Reset LEFT JOINS
+	// 	->Select("COUNT(*) sk")
+	// 	->Rows(1);
 
-		return (int)($this->get_trans()->execute_single($sql)['sk']??0);
-	}
+	// 	return (int)($this->get_trans()->execute_single($sql)['sk']??0);
+	// }
 
 	# TODO: insert un update
 	function save(array|object $DATA){
@@ -141,11 +153,12 @@ abstract class AbstractEntity implements EntityInterface {
 		# TODO: check null
 		$PK_fields_str = is_array($PK) ? join(",", $PK) : $PK;
 
-		if($this instanceof ORMInterface){
-			$sql_fields = $this->get_sql_fields($this->toDBObject($DATA));
-		} else {
-			$sql_fields = $this->get_sql_fields($DATA);
-		}
+		// if($this instanceof ORMInterface){
+		// 	$sql_fields = $this->get_sql_fields($this->toDBObject($DATA));
+		// } else {
+		// 	$sql_fields = $this->get_sql_fields($DATA);
+		// }
+		$sql_fields = $this->get_sql_fields($DATA);
 
 		$sql = (new Insert)
 		->Into($TableName)
