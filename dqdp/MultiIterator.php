@@ -23,7 +23,7 @@ class MultiIterator implements Iterator, ArrayAccess, Countable {
 		} elseif($this->data instanceof Generator) {
 			# TODO: test
 		} else {
-			throw new InvalidArgumentException("Unsupported type: ".gettype($data));
+			throw new InvalidArgumentException("Unsupported type: ".get_multitype($data));
 		}
 	}
 

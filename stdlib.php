@@ -2201,3 +2201,7 @@ function get_object_public_vars(object $o){
 function static_prop_initialized(string $className, string|int $k): bool {
 	return (new ReflectionClass($className))->getProperty($k)->isInitialized();
 }
+
+function get_multitype(mixed $o): string {
+	return is_object($o) ? get_class($o) : gettype($o);
+}
