@@ -69,9 +69,10 @@ class IBase implements DBAInterface
 			} else {
 				$q = ibase_query($this->conn, (string)$args[0], ...$args[0]->vars());
 			}
-			// if(!$q){
-				// sqlr($args[0]);
-			// }
+
+			if(!$q){
+				sqlr($args[0]);
+			}
 		// } elseif((count($args) == 2) && is_resource($args[0]) && is_array($args[1])) {
 		// 	//$q = ibase_execute(...$args);
 		// 	$q = ibase_execute($args[0], ...$args[1]);
@@ -95,9 +96,9 @@ class IBase implements DBAInterface
 				$q = ibase_query($this->conn, ...$args);
 			}
 
-			// if(!$q){
-				// sqlr($args);
-			// }
+			if(!$q){
+				sqlr($args);
+			}
 		}
 
 		// if($this->is_dqdp_statement($args)){
