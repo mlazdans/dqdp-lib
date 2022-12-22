@@ -2007,7 +2007,21 @@ function prop_is_initialized(array|object|null $o, string|int $k): bool {
 	}
 }
 
-function &get_prop(array|object|null $o, string|int $k): mixed {
+# TODO: vajag vai nevajag ar referenci??
+function &get_prop_ref(array|object|null $o, string|int $k): mixed {
+	if(is_null($o)){
+		return null;
+	} elseif(is_array($o) || $o instanceof ArrayAccess){
+		return $o[$k];
+	// } elseif($o instanceof Generator){
+	// 	throw new InvalidArgumentException("Generators does not support ArrayAccess");
+	} elseif(is_object($o)){
+		return $o->{$k};
+	} else {
+		throw new InvalidArgumentException("Expected array|object|ArrayAccess, found: ".gettype($o));
+	}
+}
+function get_prop(array|object|null $o, string|int $k): mixed {
 	if(is_null($o)){
 		return null;
 	} elseif(is_array($o) || $o instanceof ArrayAccess){
