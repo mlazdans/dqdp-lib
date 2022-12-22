@@ -831,8 +831,8 @@ function sqlr(){
 				print ("\n\n--[Bind vars]\n");
 				if(count($v->vars())){
 					foreach($v->vars() as $k=>$var){
-					printf("--[%s] = %s\n", $k, format_debug($var));
-				}
+						printf("--[%s] = %s\n", $k, format_debug($var));
+					}
 				} else {
 					print "-- none --";
 				}
@@ -1793,7 +1793,8 @@ function array_search_k(array|object $arr, $k, $v): mixed {
 			}
 		} else {
 			if(get_prop($item, $k) === $v){
-			return $i;
+				return $i;
+			}
 		}
 	}
 
