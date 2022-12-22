@@ -3,11 +3,11 @@
 namespace dqdp\Settings;
 
 enum SetType: string {
-	case int = "int";
-	case bool = "bool";
-	case string = "string";
-	case date = "date";
-	case binary = "binary";
-	case serialize = "serialize";
-	case text = "text";
+	case int = "SetInt";
+	case bool = "SetBool";
+	case string = "SetString";
+	case date = "SetDate";
+	case binary = "SetBinary";
+	case serialize = "SetSerialize";
+	case text = "SetText";
 }

@@ -4,7 +4,6 @@ namespace dqdp\Settings;
 
 use dqdp\DBA\interfaces\DBAInterface;
 use dqdp\DBA\interfaces\EntityInterface;
-use dqdp\Settings\SettingsType;
 use dqdp\Settings\SetType;
 use Exception;
 use TypeError;
@@ -50,8 +49,8 @@ CREATE TABLE settings
 class Settings implements EntityInterface
 {
 	protected array $DB_STRUCT = [];
-	protected array $DATA = [];
-	protected $Ent;
+	// protected array $DATA = [];
+	protected Entity $Ent;
 
 	function __construct(public string $domain){
 		$this->Ent = new Entity;
@@ -96,7 +95,7 @@ class Settings implements EntityInterface
 		throw new Exception("Not implemented");
 	}
 
-	function save(array|object|null $_ = null){
+	function save(array|object $DATA){
 		// $ST = new SettingsType();
 		// $ST->class = $this->CLASS;
 		// dumpr($ST, $this->DATA, $this->DB_STRUCT);
@@ -104,25 +103,25 @@ class Settings implements EntityInterface
 
 		$ret = true;
 		foreach($this->DB_STRUCT as $k=>$v){
-			if(!prop_exists($this->DATA, $k)){
+			if(!prop_exists($DATA, $k) || !prop_initialized($DATA, $k)){
 				continue;
 			}
 
 			// $v = strtoupper($v);
 			$params = [
-				'domain'=>$this->domain,
-				'key'=>$k,
+				'SetDomain'=>$this->domain,
+				'SetKey'=>$k,
 			];
 
 			switch($v) {
 				case SetType::serialize:
-					$params[$v->value] = serialize($this->DATA[$k]);
+					$params[$v->value] = serialize(get_prop($DATA, $k));
 					break;
 				default:
-					$params[$v->value] = $this->DATA[$k];
+					$params[$v->value] = get_prop($DATA, $k);
 			}
 
-			$ret = $ret && $this->Ent->save(new SettingsType($params));
+			$ret = $ret && $this->Ent->save(new Types\Settings($params));
 		}
 
 		return $ret;
@@ -165,25 +164,25 @@ class Settings implements EntityInterface
 	// }
 
 	# $k = key | arr | obj
-	function set(string|int $k, mixed $v = null): static {
-		if(is_array($k)){
-			$this->set_array($k);
-		} elseif(is_object($k)){
-			$this->set_array(get_object_vars($k));
-		} elseif(isset($this->DB_STRUCT[$k])) {
-			$this->DATA[$k] = $v;
-		} else {
-			throw new TypeError("Undefined struct entry: $k");
-		}
+	// function set(string|int $k, mixed $v = null): static {
+	// 	if(is_array($k)){
+	// 		$this->set_array($k);
+	// 	} elseif(is_object($k)){
+	// 		$this->set_array(get_object_vars($k));
+	// 	} elseif(isset($this->DB_STRUCT[$k])) {
+	// 		$this->DATA[$k] = $v;
+	// 	} else {
+	// 		throw new TypeError("Undefined struct entry: $k");
+	// 	}
 
-		return $this;
-	}
+	// 	return $this;
+	// }
 
-	function set_array(array $new_data): static {
-		$this->DATA = array_merge($this->DATA, $new_data);
+	// function set_array(array $new_data): static {
+	// 	$this->DATA = array_merge($this->DATA, $new_data);
 
-		return $this;
-	}
+	// 	return $this;
+	// }
 
 	function fetch(...$args): mixed {
 		list($q) = $args;
@@ -192,15 +191,15 @@ class Settings implements EntityInterface
 			return null;
 		}
 
-		if(!isset($this->DB_STRUCT[$r->key])){
-			throw new TypeError("Undefined struct entry: $r->key");
+		if(!isset($this->DB_STRUCT[$r->SetKey])){
+			throw new TypeError("Undefined struct entry: $r->SetKey");
 		}
 
-		switch($v = $this->DB_STRUCT[$r->key]){
+		switch($v = $this->DB_STRUCT[$r->SetKey]){
 			case SetType::serialize:
-				return [$r->key => unserialize($r->{$v->value})];
+				return [$r->SetKey => unserialize($r->{$v->value})];
 			default:
-				return [$r->key => $r->{$v->value}];
+				return [$r->SetKey => $r->{$v->value}];
 		}
 	}
 
