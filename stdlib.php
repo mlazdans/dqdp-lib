@@ -1787,17 +1787,17 @@ function options_select(iterable $data, string $vk, string $lk, $selected = null
 
 function array_search_k(array|object $arr, $k, $v): mixed {
 	foreach($arr as $i=>$item){
-		if(is_object($item)){
-			$cmpv = $item->{$k}??null;
-		} elseif(is_array($item)){
-			$cmpv = $item[$k]??null;
+		if(is_scalar($item)){
+			if($item === $v){
+				return $i;
+			}
 		} else {
-			$cmpv = $item;
-		}
-		if($cmpv === $v){
+			if(get_prop($item, $k) === $v){
 			return $i;
 		}
 	}
+
+	return null;
 }
 
 # TODO: refactor
