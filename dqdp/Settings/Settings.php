@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 
-namespace dqdp;
+namespace dqdp\Settings;
 
 use dqdp\DBA\interfaces\DBAInterface;
 use dqdp\DBA\interfaces\EntityInterface;
@@ -54,7 +54,7 @@ class Settings implements EntityInterface
 	protected $Ent;
 
 	function __construct(public string $domain){
-		$this->Ent = new Settings\Entity;
+		$this->Ent = new Entity;
 	}
 
 	# Interface f-ns
