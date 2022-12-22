@@ -1366,16 +1366,16 @@ function optioned($v, $value): string {
 	return sprintf(' value="%s"%s', $v, checked($v == $value));
 }
 
-function checked($v): string {
+function checked(mixed $v): string {
 	return ($v ? ' checked' : '');
 }
 
-function checkeda(Array $a, $k): string {
+function checkeda(array $a, $k): string {
 	return checked($a[$k]??null);
 }
 
-function checkedina(Array $a, $k): string {
-	return checked(in_array($k, $a));
+function checkedina(array $a, mixed $v): string {
+	return checked(in_array($v, $a));
 }
 
 # Hacking POST checkboxes
