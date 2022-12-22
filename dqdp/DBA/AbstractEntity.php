@@ -35,6 +35,7 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 
 		$filters = eoe($filters);
 
+		# TODO: array
 		$filters->{$this->PK} = $ID;
 
 		return $this->getSingle($filters);
