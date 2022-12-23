@@ -2,14 +2,7 @@
 
 namespace dqdp;
 
-use ArrayAccess;
-use ArrayIterator;
-use Countable;
-use IteratorAggregate;
-use Traversable;
-
-#[\AllowDynamicProperties]
-class StdObject implements Countable, ArrayAccess, IteratorAggregate
+class StdObject extends \stdClass implements \Countable, \ArrayAccess, \IteratorAggregate
 {
 	private int $counter = 0;
 
@@ -29,8 +22,8 @@ class StdObject implements Countable, ArrayAccess, IteratorAggregate
 		$this->{$k} = $v;
 	}
 
-	function getIterator(): Traversable {
-		return new ArrayIterator(get_object_public_vars($this));
+	function getIterator(): \Traversable {
+		return new \ArrayIterator(get_object_public_vars($this));
 	}
 
 	function exists(string $k): bool {
