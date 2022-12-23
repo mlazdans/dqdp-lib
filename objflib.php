@@ -18,6 +18,7 @@ function __object_walk(mixed &$data, callable $func, mixed &$parent = null, &$pa
 	}
 }
 
+# TODO: test if object does not get screwed over
 function __object_map(mixed $data, callable $func, mixed $parent = null, $parent_key = null): mixed {
 	if(is_null($data) || is_scalar($data)){
 		return $func($data, $parent_key, $parent);
