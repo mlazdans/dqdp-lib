@@ -4,8 +4,6 @@ namespace dqdp;
 
 class StdObject extends \stdClass implements \Countable, \ArrayAccess, \IteratorAggregate
 {
-	private int $counter = 0;
-
 	function __construct(array|object|null $initValues = null) {
 		$this->merge($initValues);
 	}
@@ -76,13 +74,12 @@ class StdObject extends \stdClass implements \Countable, \ArrayAccess, \Iterator
 
 	function offsetSet(mixed $k, mixed $v): void {
 		if (is_null($k)) {
-			$this->{$this->counter++} = $v;
+			$this->{$this->count() + 1} = $v;
 		} elseif(is_int($k)) {
 			if($this->offsetExists($k)){
 				$this->{$k} = $v;
 			} else {
-				$this->counter = max($this->counter, $k);
-				$this->{$this->counter++} = $v;
+				$this->{max($this->count(), $k)} = $v;
 			}
 		} else {
 			$this->{$k} = $v;
