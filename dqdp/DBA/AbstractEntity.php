@@ -8,7 +8,6 @@ use dqdp\DBA\interfaces\TransactionInterface;
 use dqdp\SQL\Insert;
 use dqdp\SQL\Select;
 use dqdp\SQL\Statement;
-use InvalidArgumentException;
 
 abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 	protected DBAInterface $dba;
@@ -26,19 +25,6 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 
 	protected function select(): Select {
 		return (new Select($this->getTableName().".*"))->From($this->getTableName());
-	}
-
-	function get($ID, ?iterable $filters = null): mixed {
-		if(is_null($this->PK)){
-			throw new InvalidArgumentException("PRIMARY KEY not defined for $this->Table");
-		}
-
-		$filters = eoe($filters);
-
-		# TODO: array
-		$filters->{$this->PK} = $ID;
-
-		return $this->getSingle($filters);
 	}
 
 	function fetch($q): mixed {
