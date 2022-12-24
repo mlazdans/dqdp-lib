@@ -15,17 +15,24 @@ trait PropertyInitTrait {
 		$Reflection = new ReflectionProperty(static::class, $k);
 		$Type = $Reflection->getType();
 
-		# TODO: implement union type checks
-		// if($Type instanceof ReflectionUnionType) {
-
-		// } else
+		# TODO: implement union and intersaction type checks
 		if($Type instanceof ReflectionNamedType) {
-			switch($Type->getName()){
+			$TypeName = $Type->getName();
+
+			switch($TypeName){
 				case "int": {
-					if((int)$v != $v){
-						throw new InvalidArgumentException("Expected $k to be int, found: ".gettype($v)." ($v)");
+					if(is_int($v)){
+						return $v;
 					}
-					return (int)$v;
+					if(strlen($v)){
+						return (int)$v;
+					} else {
+						return null;
+					}
+					// if((int)$v != $v){
+					// 	throw new InvalidArgumentException("Expected $k to be int, found: ".gettype($v)." '$v'");
+					// }
+					// return (int)$v;
 				}
 				case "string": {
 					return (string)$v;
@@ -33,10 +40,27 @@ trait PropertyInitTrait {
 				case "bool": {
 					return (bool)$v;
 				}
-				default: {
-					return $v;
-				}
+				// case "array": {
+				// 	if(is_array($v)){
+				// 		return $v;
+				// 	} else {
+				// 	}
+				// }
 			};
+
+			if(enum_exists($TypeName)){
+				if($v instanceof $TypeName || !method_exists($TypeName, "from")){
+					return $v;
+				} else {
+					return $TypeName::from($v);
+				}
+			}
+
+			if(method_exists($TypeName, "initFrom")){
+				return ($TypeName)::initFrom($v);
+			}
+
+			return $v;
 		} else {
 			throw new InvalidArgumentException("Unsupported Reflection type: ".get_class($Type));
 		}
