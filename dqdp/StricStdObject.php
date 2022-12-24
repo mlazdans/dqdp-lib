@@ -38,7 +38,7 @@ class StricStdObject implements \Countable, \ArrayAccess, \IteratorAggregate
 		}
 	}
 
-	function &offsetGet(mixed $k): mixed {
+	function offsetGet(mixed $k): mixed {
 		return $this->{$k};
 	}
 
