@@ -2,9 +2,11 @@
 
 namespace dqdp\Settings;
 
+use dqdp\DBA\AbstractFilter;
 use dqdp\DBA\interfaces\DBAInterface;
 use dqdp\DBA\interfaces\EntityInterface;
 use dqdp\Settings\SetType;
+use dqdp\Settings\Types\SettingsFilter;
 use Exception;
 use TypeError;
 
@@ -56,15 +58,11 @@ class Settings implements EntityInterface
 		$this->Ent = new Entity;
 	}
 
-	# Interface f-ns
-	function get($ID, ?iterable $filters = null): mixed {
-		$params = eoe($filters);
-		$params->SET_KEY = $ID;
-
-		return $this->fetch($this->query($params))[$ID];
+	function get($ID, ?AbstractFilter $filters = null): mixed {
+		return $this->getSingle(SettingsFilter::initFrom(["SET_KEY" => $ID], $filters));
 	}
 
-	function getAll(?iterable $filters = null): mixed {
+	function getAll(?AbstractFilter $filters = null): mixed {
 		$ret = array_fill_keys(array_keys($this->DB_STRUCT), null);
 		$q = $this->query($filters);
 		while($r = $this->fetch($q)){
@@ -74,17 +72,14 @@ class Settings implements EntityInterface
 		return $ret;
 	}
 
-	function getSingle(?iterable $filters = null): mixed {
+	function getSingle(?AbstractFilter $filters = null): mixed {
 		if($q = $this->query($filters)){
 			return $this->fetch($q);
 		}
 	}
 
-	function query(?iterable $filters = null){
-		$PARAMS = eoe($filters);
-		$PARAMS->SET_DOMAIN = $this->domain; // part of PK, parent will take care
-
-		return $this->Ent->query($PARAMS);
+	function query(?AbstractFilter $filters = null){
+		return $this->Ent->query(SettingsFilter::initFrom(["SET_DOMAIN" => $this->domain], $filters));
 	}
 
 	function insert(array|object $DATA){

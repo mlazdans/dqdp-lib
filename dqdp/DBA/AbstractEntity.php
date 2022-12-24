@@ -35,7 +35,7 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 		}
 	}
 
-	function getSingle(?iterable $filters = null): mixed {
+	function getSingle(?AbstractFilter $filters = null): mixed {
 		if($q = $this->query($filters)){
 			return $this->fetch($q);
 		}
@@ -43,8 +43,8 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 		return null;
 	}
 
-	function query(?iterable $filters = null): mixed {
-		return $this->get_trans()->query($this->set_filters($this->select(), $filters));
+	function query(?AbstractFilter $filter = null): mixed {
+		return $this->get_trans()->query($filter ? $filter->apply($this->select()) : $this->select());
 	}
 
 	// function count(?iterable $filters = null): int {
@@ -146,88 +146,88 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 		return $this->dba;
 	}
 
-	protected function set_default_filters(Statement $sql, $DATA, array $defaults, $prefix = null): Statement {
-		$DATA = eoe($DATA);
+	// protected function set_default_filters(Statement $sql, $DATA, array $defaults, $prefix = null): Statement {
+	// 	$DATA = eoe($DATA);
 
-		if(is_null($prefix)){
-			$prefix = "$this->Table.";
-		}
+	// 	if(is_null($prefix)){
+	// 		$prefix = "$this->Table.";
+	// 	}
 
-		foreach($defaults as $field=>$value){
-			if(is_int($field)){
-				$sql->Where($value);
-			} elseif($DATA->exists($field)){
-				if(!is_null($DATA->{$field})){
-					# TODO: f-ija, kā build_sql
-					$sql->Where(["$prefix$field = ?", $DATA->{$field}]);
-				}
-			} else {
-				$sql->Where(["$prefix$field = ?", $value]);
-			}
-		}
+	// 	foreach($defaults as $field=>$value){
+	// 		if(is_int($field)){
+	// 			$sql->Where($value);
+	// 		} elseif($DATA->exists($field)){
+	// 			if(!is_null($DATA->{$field})){
+	// 				# TODO: f-ija, kā build_sql
+	// 				$sql->Where(["$prefix$field = ?", $DATA->{$field}]);
+	// 			}
+	// 		} else {
+	// 			$sql->Where(["$prefix$field = ?", $value]);
+	// 		}
+	// 	}
 
-		return $sql;
-	}
+	// 	return $sql;
+	// }
 
-	# TODO: abstract out filters funkcionālo daļu
-	# TODO: uz Select???
-	# TODO: vai vispār vajag atdalīt NULL filters? Varbūt visiem vajag NULL check?
-	protected function set_null_filters(Statement $sql, $DATA, array $fields, string $prefix = null): Statement {
-		$DATA = eoe($DATA);
+	// # TODO: abstract out filters funkcionālo daļu
+	// # TODO: uz Select???
+	// # TODO: vai vispār vajag atdalīt NULL filters? Varbūt visiem vajag NULL check?
+	// protected function set_null_filters(Statement $sql, $DATA, array $fields, string $prefix = null): Statement {
+	// 	$DATA = eoe($DATA);
 
-		if(is_null($prefix)){
-			$prefix = "$this->Table.";
-		}
+	// 	if(is_null($prefix)){
+	// 		$prefix = "$this->Table.";
+	// 	}
 
-		foreach($fields as $k){
-			if($DATA->exists($k)){
-				if(is_null($DATA->{$k})){
-					$sql->Where(["$prefix$k IS NULL"]);
-				} else {
-					# TODO: f-ija, kā build_sql
-					$sql->Where(["$prefix$k = ?", $DATA->{$k}]);
-				}
-			}
-		}
+	// 	foreach($fields as $k){
+	// 		if($DATA->exists($k)){
+	// 			if(is_null($DATA->{$k})){
+	// 				$sql->Where(["$prefix$k IS NULL"]);
+	// 			} else {
+	// 				# TODO: f-ija, kā build_sql
+	// 				$sql->Where(["$prefix$k = ?", $DATA->{$k}]);
+	// 			}
+	// 		}
+	// 	}
 
-		return $sql;
-	}
+	// 	return $sql;
+	// }
 
-	protected function set_non_null_filters(Statement $sql, $DATA, array $fields, string $prefix = null): Statement {
-		$DATA = eoe($DATA);
+	// protected function set_non_null_filters(Statement $sql, $DATA, array $fields, string $prefix = null): Statement {
+	// 	$DATA = eoe($DATA);
 
-		if(is_null($prefix)){
-			$prefix = "$this->Table.";
-		}
+	// 	if(is_null($prefix)){
+	// 		$prefix = "$this->Table.";
+	// 	}
 
-		foreach($fields as $k){
-			if($DATA->exists($k)){
-				# TODO: f-ija, kā build_sql
-				$sql->Where(["$prefix$k = ?", $DATA->{$k}]);
-			}
-		}
+	// 	foreach($fields as $k){
+	// 		if($DATA->exists($k)){
+	// 			# TODO: f-ija, kā build_sql
+	// 			$sql->Where(["$prefix$k = ?", $DATA->{$k}]);
+	// 		}
+	// 	}
 
-		return $sql;
-	}
+	// 	return $sql;
+	// }
 
-	protected function set_field_filters(Statement $sql, $DATA, array $fields, string $prefix = null): Statement {
-		$DATA = eoe($DATA);
+	// protected function set_field_filters(Statement $sql, $DATA, array $fields, string $prefix = null): Statement {
+	// 	$DATA = eoe($DATA);
 
-		if(is_null($prefix)){
-			$prefix = "$this->Table.";
-		}
+	// 	if(is_null($prefix)){
+	// 		$prefix = "$this->Table.";
+	// 	}
 
-		foreach($fields as $k){
-			if($DATA->$k){
-				# TODO: f-ija, kā build_sql
-				$sql->Where(["$prefix$k = ?", $DATA->{$k}]);
-			}
-		}
+	// 	foreach($fields as $k){
+	// 		if($DATA->$k){
+	// 			# TODO: f-ija, kā build_sql
+	// 			$sql->Where(["$prefix$k = ?", $DATA->{$k}]);
+	// 		}
+	// 	}
 
-		return $sql;
-	}
+	// 	return $sql;
+	// }
 
-	protected function set_filters(Statement $sql, ?iterable $filters = null): Statement {
+	protected function set_base_filters(Statement $sql, ?iterable $filters = null): Statement {
 		$filters = eoe($filters);
 		if($this->PK){
 			if(is_array($this->PK)){

@@ -2,12 +2,14 @@
 
 namespace dqdp\DBA\interfaces;
 
-interface EntityInterface {
-	function get($ID, ?iterable $filters = null): mixed;
-	// function getAll(?iterable $filters = null): mixed;
-	// function getSingle(?iterable $filters = null): mixed;
+use dqdp\DBA\AbstractFilter;
 
-	// function query(?iterable $filters = null): static;
+interface EntityInterface {
+	function get($ID, ?AbstractFilter $filters = null): mixed;
+	function getAll(?AbstractFilter $filters = null): mixed;
+	function getSingle(?AbstractFilter $filters = null): mixed;
+
+	// function query(?AbstractFilter $filters = null): mixed;
 	// function fetch(): mixed;
 
 	function insert(array|object $DATA);
