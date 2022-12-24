@@ -689,65 +689,65 @@ function date_qt_month(int $C, int $m = 1): int {
 	return ($C - 1) * 3 + $m;
 }
 
-function date_startend($D): array {
-	$DATE = eoe($D);
-	$format = get_date_format();
-	$start_date = $end_date = false;
+// function date_startend($D): array {
+// 	$DATE = eoe($D);
+// 	$format = get_date_format();
+// 	$start_date = $end_date = false;
 
-	$ceturksnis = false;
-	for($i = 1; $i < 5; $i++){
-		if($DATE->{"C$i"}){
-			$ceturksnis = $i;
-		}
-	}
+// 	$ceturksnis = false;
+// 	for($i = 1; $i < 5; $i++){
+// 		if($DATE->{"C$i"}){
+// 			$ceturksnis = $i;
+// 		}
+// 	}
 
-	if($ceturksnis){
-		// $start_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 1, 1, date('Y'));
-		// $days_in_end_month = date_daycount(($ceturksnis - 1) * 3 + 3);
-		// $end_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 3, $days_in_end_month, date('Y'));
-		$start_date = mktime(0,0,0, date_qt_month($ceturksnis, 1), 1, (int)date('Y'));
-		$days_in_end_month = date_daycount(date_qt_month($ceturksnis, 3));
-		$end_date = mktime(0,0,0, date_qt_month($ceturksnis, 3), $days_in_end_month, (int)date('Y'));
-	} elseif($DATE->PREV_YEAR) {
-		$start_date = strtotime('first day of January last year');
-		$end_date = strtotime('last day of December last year');
-	} elseif($DATE->THIS_YEAR){
-		$start_date = strtotime('first day of January');
-		$end_date = time();
-	} elseif($DATE->TODAY) {
-		$start_date = $end_date = strtotime('today');
-	} elseif($DATE->YESTERDAY) {
-		$start_date = $end_date = strtotime('yesterday');
-	} elseif($DATE->THIS_WEEK) {
-		$start_date = strtotime("last Monday");
-		$end_date = time();
-	} elseif($DATE->THIS_MONTH) {
-		$start_date = strtotime("first day of");
-		$end_date = time();
-	} elseif($DATE->PREV_MONTH) {
-		$start_date = strtotime("first day of previous month");
-		$end_date = strtotime("last day of previous month");
-	} elseif($DATE->PREV_30DAYS){
-		$start_date = strtotime("-30 days");
-		$end_date = time();
-	} elseif($DATE->MONTH){
-		if(empty($DATE->YEAR))$DATE->YEAR = date('Y');
-		$dc = date_daycount((int)$DATE->MONTH, (int)$DATE->YEAR);
-		$start_date = strtotime("$DATE->YEAR-$DATE->MONTH-01");
-		$end_date = strtotime("$DATE->YEAR-$DATE->MONTH-$dc");
-	} elseif($DATE->YEAR){
-		$start_date = strtotime("first day of January $DATE->YEAR");
-		$end_date = strtotime("last day of December $DATE->YEAR");
-	} else {
-		if($DATE->START)$start_date = strtotime($DATE->START);
-		if($DATE->END)$end_date = strtotime($DATE->END);
-	}
+// 	if($ceturksnis){
+// 		// $start_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 1, 1, date('Y'));
+// 		// $days_in_end_month = date_daycount(($ceturksnis - 1) * 3 + 3);
+// 		// $end_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 3, $days_in_end_month, date('Y'));
+// 		$start_date = mktime(0,0,0, date_qt_month($ceturksnis, 1), 1, (int)date('Y'));
+// 		$days_in_end_month = date_daycount(date_qt_month($ceturksnis, 3));
+// 		$end_date = mktime(0,0,0, date_qt_month($ceturksnis, 3), $days_in_end_month, (int)date('Y'));
+// 	} elseif($DATE->PREV_YEAR) {
+// 		$start_date = strtotime('first day of January last year');
+// 		$end_date = strtotime('last day of December last year');
+// 	} elseif($DATE->THIS_YEAR){
+// 		$start_date = strtotime('first day of January');
+// 		$end_date = time();
+// 	} elseif($DATE->TODAY) {
+// 		$start_date = $end_date = strtotime('today');
+// 	} elseif($DATE->YESTERDAY) {
+// 		$start_date = $end_date = strtotime('yesterday');
+// 	} elseif($DATE->THIS_WEEK) {
+// 		$start_date = strtotime("last Monday");
+// 		$end_date = time();
+// 	} elseif($DATE->THIS_MONTH) {
+// 		$start_date = strtotime("first day of");
+// 		$end_date = time();
+// 	} elseif($DATE->PREV_MONTH) {
+// 		$start_date = strtotime("first day of previous month");
+// 		$end_date = strtotime("last day of previous month");
+// 	} elseif($DATE->PREV_30DAYS){
+// 		$start_date = strtotime("-30 days");
+// 		$end_date = time();
+// 	} elseif($DATE->MONTH){
+// 		if(empty($DATE->YEAR))$DATE->YEAR = date('Y');
+// 		$dc = date_daycount((int)$DATE->MONTH, (int)$DATE->YEAR);
+// 		$start_date = strtotime("$DATE->YEAR-$DATE->MONTH-01");
+// 		$end_date = strtotime("$DATE->YEAR-$DATE->MONTH-$dc");
+// 	} elseif($DATE->YEAR){
+// 		$start_date = strtotime("first day of January $DATE->YEAR");
+// 		$end_date = strtotime("last day of December $DATE->YEAR");
+// 	} else {
+// 		if($DATE->START)$start_date = strtotime($DATE->START);
+// 		if($DATE->END)$end_date = strtotime($DATE->END);
+// 	}
 
-	if($start_date)$start_date = date($format, $start_date);
-	if($end_date)$end_date = date($format, $end_date);
+// 	if($start_date)$start_date = date($format, $start_date);
+// 	if($end_date)$end_date = date($format, $end_date);
 
-	return [$start_date, $end_date];
-}
+// 	return [$start_date, $end_date];
+// }
 
 function php_self(){
 	return $_SERVER['REQUEST_URI'] ?? '';
