@@ -2,6 +2,7 @@
 
 namespace dqdp\Settings;
 
+# TODO: rename
 enum SetType: string {
 	case int = "SetInt";
 	case bool = "SetBool";
