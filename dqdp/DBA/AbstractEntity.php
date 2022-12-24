@@ -227,68 +227,68 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 	// 	return $sql;
 	// }
 
-	protected function set_base_filters(Statement $sql, ?iterable $filters = null): Statement {
-		$filters = eoe($filters);
-		if($this->PK){
-			if(is_array($this->PK)){
-			} else {
-				//if($filters->exists($this->PK) && is_empty($filters->{$this->PK})){
-				if($filters->exists($this->PK) && is_null($filters->{$this->PK})){
-					trigger_error("Illegal PRIMARY KEY value for $this->PK", E_USER_ERROR);
-					return $sql;
-				}
-			}
-		}
+	// protected function set_base_filters(Statement $sql, ?iterable $filters = null): Statement {
+	// 	$filters = eoe($filters);
+	// 	if($this->PK){
+	// 		if(is_array($this->PK)){
+	// 		} else {
+	// 			//if($filters->exists($this->PK) && is_empty($filters->{$this->PK})){
+	// 			if($filters->exists($this->PK) && is_null($filters->{$this->PK})){
+	// 				trigger_error("Illegal PRIMARY KEY value for $this->PK", E_USER_ERROR);
+	// 				return $sql;
+	// 			}
+	// 		}
+	// 	}
 
-		if($this->PK){
-			foreach(array_enfold($this->PK) as $k){
-				if($filters->exists($k) && !is_null($filters->{$k})){
-					$sql->Where(["$this->Table.$k = ?", $filters->{$k}]);
-				}
-			}
-		}
+	// 	if($this->PK){
+	// 		foreach(array_enfold($this->PK) as $k){
+	// 			if($filters->exists($k) && !is_null($filters->{$k})){
+	// 				$sql->Where(["$this->Table.$k = ?", $filters->{$k}]);
+	// 			}
+	// 		}
+	// 	}
 
-		# TODO: multi field PK
-		if($this->PK && !is_array($this->PK)){
-			$k = $this->PK."S";
-			if($filters->exists($k)){
-				if(is_array($filters->{$k})){
-					$IDS = $filters->{$k};
-				} elseif(is_string($filters->{$k})){
-					$IDS = explode(',',$filters->{$k});
-				} else {
-					trigger_error("Illegal multiple PRIMARY KEY value for $this->PKS", E_USER_ERROR);
-				}
-				$sql->Where(qb_filter_in("$this->Table.{$this->PK}", $IDS));
-			}
-		}
+	// 	# TODO: multi field PK
+	// 	if($this->PK && !is_array($this->PK)){
+	// 		$k = $this->PK."S";
+	// 		if($filters->exists($k)){
+	// 			if(is_array($filters->{$k})){
+	// 				$IDS = $filters->{$k};
+	// 			} elseif(is_string($filters->{$k})){
+	// 				$IDS = explode(',',$filters->{$k});
+	// 			} else {
+	// 				trigger_error("Illegal multiple PRIMARY KEY value for $this->PKS", E_USER_ERROR);
+	// 			}
+	// 			$sql->Where(qb_filter_in("$this->Table.{$this->PK}", $IDS));
+	// 		}
+	// 	}
 
-		# TODO: unify
-		$Order = $filters->order_by??($filters->ORDER_BY??'');
-		if($Order){
-			$sql->ResetOrderBy()->OrderBy($Order);
-		}
+	// 	# TODO: unify
+	// 	$Order = $filters->order_by??($filters->ORDER_BY??'');
+	// 	if($Order){
+	// 		$sql->ResetOrderBy()->OrderBy($Order);
+	// 	}
 
-		if($filters->limit){
-			$sql->Rows($filters->limit);
-		}
+	// 	if($filters->limit){
+	// 		$sql->Rows($filters->limit);
+	// 	}
 
-		if($filters->rows){
-			$sql->Rows($filters->rows);
-		}
+	// 	if($filters->rows){
+	// 		$sql->Rows($filters->rows);
+	// 	}
 
-		if($filters->offset){
-			$sql->Offset($filters->offset);
-		}
+	// 	if($filters->offset){
+	// 		$sql->Offset($filters->offset);
+	// 	}
 
-		if($filters->fields){
-			if(is_array($filters->fields)){
-				$sql->ResetFields()->Select(join(", ", $filters->fields));
-			} else {
-				$sql->ResetFields()->Select($filters->fields);
-			}
-		}
+	// 	if($filters->fields){
+	// 		if(is_array($filters->fields)){
+	// 			$sql->ResetFields()->Select(join(", ", $filters->fields));
+	// 		} else {
+	// 			$sql->ResetFields()->Select($filters->fields);
+	// 		}
+	// 	}
 
-		return $sql;
-	}
+	// 	return $sql;
+	// }
 }
