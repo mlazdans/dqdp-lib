@@ -52,7 +52,7 @@ trait PropertyInitTrait {
 				if($v instanceof $TypeName || !method_exists($TypeName, "from")){
 					return $v;
 				} else {
-					return $TypeName::from($v);
+					return $TypeName::tryFrom($v);
 				}
 			}
 
