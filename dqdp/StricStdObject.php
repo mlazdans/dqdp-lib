@@ -6,7 +6,7 @@ class StricStdObject implements \Countable, \ArrayAccess, \IteratorAggregate
 {
 	use PropertyInitTrait;
 
-	static function initFrom(array|object|null $data = null): static {
+	static function initFrom(array|object|null $data = null, array|object|null $defaults = null): static {
 		if(empty($data)){
 			return new static;
 		}
@@ -16,6 +16,8 @@ class StricStdObject implements \Countable, \ArrayAccess, \IteratorAggregate
 		foreach($properties as $k=>$class_default){
 			if(prop_exists($data, $k)){
 				$params[$k] = static::initValue($k, get_prop($data, $k));
+			} elseif(prop_exists($defaults, $k)){
+				$params[$k] = static::initValue($k, get_prop($defaults, $k));
 			}
 		}
 
