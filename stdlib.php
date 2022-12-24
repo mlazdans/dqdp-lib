@@ -1388,6 +1388,8 @@ function boolcheckbox($NAME, $checked): string {
 function datediff(string $d1, string $d2, $calc = 3600 * 24): int|false {
 	$date1 = strtotime($d1);
 	$date2 = strtotime($d2);
+	// $date1 = $d1 ? strtotime($d1) : time();
+	// $date2 = $d2 ? strtotime($d2) : time();
 
 	if($date1 === false || $date2 === false || $calc == 0){
 		return false;
