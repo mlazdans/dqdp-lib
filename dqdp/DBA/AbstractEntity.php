@@ -9,12 +9,11 @@ use dqdp\SQL\Insert;
 use dqdp\SQL\Select;
 use InvalidArgumentException;
 
+// TODO: maybe do separate classes? ProcEntity, ReadOnlyEntity, etc
 abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 	protected DBAInterface $dba;
-	protected $PK;
 
 	function __construct(){
-		$this->PK = $this->getPK();
 	}
 
 	// Select can be made from tabe,view or procedure
@@ -23,13 +22,16 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 	protected abstract function getProcName(): ?string;
 	protected abstract function getPK(): array|string|null;
 	protected abstract function getGen(): ?string;
+	protected abstract function getProcArgs(): ?array;
 
 	protected function select(): Select {
-		if(is_null($TableName = $this->getTableName()??$this->getProcName())){
+		if($TableName = $this->getTableName()){
+			return (new Select("$TableName.*"))->From($TableName);
+		} elseif($TableName = $this->getProcName()){
+			return (new Select("$TableName.*"))->From($TableName)->withArgs($this->getProcArgs());
+		} else {
 			throw new InvalidArgumentException("Table not found");
 		}
-
-		return (new Select("$TableName.*"))->From($TableName);
 	}
 
 	function fetch($q): mixed {
