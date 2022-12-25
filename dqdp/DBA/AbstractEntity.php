@@ -7,24 +7,29 @@ use dqdp\DBA\interfaces\EntityInterface;
 use dqdp\DBA\interfaces\TransactionInterface;
 use dqdp\SQL\Insert;
 use dqdp\SQL\Select;
-use dqdp\SQL\Statement;
+use InvalidArgumentException;
 
 abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 	protected DBAInterface $dba;
-	protected $Table;
 	protected $PK;
 
 	function __construct(){
-		$this->Table = $this->getTableName();
 		$this->PK = $this->getPK();
 	}
 
-	protected abstract function getTableName(): string;
+	// Select can be made from tabe,view or procedure
+	// Update,insert can be made to table or view
+	protected abstract function getTableName(): ?string;
+	protected abstract function getProcName(): ?string;
 	protected abstract function getPK(): array|string|null;
 	protected abstract function getGen(): ?string;
 
 	protected function select(): Select {
-		return (new Select($this->getTableName().".*"))->From($this->getTableName());
+		if(is_null($TableName = $this->getTableName()??$this->getProcName())){
+			throw new InvalidArgumentException("Table not found");
+		}
+
+		return (new Select("$TableName.*"))->From($TableName);
 	}
 
 	function fetch($q): mixed {
@@ -61,20 +66,30 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 	# TODO: insert un update
 	function save(array|object $DATA){
 		return $this->_insert_query($DATA, true);
-		// return $this->get_trans()->save($DATA, $this->Table);
 	}
 
 	function update($ID, array|object $DATA){
-		return $this->get_trans()->update($ID, $DATA, $this->Table);
+		if(is_null($TableName = $this->getTableName())){
+			throw new InvalidArgumentException("Table not found");
+		}
+
+		return $this->get_trans()->update($ID, $DATA, $TableName);
 	}
 
 	function insert(array|object $DATA){
-		return $this->get_trans()->insert($DATA, $this->Table);
+		if(is_null($TableName = $this->getTableName())){
+			throw new InvalidArgumentException("Table not found");
+		}
+
+		return $this->get_trans()->insert($DATA, $TableName);
 	}
 
 	private function _insert_query(array|object $DATA, $update = false): mixed {
+		if(is_null($TableName = $this->getTableName())){
+			throw new InvalidArgumentException("Table not found");
+		}
+
 		$PK = $this->getPK();
-		$TableName = $this->getTableName();
 		# TODO: check null
 		$PK_fields_str = is_array($PK) ? join(",", $PK) : $PK;
 
@@ -126,10 +141,14 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 
 
 	function delete($ID){
+		if(is_null($TableName = $this->getTableName())){
+			throw new InvalidArgumentException("Table not found");
+		}
+
 		// $ID = func_get_arg(0);
 		# TODO: multi field PK
 		# TODO: dqdp\SQL\Statement
-		$prep = $this->get_trans()->prepare("DELETE FROM $this->Table WHERE $this->PK = ?");
+		$prep = $this->get_trans()->prepare("DELETE FROM $TableName WHERE $this->PK = ?");
 		$ret = true;
 		foreach(array_enfold($ID) as $id){
 			$ret = $ret && $this->get_trans()->execute_prepared($prep, $id);
