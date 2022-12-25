@@ -1,5 +1,7 @@
 <?php declare(strict_types = 1);
 
+use dqdp\InvalidTypeException;
+
 /**
  * Nebūtu slikti izdomāt veidu, kā ērtāk apstrādāt obj un array pašā $func
  * Pagaidām $func dabū tikai ne-(obj|arr)
@@ -14,7 +16,7 @@ function __object_walk(mixed &$data, callable $func, mixed &$parent = null, &$pa
 			__object_walk($v, $func, $data, $k);
 		}
 	} else {
-		throw new InvalidArgumentException("Expected array|stdClass|Traversable, found: ".gettype($data));
+		throw new InvalidTypeException($data);
 	}
 }
 
@@ -35,7 +37,7 @@ function __object_map(mixed $data, callable $func, mixed $parent = null, $parent
 
 		return $d;
 	} else {
-		throw new InvalidArgumentException("Expected array|stdClass|Traversable, found: ".gettype($data));
+		throw new InvalidTypeException($data);
 	}
 }
 
@@ -58,7 +60,7 @@ function __object_filter(mixed $data, callable $func, mixed $parent = null, $par
 		}
 		return $d;
 	} else {
-		throw new InvalidArgumentException("Expected array|stdClass|Traversable, found: ".gettype($data));
+		throw new InvalidTypeException($data);
 	}
 }
 
@@ -71,7 +73,7 @@ function __object_reduce(mixed $data, callable $func, $carry = null, mixed $pare
 			$carry = __object_reduce($v, $func, $carry, $k);
 		}
 	} else {
-		throw new InvalidArgumentException("Expected array|stdClass|Traversable, found: ".gettype($data));
+		throw new InvalidTypeException($data);
 	}
 
 	return $carry;

@@ -5,7 +5,6 @@ namespace dqdp;
 use ArrayAccess;
 use Countable;
 use Generator;
-use InvalidArgumentException;
 use Iterator;
 
 class MultiIterator implements Iterator, ArrayAccess, Countable {
@@ -23,7 +22,7 @@ class MultiIterator implements Iterator, ArrayAccess, Countable {
 		} elseif($this->data instanceof Generator) {
 			# TODO: test
 		} else {
-			throw new InvalidArgumentException("Unsupported type: ".get_multitype($data));
+			throw new InvalidTypeException($data);
 		}
 	}
 

@@ -3,11 +3,11 @@
 namespace dqdp;
 
 class InvalidTypeException extends \InvalidArgumentException {
-	function __construct(mixed $o){
-		$t = gettype($o);
-		$s = "Unsupported type: $t";
-		if($t == "object"){
-			$s .= "(".get_class($o).")";
+	function __construct(mixed $o, string $msg = null){
+		$s = "Invalid type: ".get_multitype($o);
+
+		if($msg){
+			$s .= " ".$msg;
 		}
 
 		throw new \InvalidArgumentException($s);

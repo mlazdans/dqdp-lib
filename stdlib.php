@@ -1,5 +1,6 @@
 <?php declare(strict_types = 1);
 
+use dqdp\InvalidTypeException;
 use dqdp\LV;
 use dqdp\QueueMailer;
 use dqdp\StdObject;
@@ -1994,7 +1995,7 @@ function prop_exists(array|object|null $o, string|int $k): bool {
 	} elseif(is_object($o)){
 		return is_int($k) ? property_exists($o, (string)$k) : property_exists($o, $k);
 	} else {
-		throw new InvalidArgumentException("Expected array|object|ArrayAccess, found: ".gettype($o));
+		throw new InvalidTypeException($o);
 	}
 }
 
@@ -2006,7 +2007,7 @@ function prop_initialized(array|object|null $o, string|int $k): bool {
 	} elseif(is_object($o)){
 		return (new ReflectionObject($o))->getProperty($k)->isInitialized($o);
 	} else {
-		throw new InvalidArgumentException("Expected array|object|ArrayAccess, found: ".gettype($o));
+		throw new InvalidTypeException($o);
 	}
 }
 
@@ -2021,7 +2022,7 @@ function &get_prop_ref(array|object|null $o, string|int $k): mixed {
 	} elseif(is_object($o)){
 		return $o->{$k};
 	} else {
-		throw new InvalidArgumentException("Expected array|object|ArrayAccess, found: ".gettype($o));
+		throw new InvalidTypeException($o);
 	}
 }
 function get_prop(array|object|null $o, string|int $k): mixed {
@@ -2034,7 +2035,7 @@ function get_prop(array|object|null $o, string|int $k): mixed {
 	} elseif(is_object($o)){
 		return $o->{$k};
 	} else {
-		throw new InvalidArgumentException("Expected array|object|ArrayAccess, found: ".gettype($o));
+		throw new InvalidTypeException($o);
 	}
 }
 
@@ -2046,7 +2047,7 @@ function unset_prop(array|object &$o, string|int $k): void {
 	} elseif(is_object($o)){
 		unset($o->{$k});
 	} else {
-		throw new InvalidArgumentException("Expected array|object|ArrayAccess, found: ".gettype($o));
+		throw new InvalidTypeException($o);
 	}
 }
 
@@ -2058,7 +2059,7 @@ function set_prop(array|object &$o, string|int $k, mixed $v): void {
 	} elseif(is_object($o)){
 		$o->{$k} = $v;
 	} else {
-		throw new InvalidArgumentException("Expected array|object|ArrayAccess, found: ".gettype($o));
+		throw new InvalidTypeException($o);
 	}
 }
 
