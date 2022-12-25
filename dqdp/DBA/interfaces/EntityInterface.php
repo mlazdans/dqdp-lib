@@ -5,7 +5,7 @@ namespace dqdp\DBA\interfaces;
 use dqdp\DBA\AbstractFilter;
 
 interface EntityInterface {
-	function get($ID, ?AbstractFilter $filters = null): mixed;
+	// function get($ID, ?AbstractFilter $filters = null): mixed;
 	function getAll(?AbstractFilter $filters = null): mixed;
 	function getSingle(?AbstractFilter $filters = null): mixed;
 
