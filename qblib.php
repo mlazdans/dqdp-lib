@@ -6,8 +6,12 @@ use dqdp\SQL\Condition;
  * Query builder lib
  */
 
+function qb_create_placeholders(int $count){
+	return join(",", array_fill(0, $count, "?"));
+}
+
 function qb_filter_in($field, $v){
-	return ["$field IN (".join(",", array_fill(0, count($v), "?")).")", $v];
+	return ["$field IN (".qb_create_placeholders(count($v)).")", $v];
 }
 
 function qb_filter_in_ints($field, $v){
