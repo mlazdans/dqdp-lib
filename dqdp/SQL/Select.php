@@ -11,9 +11,11 @@ class Select extends Statement
 	protected $distinct;
 	protected $offset;
 	protected $rows;
+	protected $Vars = [];
 
 	function __construct(string $fields = null){
 		$this->parts = (object)[];
+		$this->parts->selectargs_counts = [];
 		$this->parts->fields = [];
 		$this->parts->from = [];
 		$this->parts->join = [];
@@ -81,6 +83,13 @@ class Select extends Statement
 		return $this;
 	}
 
+	function withArgs(...$args){
+		$i = key($this->parts->from);
+		$this->parts->selectargs_counts[$i] = count($args);
+		$this->add_vars($args);
+		return $this;
+	}
+
 	function Offset($offset = null){
 		$this->offset = $offset;
 		return $this;
@@ -137,7 +146,7 @@ class Select extends Statement
 		} elseif($v2){
 			$this->Where(["$Col <= ?", $v2]);
 		}
-}
+	}
 
 	function OrderBy($order){
 		$this->parts->orderby[] = Order::factory($order);
@@ -165,7 +174,7 @@ class Select extends Statement
 	}
 
 	function vars(){
-		$vars = [];
+		$vars = $this->Vars;
 		foreach($this->parts->join as $j){
 			$vars = array_merge($vars, $j->vars());
 		}
@@ -237,7 +246,15 @@ class Select extends Statement
 	protected function _from(){
 		if($this->parts->from){
 			$lines[] = 'FROM';
-			$lines[] = join(', ', $this->parts->from);
+			$parts = [];
+			foreach($this->parts->from as $k=>$v){
+				if(isset($this->parts->selectargs_counts[$k])){
+					$parts[] = "$v(".qb_create_placeholders($this->parts->selectargs_counts[$k]).")";
+				} else {
+					$parts[] = $v;
+				}
+			}
+			$lines[] = join(', ', $parts);
 		}
 		return $lines??[];
 	}
@@ -274,5 +291,15 @@ class Select extends Statement
 			$lines[] = join(', ', $this->parts->orderby);
 		}
 		return $lines??[];
+	}
+
+	function add_vars($v){
+		if(is_array($v)){
+			foreach($v as $i){
+				$this->add_vars($i);
+			}
+		} else {
+			$this->Vars[] = $v;
+		}
 	}
 }
