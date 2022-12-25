@@ -1734,7 +1734,7 @@ function proc_exec(string $cmd, array $args = [], string $input = '', array $des
 
 function debug2file($msg){
 	$msg = str_replace(array("\r", "\n"), ' ', $msg);
-	return file_put_contents(constant('TMPDIR').'./debug.log', sprintf("[%s] %s\n", date('c'), $msg), FILE_APPEND);
+	return file_put_contents(constant('TMPDIR').DIRECTORY_SEPARATOR.'.'.DIRECTORY_SEPARATOR.'debug.log', sprintf("[%s] %s\n", date('c'), $msg), FILE_APPEND);
 }
 
 function get_ex_rate($CURR_ID, $date = null): ?float {
