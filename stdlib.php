@@ -827,10 +827,10 @@ function sqlr(){
 	__output_wrapper(function($v){
 		if($v instanceof dqdp\SQL\Statement){
 			print (string)$v;
-			if(method_exists($v, 'vars')){
+			if(method_exists($v, 'getVars')){
 				print ("\n\n--[Bind vars]\n");
-				if(count($v->vars())){
-					foreach($v->vars() as $k=>$var){
+				if($vars = $v->getVars()){
+					foreach($vars as $k=>$var){
 						printf("--[%s] = %s\n", $k, format_debug($var));
 					}
 				} else {
