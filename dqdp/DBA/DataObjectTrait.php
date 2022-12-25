@@ -6,9 +6,6 @@ use dqdp\PropertyInitTrait;
 
 trait DataObjectTrait {
 	use PropertyInitTrait;
-	function initPoperty(string|int $k, mixed $v): void {
-		$this->{$k} = $this->initValue($k, $v);
-	}
 
 	// function initPoperty(string|int $k, mixed $v): void {
 	// 	if(is_null($v)){
@@ -42,10 +39,6 @@ trait DataObjectTrait {
 	// 		throw new InvalidArgumentException("Unsupported Reflection type: ".get_class($Type));
 	// 	}
 	// }
-
-	static function withDefaults(): static {
-		return new static(get_class_public_vars(static::class));
-	}
 
 	static function fromDBObjectFactory(iterable $map, array|object|null $o): ?AbstractDataObject {
 		if(is_null($o)){

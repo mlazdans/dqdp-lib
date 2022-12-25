@@ -5,8 +5,6 @@ namespace dqdp\DBA;
 abstract class AbstractDataObject implements \IteratorAggregate {
 	# NOTE: must be defined in child, to be in scope
 	abstract function initPoperty(string|int $k, mixed $v): void;
-	// abstract function toDBObject(): stdClass;
-	// abstract static function fromDBObject(array|object $o): AbstractDataObject;
 
 	function __construct(array|object|null $data = null, array|object|null $defaults = null){
 		if(empty($data)){

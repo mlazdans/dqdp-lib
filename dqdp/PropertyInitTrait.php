@@ -7,6 +7,14 @@ use ReflectionNamedType;
 use ReflectionProperty;
 
 trait PropertyInitTrait {
+	function initPoperty(string|int $k, mixed $v): void {
+		$this->{$k} = $this->initValue($k, $v);
+	}
+
+	static function withDefaults(): static {
+		return new static(get_class_public_vars(static::class));
+	}
+
 	static function initValue(string|int $k, mixed $v): mixed {
 		if(is_null($v)){
 			return null;
@@ -64,5 +72,23 @@ trait PropertyInitTrait {
 		} else {
 			throw new InvalidArgumentException("Unsupported Reflection type: ".get_class($Type));
 		}
+	}
+
+	static function initFrom(array|object|null $data = null, array|object|null $defaults = null): static {
+		if(empty($data)){
+			return new static;
+		}
+
+		$params = [];
+		$properties = get_class_public_vars(static::class);
+		foreach($properties as $k=>$class_default){
+			if(prop_exists($data, $k)){
+				$params[$k] = static::initValue($k, get_prop($data, $k));
+			} elseif(prop_exists($defaults, $k)){
+				$params[$k] = static::initValue($k, get_prop($defaults, $k));
+			}
+		}
+
+		return new static(...$params);
 	}
 }
