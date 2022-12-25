@@ -58,6 +58,16 @@ class Select extends Statement
 		return $this;
 	}
 
+	function ResetOrderBy(): static {
+		$this->orderByParts = [];
+		return $this;
+	}
+
+	function ResetFields(): static {
+		$this->fieldsParts = [];
+		return $this;
+	}
+
 	function Distinct(): static {
 		$this->isDistinct = true;
 		return $this;
