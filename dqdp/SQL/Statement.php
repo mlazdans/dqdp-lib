@@ -3,7 +3,6 @@
 namespace dqdp\SQL;
 
 use BadMethodCallException;
-use dqdp\SQL;
 
 abstract class Statement
 {
