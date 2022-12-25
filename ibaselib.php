@@ -439,6 +439,33 @@ ORDER BY pp.RDB$PARAMETER_NUMBER';
 	return $ret??[];
 }
 
+function get_proc_args(IBase $db, string $proc): mixed {
+	$sql = 'SELECT pp.*,
+	f.RDB$FIELD_SUB_TYPE,
+	f.RDB$FIELD_TYPE,
+	f.RDB$FIELD_LENGTH,
+	f.RDB$CHARACTER_LENGTH,
+	f.RDB$FIELD_PRECISION,
+	f.RDB$FIELD_SCALE,
+	f.RDB$NULL_FLAG,
+	pp.RDB$PARAMETER_NAME AS RDB$ITEM_NAME
+FROM RDB$PROCEDURE_PARAMETERS pp
+JOIN RDB$FIELDS f ON f.RDB$FIELD_NAME = pp.RDB$FIELD_SOURCE
+WHERE pp.RDB$PROCEDURE_NAME = ? AND pp.RDB$PARAMETER_TYPE = 0
+ORDER BY pp.RDB$PARAMETER_NUMBER';
+
+	if(!($q = $db->query($sql, $proc))){
+		return null;
+	}
+
+	while($r = $db->fetch_object($q)){
+		ibase_strip_rdb($r);
+		$ret[] = $r;
+	}
+
+	return $ret??[];
+}
+
 function ibase_get_pk(IBase $db, string $table): string|array|null {
 	$sql ='SELECT
 		ix.RDB$INDEX_NAME AS INDEX_NAME,
