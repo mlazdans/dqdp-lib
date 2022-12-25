@@ -1,7 +1,7 @@
 <?php
 
 use dqdp\DBA\driver\IBase;
-use dqdp\SQL;
+use dqdp\SQL\SQL;
 
 class FS_IBaseTest extends FSTest
 {

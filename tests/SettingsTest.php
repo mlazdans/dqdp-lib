@@ -2,7 +2,7 @@
 
 use dqdp\DBA\driver\MySQL_PDO;
 use dqdp\Settings;
-use dqdp\SQL;
+use dqdp\SQL\SQL;
 use PHPUnit\Framework\TestCase;
 
 # TODO: atsevišķi DBA
