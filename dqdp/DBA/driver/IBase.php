@@ -64,6 +64,11 @@ class IBase implements DBAInterface
 		$args = func_get_args();
 
 		if(is_dqdp_statement($args)){
+			# NOTE: ibase_query() fatals when more arguments specified with notice.
+			# shutdown, error nor exception handlers get called
+			# PHP Version 8.2.0
+			# (Windows NT 10.0 build 19045 (Windows 10) AMD64)
+			# CGI/FastCGI or CLI, API420220829,TS,VS16
 			if($this->tr){
 				$q = ibase_query($this->conn, $this->tr, (string)$args[0], ...$args[0]->vars());
 			} else {
