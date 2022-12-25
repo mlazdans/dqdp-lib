@@ -1,144 +1,160 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace dqdp\SQL;
 
-use BadMethodCallException;
 use InvalidArgumentException;
 
 class Select extends Statement
 {
-	protected $parts = null;
-	protected $distinct;
-	protected $offset;
-	protected $rows;
-	protected $Vars = [];
+	protected bool $isDistinct = false;
+	protected ?int $rowOffset = null;
+	protected ?int $rowRows = null;
 
-	function __construct(string $fields = null){
-		$this->parts = (object)[];
-		$this->parts->selectargs_counts = [];
-		$this->parts->fields = [];
-		$this->parts->from = [];
-		$this->parts->join = [];
-		$this->parts->joinlast = [];
-		$this->parts->where = new Condition;
-		$this->parts->groupby = [];
-		$this->parts->having = [];
-		$this->parts->orderby = [];
+	protected array         $fromArgCounts   = [];
+	protected array         $fromParts       = [];
+	protected array         $fieldsParts     = [];
+	protected array         $joinsParts      = [];
+	protected array         $lastJoinsParts  = [];
+	protected array         $orderByParts    = [];
+	protected array         $groupByParts    = [];
+	protected Condition     $whereParts;
 
-		if($fields){
-			$this->Select($fields);
+	function __construct(string|Select $fromFields = null){
+		$this->ResetWhere();
+		if($fromFields){
+			$this->Select($fromFields);
 		}
 	}
 
-	function __clone(){
-		$pp = [];
-		foreach((array)$this->parts as $k=>$v){
-			$pp[$k] = is_object($v) ? clone $v : $v;
-		}
-		$this->parts = (object)$pp;
-	}
+	// function __clone(){
+	// 	$pp = [];
+	// 	foreach((array)$this->parts as $k=>$v){
+	// 		$pp[$k] = is_object($v) ? clone $v : $v;
+	// 	}
+	// 	$this->parts = (object)$pp;
+	// }
 
 	# TODO: make native methods
-	function __call(string $name, array $arguments){
-		if(strpos($name, 'Reset') === 0){
-			$part = strtolower(substr($name, 5));
-			if(isset($this->parts->{$part})){
-				$this->parts->{$part} = [];
-				return $this;
-			}
-			throw new BadMethodCallException($name);
-		}
+	// function __call(string $name, array $arguments){
+	// 	if(strpos($name, 'Reset') === 0){
+	// 		$part = strtolower(substr($name, 5));
+	// 		if(isset($this->parts->{$part})){
+	// 			$this->parts->{$part} = [];
+	// 			return $this;
+	// 		}
+	// 		throw new BadMethodCallException($name);
+	// 	}
 
-		return parent::__call($name, $arguments);
-	}
+	// 	return parent::__call($name, $arguments);
+	// }
 
-	function ResetDistinct(){
-		$this->distinct = false;
+	function ResetDistinct(): static {
+		$this->isDistinct = false;
 		return $this;
 	}
 
-	function ResetWhere(){
-		$this->parts->where = new Condition;
+	function ResetWhere(): static {
+		$this->whereParts = new Condition;
 		return $this;
 	}
 
-	function Distinct(){
-		$this->distinct = true;
+	function Distinct(): static {
+		$this->isDistinct = true;
 		return $this;
 	}
 
-	function Select($arg, $wrapper = ''){
-		if(is_array($arg) && $arg[0] instanceof \dqdp\SQL\Select){
-			list($sql, $alias) = $arg;
-			if($wrapper){
-				$this->parts->fields[] = "$wrapper(($sql)) $alias";
-			} else {
-				$this->parts->fields[] = "($sql) $alias";
-			}
-			$this->parts->where->add_vars($sql->vars());
+	# TODO: sameklēt kodā, kur tiek lietots Select([]) vai otrs arguments kā wrapper
+	function Select(string|Select $Field, ?string $alias = null): static {
+		if($Field instanceof \dqdp\SQL\Select){
+			// if($wrapper){
+			// 	$this->parts->fields[] = "$wrapper(($sql)) $alias";
+			// }
+			$fieldStr = "($Field)";
+			$this->whereParts->addVar($Field->getVars());
 		} else {
-			$this->parts->fields[] = $arg;
+			$fieldStr = $Field;
 		}
 
+		$this->fieldsParts[] = $fieldStr.($alias ? " $alias" : "");
+
+		return $this;
+	}
+	// function Select($arg, $wrapper = ''): static {
+	// 	if(is_array($arg) && $arg[0] instanceof \dqdp\SQL\Select){
+	// 		list($sql, $alias) = $arg;
+	// 		if($wrapper){
+	// 			$this->parts->fields[] = "$wrapper(($sql)) $alias";
+	// 		} else {
+	// 			$this->parts->fields[] = "($sql) $alias";
+	// 		}
+	// 		$this->parts->where->add_vars($sql->vars());
+	// 	} else {
+	// 		$this->parts->fields[] = $arg;
+	// 	}
+
+	// 	return $this;
+	// }
+
+	# Add () and optional arguments to *last added* ->From()
+	# Useful for selectable procedures
+	function withArgs(...$args): static {
+		$i = count($this->fromParts) - 1;
+		$this->fromArgCounts[$i] = $this->fromArgCounts[$i]??0;
+		$this->fromArgCounts[$i] += $this->addVar($args);
+
 		return $this;
 	}
 
-	function withArgs(...$args){
-		$i = key($this->parts->from);
-		$this->parts->selectargs_counts[$i] = count($args);
-		$this->add_vars($args);
+	function Offset(?int $offset): static {
+		$this->rowOffset = $offset;
 		return $this;
 	}
 
-	function Offset($offset = null){
-		$this->offset = $offset;
+	function Rows(?int $rows): static {
+		$this->rowRows = $rows;
 		return $this;
 	}
 
-	function Rows($rows = null){
-		$this->rows = $rows;
-		return $this;
-	}
-
-	function From($arg){
-		# TODO: alias optional
-		if(is_array($arg) && $arg[0] instanceof \dqdp\SQL\Select){
-			list($sql, $alias) = $arg;
-			$this->parts->from[] = "($sql) $alias";
-			$this->parts->where->add_vars($sql->vars());
+	# TODO: sameklēt kodā, kur tiek lietots From([])
+	function From(string|Select $From, ?string $alias = null): static {
+		if($From instanceof \dqdp\SQL\Select){
+			$fromStr = "($From)";
+			$this->whereParts->addVar($From->getVars());
 		} else {
-			$this->parts->from[] = $arg;
+			$fromStr = "$From";
 		}
 
+		$this->fromParts[] = $fromStr.($alias ? " $alias" : "");
+
 		return $this;
 	}
 
-	function Join(string $table, $condition){
-		$this->parts->join[] = new Join($table, $condition, Join::INNER_JOIN);
+	function Join(string $table, $condition): static {
+		$this->joinsParts[] = new Join($table, $condition, Join::INNER_JOIN);
 		return $this;
 	}
 
-	function LeftJoin(string $table, $condition){
-		$this->parts->join[] = new Join($table, $condition, Join::LEFT_OUTER_JOIN);
+	function LeftJoin(string $table, $condition): static {
+		$this->joinsParts[] = new Join($table, $condition, Join::LEFT_OUTER_JOIN);
 		return $this;
 	}
 
-	function LeftJoinLast(string $table, $condition){
-		$this->parts->joinlast[] = new Join($table, $condition, Join::LEFT_OUTER_JOIN);
+	function LeftJoinLast(string $table, $condition): static {
+		$this->lastJoinsParts[] = new Join($table, $condition, Join::LEFT_OUTER_JOIN);
 		return $this;
 	}
 
-	function Where($condition){
-		$this->parts->where->add_condition($condition);
+	function Where(mixed $condition): static {
+		$this->whereParts->add_condition($condition);
 		return $this;
 	}
 
-	function WhereIn($field, $v){
-		$this->parts->where->add_condition(qb_filter_in($field, $v));
+	function WhereIn(mixed $field, mixed $v): static {
+		$this->whereParts->add_condition(qb_filter_in($field, $v));
 		return $this;
 	}
 
-	function Between($Col, $v1 = NULL, $v2 = NULL){
+	function Between(mixed $Col, mixed $v1 = null, mixed $v2 = null): static {
 		if($v1 && $v2){
 			$this->Where(["$Col BETWEEN ? AND ?", $v1, $v2]);
 		} elseif($v1){
@@ -146,46 +162,53 @@ class Select extends Statement
 		} elseif($v2){
 			$this->Where(["$Col <= ?", $v2]);
 		}
-	}
-
-	function OrderBy($order){
-		$this->parts->orderby[] = Order::factory($order);
 		return $this;
 	}
 
-	function GroupBy($group){
-		$this->parts->groupby[] = $group;
+	function OrderBy(...$args): static {
+		$this->orderByParts[] = Order::factory(...$args);
 		return $this;
 	}
 
-	function Page(int $page, int $items_per_page){
+	function GroupBy($group): static {
+		$this->groupByParts[] = $group;
+		return $this;
+	}
+
+	function Page(int $page, int $items_per_page): static {
 		return $this->Offset(($page - 1) * $items_per_page)->Rows($items_per_page);
 	}
 
-	function parse(){
-		if($this->lex() == 'mysql'){
+	# TODO: abstract out
+	function parse(): string {
+		if(SQL::$lex == 'mysql'){
 			$lines = $this->parse_mysql();
-		} elseif($this->lex() == 'fbird'){
+		} elseif(SQL::$lex == 'fbird'){
 			$lines = $this->parse_fbird();
 		} else {
-			throw new InvalidArgumentException("Unknown SQL::\$lex: ".$this->lex());
+			throw new InvalidArgumentException("Unknown SQL::\$lex: ".SQL::$lex);
 		}
+
 		return join("\n", $lines);
 	}
 
-	function vars(){
-		$vars = $this->Vars;
-		foreach($this->parts->join as $j){
-			$vars = array_merge($vars, $j->vars());
+	function getVars(): array {
+		$vars = parent::getVars();
+
+		foreach($this->joinsParts as $j){
+			$vars = array_merge($vars, $j->getVars());
 		}
-		foreach($this->parts->joinlast as $j){
-			$vars = array_merge($vars, $j->vars());
+
+		foreach($this->lastJoinsParts as $j){
+			$vars = array_merge($vars, $j->getVars());
 		}
-		$vars = array_merge($vars, $this->parts->where->vars());
+
+		$vars = array_merge($vars, $this->whereParts->getVars());
+
 		return $vars;
 	}
 
-	protected function parse_mysql(){
+	protected function parse_mysql(): array {
 		$lines = [];
 		$this->merge_lines($lines, $this->select_parser());
 		$this->merge_lines($lines, $this->fields_parser());
@@ -195,23 +218,23 @@ class Select extends Statement
 		$this->merge_lines($lines, $this->groupby_parser());
 		$this->merge_lines($lines, $this->orderby_parser());
 
-		if(isset($this->rows) && isset($this->offset)){
-			$lines[] = "LIMIT $this->offset,$this->rows";
-		} elseif(isset($this->rows)){
-			$lines[] = "LIMIT $this->rows";
-		} elseif(isset($this->offset)){
+		if(isset($this->rowRows) && isset($this->rowOffset)){
+			$lines[] = "LIMIT $this->rowOffset,$this->rowRows";
+		} elseif(isset($this->rowRows)){
+			$lines[] = "LIMIT $this->rowRows";
+		} elseif(isset($this->rowOffset)){
 			throw new InvalidArgumentException("offset without rows");
 		}
 
 		return $lines;
 	}
 
-	protected function parse_fbird(){
+	protected function parse_fbird(): array {
 		$lines = [];
 		$this->merge_lines($lines, $this->select_parser());
 
-		if(!isset($this->rows) && isset($this->offset)){
-			$lines[] = "SKIP $this->offset";
+		if(!isset($this->rowRows) && isset($this->rowOffset)){
+			$lines[] = "SKIP $this->rowOffset";
 		}
 
 		$this->merge_lines($lines, $this->fields_parser());
@@ -221,85 +244,79 @@ class Select extends Statement
 		$this->merge_lines($lines, $this->groupby_parser());
 		$this->merge_lines($lines, $this->orderby_parser());
 
-		if(isset($this->rows) && isset($this->offset)){
-			$lines[] = sprintf("ROWS %d TO %d", $this->offset + 1, $this->rows + $this->offset);
-		} elseif(isset($this->rows)){
-			$lines[] = "ROWS $this->rows";
+		if(isset($this->rowRows) && isset($this->rowOffset)){
+			$lines[] = sprintf("ROWS %d TO %d", $this->rowOffset + 1, $this->rowRows + $this->rowOffset);
+		} elseif(isset($this->rowRows)){
+			$lines[] = "ROWS $this->rowRows";
 		}
 
 		return $lines;
 	}
 
-	protected function _select(){
+	protected function select_parser(): array {
 		$lines = ['SELECT'];
-		if($this->distinct){
+		if($this->isDistinct){
 			$lines[] = 'DISTINCT';
 		}
 		return $lines;
 	}
 
-	protected function _fields(){
-		return [$this->parts->fields ? join(",\n", $this->parts->fields) : '*'];
+	protected function fields_parser(): array {
+		return [$this->fieldsParts ? join(",\n", $this->fieldsParts) : '*'];
 	}
 
-	# TODO: absrahēt ar parametriem. Varbūt kādā citā klasē pat
-	protected function _from(){
-		if($this->parts->from){
-			$lines[] = 'FROM';
-			$parts = [];
-			foreach($this->parts->from as $k=>$v){
-				if(isset($this->parts->selectargs_counts[$k])){
-					$parts[] = "$v(".qb_create_placeholders($this->parts->selectargs_counts[$k]).")";
-				} else {
-					$parts[] = $v;
-				}
+	protected function from_parser(): array {
+		if(!$this->fromParts){
+			return [];
+		}
+
+		$lines[] = 'FROM';
+		foreach($this->fromParts as $k=>$v){
+			if(isset($this->fromArgCounts[$k])){
+				$parts[] = "$v(".qb_create_placeholders($this->fromArgCounts[$k]).")";
+			} else {
+				$parts[] = $v;
 			}
+		}
+
+		if(isset($parts)){
 			$lines[] = join(', ', $parts);
 		}
+
+		return $lines;
+	}
+
+	protected function join_parser(): array {
+		if($this->joinsParts){
+			$lines[] = join("\n", $this->joinsParts);
+		}
+		if($this->lastJoinsParts){
+			$lines[] = join("\n", $this->lastJoinsParts);
+		}
 		return $lines??[];
 	}
 
-	protected function _join(){
-		if($this->parts->join){
-			$lines[] = join("\n", $this->parts->join);
-		}
-		if($this->parts->joinlast){
-			$lines[] = join("\n", $this->parts->joinlast);
-		}
-		return $lines??[];
-	}
-
-	protected function _where(){
-		if($where = (string)$this->parts->where){
+	protected function where_parser(): array {
+		if($where = (string)$this->whereParts){
 			$lines[] = 'WHERE';
 			$lines[] = $where;
 		}
 		return $lines??[];
 	}
 
-	protected function _groupby(){
-		if($this->parts->groupby){
+	protected function groupby_parser(): array {
+		if($this->groupByParts){
 			$lines[] = 'GROUP BY';
-			$lines[] = join(', ', $this->parts->groupby);
+			$lines[] = join(', ', $this->groupByParts);
 		}
 		return $lines??[];
 	}
 
-	protected function _orderby(){
-		if($this->parts->orderby){
+	protected function orderby_parser(): array {
+		if($this->orderByParts){
 			$lines[] = 'ORDER BY';
-			$lines[] = join(', ', $this->parts->orderby);
+			$lines[] = join(', ', $this->orderByParts);
 		}
 		return $lines??[];
-	}
-
-	function add_vars($v){
-		if(is_array($v)){
-			foreach($v as $i){
-				$this->add_vars($i);
-			}
-		} else {
-			$this->Vars[] = $v;
-		}
 	}
 }

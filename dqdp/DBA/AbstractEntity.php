@@ -85,11 +85,13 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 		->Values($sql_fields);
 
 		if($update && $PK_fields_str){
-			$sql->Update()->after("values", "matching", "MATCHING ($PK_fields_str)");
+			$sql->Update()->Matching($PK);
+			// $sql->Update()->after("values", "matching", "MATCHING ($PK_fields_str)");
 		}
 
 		# TODO: refactor out
-		$sql->after("values", "returning", "RETURNING $PK_fields_str");
+		// $sql->after("values", "returning", "RETURNING $PK_fields_str");
+		$sql->Returning($PK);
 
 		if($q = $this->get_trans()->query($sql)){
 			$retPK = $this->get_trans()->fetch_object($q);

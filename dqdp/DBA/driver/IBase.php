@@ -70,9 +70,9 @@ class IBase implements DBAInterface
 			# (Windows NT 10.0 build 19045 (Windows 10) AMD64)
 			# CGI/FastCGI or CLI, API420220829,TS,VS16
 			if($this->tr){
-				$q = ibase_query($this->conn, $this->tr, (string)$args[0], ...$args[0]->vars());
+				$q = ibase_query($this->conn, $this->tr, (string)$args[0], ...$args[0]->getVars());
 			} else {
-				$q = ibase_query($this->conn, (string)$args[0], ...$args[0]->vars());
+				$q = ibase_query($this->conn, (string)$args[0], ...$args[0]->getVars());
 			}
 
 			if(!$q){

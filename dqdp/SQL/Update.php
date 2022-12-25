@@ -1,5 +1,6 @@
 <?php declare(strict_types = 1);
 
+# TODO: not completely refactored
 namespace dqdp\SQL;
 
 class Update extends Statement
@@ -37,7 +38,7 @@ class Update extends Statement
 		return $this;
 	}
 
-	function parse(){
+	function parse(): string {
 		$lines = ['UPDATE'];
 
 		if($this->table){
