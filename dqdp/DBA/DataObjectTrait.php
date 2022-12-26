@@ -2,6 +2,7 @@
 
 namespace dqdp\DBA;
 
+use dqdp\DataObject;
 use dqdp\PropertyInitTrait;
 
 trait DataObjectTrait {
@@ -40,7 +41,7 @@ trait DataObjectTrait {
 	// 	}
 	// }
 
-	static function fromDBObjectFactory(iterable $map, array|object|null $o): ?AbstractDataObject {
+	static function fromDBObjectFactory(iterable $map, array|object|null $o): ?DataObject {
 		if(is_null($o)){
 			return null;
 		}
@@ -55,7 +56,7 @@ trait DataObjectTrait {
 		return new static($params);
 	}
 
-	static function toDBObjectFactory(AbstractDataObject $self, iterable $map): \stdClass {
+	static function toDBObjectFactory(DataObject $self, iterable $map): \stdClass {
 		$ret = new \stdClass;
 		foreach($map as $k=>$v){
 			if(prop_exists($self, $k) && prop_initialized($self, $k)){
