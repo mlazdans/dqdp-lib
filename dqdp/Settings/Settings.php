@@ -2,12 +2,10 @@
 
 namespace dqdp\Settings;
 
-use dqdp\DBA\AbstractFilter;
 use dqdp\DBA\interfaces\DBAInterface;
-use dqdp\DBA\interfaces\EntityInterface;
+use dqdp\DBA\interfaces\TransactionInterface;
 use dqdp\Settings\SetType;
 use dqdp\Settings\Types\SettingsFilter;
-use Exception;
 use TypeError;
 
 /* Ibase
@@ -48,54 +46,33 @@ CREATE TABLE settings
 );
 */
 
-class Settings implements EntityInterface
+class Settings implements TransactionInterface
 {
 	protected array $DB_STRUCT = [];
-	// protected array $DATA = [];
 	protected Entity $Ent;
 
-	function __construct(public string $domain){
+	function __construct(protected string $Domain){
 		$this->Ent = new Entity;
 	}
 
-	function get($ID, ?AbstractFilter $filters = null): mixed {
-		return $this->getSingle(SettingsFilter::initFrom(["SET_KEY" => $ID], $filters));
-	}
-
-	function getAll(?AbstractFilter $filters = null): mixed {
+	function load() {
 		$ret = array_fill_keys(array_keys($this->DB_STRUCT), null);
-		$q = $this->query($filters);
-		while($r = $this->fetch($q)){
-			$ret = merge($ret, $r);
+		$data = $this->Ent->getAll(new SettingsFilter(SET_DOMAIN: $this->Domain));
+		foreach($data as $r){
+			if(!isset($this->DB_STRUCT[$r->SetKey])){
+				throw new TypeError("Undefined struct entry: $r->SetKey");
+			}
+			$type = $this->DB_STRUCT[$r->SetKey];
+			$ret[$r->SetKey] = match($type) {
+				SetType::serialize => unserialize($r->{$type->value}),
+				default => $r->{$type->value}
+			};
 		}
 
-		return $ret;
-	}
-
-	function getSingle(?AbstractFilter $filters = null): mixed {
-		if($q = $this->query($filters)){
-			return $this->fetch($q);
-		}
-	}
-
-	function query(?AbstractFilter $filters = null){
-		return $this->Ent->query(SettingsFilter::initFrom(["SET_DOMAIN" => $this->domain], $filters));
-	}
-
-	function insert(array|object $DATA){
-		throw new Exception("Not implemented");
-	}
-
-	function update($ID, array|object $DATA){
-		throw new Exception("Not implemented");
+		return (object)$ret;
 	}
 
 	function save(array|object $DATA){
-		// $ST = new SettingsType();
-		// $ST->class = $this->CLASS;
-		// dumpr($ST, $this->DATA, $this->DB_STRUCT);
-		// die;
-
 		$ret = true;
 		foreach($this->DB_STRUCT as $k=>$v){
 			if(!prop_exists($DATA, $k) || !prop_initialized($DATA, $k)){
@@ -104,7 +81,7 @@ class Settings implements EntityInterface
 
 			// $v = strtoupper($v);
 			$params = [
-				'SetDomain'=>$this->domain,
+				'SetDomain'=>$this->Domain,
 				'SetKey'=>$k,
 			];
 
@@ -120,13 +97,6 @@ class Settings implements EntityInterface
 		}
 
 		return $ret;
-	}
-
-	# TODO: entity multi key delete
-	function delete($ID){
-		trigger_error("Not implemented", E_USER_ERROR);
-		// list($k) = func_get_args();
-		// $params->SET_KEY = $ID;
 	}
 
 	function set_trans(DBAInterface $dba): static {
@@ -145,57 +115,4 @@ class Settings implements EntityInterface
 
 		return $this;
 	}
-
-	function unset(string|int $k): static {
-		unset($this->DATA[$k]);
-
-		return $this;
-	}
-
-	// function reset(){
-	// 	$this->DATA = [];
-
-	// 	return $this;
-	// }
-
-	# $k = key | arr | obj
-	// function set(string|int $k, mixed $v = null): static {
-	// 	if(is_array($k)){
-	// 		$this->set_array($k);
-	// 	} elseif(is_object($k)){
-	// 		$this->set_array(get_object_vars($k));
-	// 	} elseif(isset($this->DB_STRUCT[$k])) {
-	// 		$this->DATA[$k] = $v;
-	// 	} else {
-	// 		throw new TypeError("Undefined struct entry: $k");
-	// 	}
-
-	// 	return $this;
-	// }
-
-	// function set_array(array $new_data): static {
-	// 	$this->DATA = array_merge($this->DATA, $new_data);
-
-	// 	return $this;
-	// }
-
-	function fetch(...$args): mixed {
-		list($q) = $args;
-
-		if(!($r = $this->Ent->fetch($q))){
-			return null;
-		}
-
-		if(!isset($this->DB_STRUCT[$r->SetKey])){
-			throw new TypeError("Undefined struct entry: $r->SetKey");
-		}
-
-		switch($v = $this->DB_STRUCT[$r->SetKey]){
-			case SetType::serialize:
-				return [$r->SetKey => unserialize($r->{$v->value})];
-			default:
-				return [$r->SetKey => $r->{$v->value}];
-		}
-	}
-
 }
