@@ -582,11 +582,7 @@ function rawurldec($data){
 
 function specialchars($data){
 	return __object_map($data, function($item){
-		if(is_string($item) || $item instanceof Stringable){
-			return htmlspecialchars((string)$item, ENT_COMPAT | ENT_HTML401, '', false);
-		} else {
-			return $item;
-		}
+		return htmlspecialchars((string)$item, ENT_COMPAT | ENT_HTML401, '', false);
 	});
 }
 
