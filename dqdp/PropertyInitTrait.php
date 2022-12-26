@@ -11,9 +11,10 @@ trait PropertyInitTrait {
 		$this->{$k} = $this->initValue($k, $v);
 	}
 
-	static function withDefaults(): static {
-		return new static(get_class_public_vars(static::class));
-	}
+	# NOTE: does not work with non null-able properties
+	// static function withDefaults(): static {
+	// 	return new static(get_class_public_vars(static::class));
+	// }
 
 	static function initValue(string|int $k, mixed $v): mixed {
 		if(is_null($v)){
@@ -75,6 +76,21 @@ trait PropertyInitTrait {
 	}
 
 	static function initFrom(array|object|null $data = null, array|object|null $defaults = null): static {
+		if(is_subclass_of(static::class, '\dqdp\ParametersConstructor')){
+			return static::initiator(1, $data, $defaults);
+		} elseif(is_subclass_of(static::class, '\dqdp\TraversableConstructor')){
+			return static::initiator(2, $data, $defaults);
+		} else {
+			# TODO: could relax this, defaulting to ParametersConstructor?
+			throw new \Exception("Not a valid constructor interface for ".static::class.", must implement one of: \dqdp\ParametersConstructor, \dqdp\TraversableConstructor");
+		}
+	}
+
+	// static function initWithObjConstructorFrom(array|object|null $data = null, array|object|null $defaults = null): static {
+	// 	return static::initiator(2, $data, $defaults);
+	// }
+
+	private static function initiator(int $way, array|object|null $data = null, array|object|null $defaults = null): static {
 		if(empty($data)){
 			return new static;
 		}
@@ -82,13 +98,19 @@ trait PropertyInitTrait {
 		$params = [];
 		$properties = get_class_public_vars(static::class);
 		foreach($properties as $k=>$class_default){
-			if(prop_exists($data, $k)){
+			if(prop_exists($data, $k) && prop_initialized($data, $k)){
 				$params[$k] = static::initValue($k, get_prop($data, $k));
-			} elseif(prop_exists($defaults, $k)){
+			} elseif(prop_exists($defaults, $k) && prop_initialized($defaults, $k)){
 				$params[$k] = static::initValue($k, get_prop($defaults, $k));
 			}
 		}
 
-		return new static(...$params);
+		if($way == 1){
+			return new static(...$params);
+		} elseif($way == 2){
+			return new static($params);
+		} else {
+			throw new InvalidArgumentException("Invalid value for \$way: $way");
+		}
 	}
 }

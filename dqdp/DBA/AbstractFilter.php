@@ -10,10 +10,11 @@
 namespace dqdp\DBA;
 
 use dqdp\DBA\interfaces\EntityFilterInterface;
+use dqdp\ParametersConstructor;
 use dqdp\SQL\Select;
 use dqdp\StricStdObject;
 
-abstract class AbstractFilter extends StricStdObject implements EntityFilterInterface {
+abstract class AbstractFilter extends StricStdObject implements EntityFilterInterface, ParametersConstructor {
 	// protected function applay_default_filters(Select $sql, $DATA, array $defaults, $prefix = null): Select {
 	// 	if(is_null($prefix)){
 	// 		$prefix = "$this->Table.";
