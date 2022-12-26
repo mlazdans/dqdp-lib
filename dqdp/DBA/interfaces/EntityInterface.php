@@ -6,11 +6,11 @@ use dqdp\DBA\AbstractFilter;
 
 interface EntityInterface {
 	// function get($ID, ?AbstractFilter $filters = null): mixed;
-	function getAll(?AbstractFilter $filters = null): mixed;
-	function getSingle(?AbstractFilter $filters = null): mixed;
+	// function getAll(?AbstractFilter $filters = null): mixed;
+	// function getSingle(?AbstractFilter $filters = null): mixed;
 
-	// function query(?AbstractFilter $filters = null): mixed;
-	// function fetch(): mixed;
+	function query(?AbstractFilter $filters = null): mixed;
+	function fetch(mixed $q): mixed;
 
 	function insert(array|object $DATA);
 	function update($ID, array|object $DATA);

@@ -34,7 +34,7 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 		}
 	}
 
-	function fetch($q): mixed {
+	function fetch(mixed $q): mixed {
 		if($data = $this->get_trans()->fetch_object($q)){
 			return $data;
 		} else {
