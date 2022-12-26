@@ -15,6 +15,10 @@ use dqdp\SQL\Select;
 use dqdp\StricStdObject;
 
 abstract class AbstractFilter extends StricStdObject implements EntityFilterInterface, ParametersConstructor {
+	function merge(?AbstractFilter $F): static {
+		return static::initFrom($this, $F);
+	}
+
 	// protected function applay_default_filters(Select $sql, $DATA, array $defaults, $prefix = null): Select {
 	// 	if(is_null($prefix)){
 	// 		$prefix = "$this->Table.";
