@@ -73,6 +73,11 @@ class Insert extends Statement
 	}
 
 	function getVars(): array {
+		# Need array_values() otherwise unpacking to functions these will be treated as named parameters
+		return array_values($this->Values);
+	}
+
+	function getValues(): array {
 		return $this->Values;
 	}
 
