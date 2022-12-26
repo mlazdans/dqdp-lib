@@ -26,7 +26,7 @@ function __object_map(mixed $data, callable $func, mixed $parent = null, $parent
 		return $func($data, $parent_key, $parent);
 	} elseif(is_array($data) || $data instanceof ArrayAccess || $data instanceof stdClass || $data instanceof Traversable) {
 		if(is_object($data)){
-			$d = clone $data;
+			$d = (object)(array)$data; // Funny way of cloning
 		} else {
 			$d = $data;
 		}
