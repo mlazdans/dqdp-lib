@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 use dqdp\StdObject;
 use PHPUnit\Framework\TestCase;
@@ -7,90 +7,147 @@ class __object_mapTest extends TestCase
 {
 	protected static $db;
 
-	public function test1() {
+	public function test_array() {
 		$f = function($i){
 			return $i;
 		};
 
 		$datas = [
 			[[]],
+			[1],
+
+			[[1]],
+			['a'],
+
+			[['a']],
+			['a'=>1],
+
+			[['a'=>'b']],
+			['k'=>['a'=>'b']],
+		];
+
+		foreach($datas as $i=>$a){
+			$capture_before = (array)$a;
+			$b = __object_map($a, $f);
+			$capture_after = (array)$a;
+
+			$this->assertEquals($capture_before, $capture_after);
+			$this->assertEquals($b, $a);
+		}
+
+		$DO = (array)($datas);
+		$b = __object_map($DO, $f);
+		$this->assertEquals($DO, $b);
+	}
+
+	public function test_obj() {
+		$f = function($i){
+			return $i;
+		};
+
+		$datas = [
 			(object)[[]],
 			new StdObject([[]]),
 
-			[1],
 			(object)[1],
 			new StdObject([1]),
 
-			[[1]],
 			(object)[[1]],
 			new StdObject([[1]]),
 
-			['a'],
 			(object)['a'],
 			new StdObject(['a']),
 
-			[['a']],
 			(object)[['a']],
 			new StdObject([['a']]),
 
-			['a'=>1],
 			(object)['a'=>1],
 			new StdObject(['a'=>1]),
 
-			[['a'=>'b']],
 			(object)[['a'=>'b']],
 			new StdObject([['a'=>'b']]),
 
-			['k'=>['a'=>'b']],
 			(object)['k'=>['a'=>'b']],
 			new StdObject(['k'=>['a'=>'b']]),
 		];
 
 		foreach($datas as $i=>$a){
+			$capture_before = (array)$a;
 			$b = __object_map($a, $f);
-			$this->assertEquals($a, $datas[$i]);
-			$this->assertEquals($a, $b);
+			$capture_after = (array)$a;
+
+			$this->assertEquals($capture_before, $capture_after);
+			$this->assertEquals($b, (object)(array)$a);
 		}
 
-		$DO = new StdObject($datas);
-		$b = __object_map($DO, $f);
-		$this->assertEquals($DO, $DO);
-		$this->assertEquals($DO, $b);
+		// $DO = (object)($datas);
+		// $b = __object_map($DO, $f);
+		// $this->assertEquals((object)(array)$DO, $b);
 	}
 
-	public function test2() {
-		$f = function($i){
-			return strtolower($i);
+	public function test_array_modification() {
+		$f = function(int $i): int {
+			return $i * 2;
 		};
 
-		$a = [
-			['k'=>['a'=>'b']],
-			(object)['k'=>['a'=>'b']],
-			new StdObject(['k'=>['a'=>'b']])
+		$datas = [
+			[],
+			[0],
+			[0,0,0],
+			[1,2,3],
+			["a"=>1,"b"=>2,"c"=>3],
+		];
+		$datas[] = [
+			"more_nesting"=>$datas[count($datas) - 1]
 		];
 
-		$b = __object_map($a, $f);
-		$this->assertEquals($a, $b);
-
-		$a = [
-			['K'=>['A'=>'B']],
-			(object)['K'=>['A'=>'B']],
-			new StdObject(['K'=>['a'=>'b']])
+		$results = [
+			[],
+			[0],
+			[0,0,0],
+			[2,4,6],
+			["a"=>2,"b"=>4,"c"=>6],
+		];
+		$results[] = [
+			"more_nesting"=>$results[count($results) - 1]
 		];
 
-		$r = [
-			['K'=>['A'=>'b']],
-			(object)['K'=>['A'=>'b']],
-			new StdObject(['K'=>['a'=>'b']])
+		foreach($datas as $i=>$a){
+			$b = __object_map($a, $f);
+			$this->assertEquals($b, $results[$i]);
+		}
+	}
+
+	public function test_obj_modification() {
+		$f = function(int $i): int {
+			return $i * 2;
+		};
+
+		$datas = [
+			(object)[],
+			(object)[0],
+			(object)[0,0,0],
+			(object)[1,2,3],
+			(object)["a"=>1,"b"=>2,"c"=>3],
+		];
+		$datas[] = [
+			"more_nesting"=>$datas[count($datas) - 1]
 		];
 
-		$b = __object_map($a, $f);
-		$this->assertEquals($b, $r);
+		$results = [
+			(object)[],
+			(object)[0],
+			(object)[0,0,0],
+			(object)[2,4,6],
+			(object)["a"=>2,"b"=>4,"c"=>6],
+		];
+		$results[] = [
+			"more_nesting"=>$results[count($results) - 1]
+		];
 
-		$DO = new StdObject($a);
-		$DOR = new StdObject($r);
-		$b = __object_map($a, $f);
-		$this->assertEquals($DO, new StdObject($a));
-		$this->assertEquals(new StdObject($b), $DOR);
+		foreach($datas as $i=>$a){
+			$b = __object_map($a, $f);
+			$this->assertEquals($b, $results[$i]);
+		}
 	}
 }

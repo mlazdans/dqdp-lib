@@ -9,7 +9,7 @@ class stdlibTest extends TestCase
 	function test_sql_select1() {
 		$MainCond = search_sql("a b c", ["field1", "field2"]);
 		$this->assertTrue($MainCond == "((UPPER(field1) LIKE ? OR UPPER(field2) LIKE ?) AND (UPPER(field1) LIKE ? OR UPPER(field2) LIKE ?) AND (UPPER(field1) LIKE ? OR UPPER(field2) LIKE ?))");
-		$this->assertTrue($MainCond->vars() === ["%A%", "%A%", "%B%", "%B%", "%C%", "%C%"]);
+		$this->assertTrue($MainCond->getVars() === ["%A%", "%A%", "%B%", "%B%", "%C%", "%C%"]);
 	}
 
 	function test_sql_select2() {
@@ -18,7 +18,7 @@ class stdlibTest extends TestCase
 		});
 		//printr((string)$MainCond, $MainCond->vars());
 		$this->assertTrue($MainCond == "((field1 LIKE ? OR field2 LIKE ?) AND (field1 LIKE ? OR field2 LIKE ?) AND (field1 LIKE ? OR field2 LIKE ?))");
-		$this->assertTrue($MainCond->vars() === ["%a%", "%a%", "%b%", "%b%", "%c%", "%c%"]);
+		$this->assertTrue($MainCond->getVars() === ["%a%", "%a%", "%b%", "%b%", "%c%", "%c%"]);
 	}
 
 	function test_split_words1() {
