@@ -874,7 +874,7 @@ function __output_wrapper(callable $func, ...$args){
 			if($i > 0)print "\n";
 			ob_start();
 			$func($args[$i]);
-			print specialchars(ob_get_clean());
+			print htmlspecialchars(string: ob_get_clean(), double_encode: false);
 		}
 	}
 }
