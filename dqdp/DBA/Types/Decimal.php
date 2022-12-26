@@ -14,9 +14,15 @@ class Decimal {
 		$this->scale = $scale;
 
 		if(isset($value)){
-			$this->value = number_format((float)$value, $scale, '.', '');
-			if($this->value != $value){
-				throw new InvalidArgumentException("Expected decimal, found: ".gettype($value)." with value $value");
+			if(is_float($value)){
+				$this->value = number_format($value, $scale, '.', '');
+			} elseif(empty($value)){
+				// $this->value = null;
+			} else {
+				$this->value = number_format((float)$value, $scale, '.', '');
+				if($this->value != $value){
+					throw new InvalidArgumentException("Expected decimal, found: ".get_multitype($value)." with value $value");
+				}
 			}
 		}
 	}
