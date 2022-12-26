@@ -584,7 +584,7 @@ function rawurldec(mixed $data): mixed {
 
 function specialchars(mixed $data){
 	return __object_map($data, function(mixed $item): string {
-		return htmlspecialchars((string)$item, ENT_COMPAT | ENT_HTML401, '', false);
+		return htmlspecialchars(string: (string)$item, double_encode: false);
 	});
 }
 
