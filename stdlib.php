@@ -1,5 +1,7 @@
 <?php declare(strict_types = 1);
 
+# TODO: check argument types for __object_map() functions
+
 use dqdp\InvalidTypeException;
 use dqdp\LV;
 use dqdp\QueueMailer;
@@ -407,33 +409,33 @@ function redirect_referer(string $default = "/"): void {
 }
 
 
-function floatpoint($val): float {
+function floatpoint(mixed $val): float {
 	$val = preg_replace('/[^0-9,\.\-]/', '', (string)$val);
 	return (float)str_replace(',', '.', (string)$val);
 }
 
-function to_float($data){
-	return __object_map($data, function($item): float {
+function to_float(mixed $data): mixed {
+	return __object_map($data, function(mixed $item): float {
 		return floatpoint($item);
 	});
 }
 
-function to_int($data){
-	return __object_map($data, function($item): int {
+function to_int(mixed $data): mixed {
+	return __object_map($data, function(mixed $item): int {
 		return (int)$item;
 	});
 }
 
-function money_conv($data): float {
+function money_conv(mixed $data): float {
 	return floatpoint($data);
 }
 
-function money_round($data): string {
+function money_round(mixed $data): string {
 	return number_format(money_conv($data), 2, '.', '');
 }
 
-function to_money($data){
-	return __object_map($data, function($item){
+function to_money(mixed $data): mixed {
+	return __object_map($data, function(mixed $item): float {
 		return money_conv($item);
 	});
 }
@@ -508,48 +510,48 @@ function browse_flat($path, callable $function){
 	return $ret??[];
 }
 
-function compacto($data) {
+function compacto($data): mixed {
 	return __object_filter($data, function($item){
 		return (bool)$item;
 	});
 }
 
-function utf2win($data){
-	return __object_map($data, function($item){
-		return mb_convert_encoding($item, 'ISO-8859-13', 'UTF-8');
+function utf2win(mixed $data): mixed {
+	return __object_map($data, function(mixed $item): string {
+		return mb_convert_encoding((string)$item, 'ISO-8859-13', 'UTF-8');
 	});
 }
 
-function win2utf($data){
-	return __object_map($data, function($item){
+function win2utf(mixed $data): mixed {
+	return __object_map($data, function(mixed $item): string {
 		return mb_convert_encoding($item, 'UTF-8', 'ISO-8859-13');
 	});
 }
 
-function translit($data){
-	return __object_map($data, function($item){
+function translit(mixed $data): mixed {
+	return __object_map($data, function($item): string {
 		return iconv("utf-8","ascii//TRANSLIT", $item);
 	});
 }
 
-function is_empty($data = null){
-	return __object_reduce($data, function($carry, $item){
+function is_empty(mixed $data): bool {
+	return __object_reduce($data, function(bool $carry, mixed $item): bool {
 		return $carry && empty($item);
 	}, true);
 }
 
-function non_empty($data = null){
+function non_empty(mixed $data): bool {
 	return !is_empty($data);
 }
 
-function ent($data){
-	return __object_map($data, function($item){
+function ent(mixed $data): mixed {
+	return __object_map($data, function(mixed $item): string {
 		return htmlentities($item);
 	});
 }
 
-function entdecode($data){
-	return __object_map($data, function($item){
+function entdecode(mixed $data): mixed {
+	return __object_map($data, function(mixed $item): string {
 		return html_entity_decode($item);
 	});
 }
@@ -558,30 +560,30 @@ function entdecode($data){
 # scheme:[//[user[:password]@]host[:port]][/path][?query][#fragment]
 # If you are encoding *path* segment, use rawurlencode().
 # If you are encoding *query* component, use urlencode().
-function urlenc($data){
-	return __object_map($data, function($item){
+function urlenc(mixed $data): mixed {
+	return __object_map($data, function($item): string {
 		return urlencode($item);
 	});
 }
-function urldec($data){
-	return __object_map($data, function($item){
+function urldec(mixed $data): mixed {
+	return __object_map($data, function(mixed $item): string {
 		return urldecode($item);
 	});
 }
-function rawurlenc($data){
-	return __object_map($data, function($item){
+function rawurlenc(mixed $data): mixed {
+	return __object_map($data, function(mixed $item): string {
 		return rawurlencode($item);
 	});
 }
-function rawurldec($data){
-	return __object_map($data, function($item){
+function rawurldec(mixed $data): mixed {
+	return __object_map($data, function(mixed $item): string {
 		return rawurldecode($item);
 	});
 }
 ##
 
-function specialchars($data){
-	return __object_map($data, function($item){
+function specialchars(mixed $data){
+	return __object_map($data, function(mixed $item): string {
 		return htmlspecialchars((string)$item, ENT_COMPAT | ENT_HTML401, '', false);
 	});
 }
@@ -793,9 +795,8 @@ function __query($query_string = '', $format = '', $delim = '&amp;', $allowed = 
 	return $q2;
 }
 
-# TODO: tas nestrādā, kā plānots
-function format_debug($v, $depth = 0){
-	$vars = __object_map($v, function($item) use ($depth){
+function format_debug(mixed $v): mixed {
+	return __object_map($v, function($item) {
 		if((is_string($item) || $item instanceof Stringable) && mb_detect_encoding($item)){
 			return mb_substr($item, 0, 1024).(mb_strlen($item) > 1024 ? '...' : '');
 		} elseif(is_scalar($item)){
@@ -812,8 +813,6 @@ function format_debug($v, $depth = 0){
 			return "[BLOB]";
 		}
 	});
-
-	return $vars;
 }
 
 # NOTE: dep on https://highlightjs.org/
@@ -1005,8 +1004,8 @@ function locale_money_format($t, $places = 2){
 	return number_format($t, $places, $point, $sep);
 }
 
-function strip_path($data) {
-	return __object_map($data, function($item){
+function strip_path(mixed $data): mixed {
+	return __object_map($data, function(mixed $item): string {
 		return preg_replace('/[\/\.\\\]/', '', $item);
 	});
 }
