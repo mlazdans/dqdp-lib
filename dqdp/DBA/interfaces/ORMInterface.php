@@ -2,12 +2,12 @@
 
 namespace dqdp\DBA\interfaces;
 
-use dqdp\DBA\AbstractDataObject;
+use dqdp\DataObject;
 use stdClass;
 
 interface ORMInterface {
-	static function fromDBObject(array|object|null $o): ?AbstractDataObject;
-	static function toDBObject(AbstractDataObject $o): stdClass;
+	static function fromDBObject(array|object|null $o): ?DataObject;
+	static function toDBObject(DataObject $o): stdClass;
 	// static function getDataType(): string;
 	// static function getCollectionType(): string;
 }

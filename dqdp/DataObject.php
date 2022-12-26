@@ -1,8 +1,8 @@
 <?php declare(strict_types = 1);
 
-namespace dqdp\DBA;
+namespace dqdp;
 
-abstract class AbstractDataObject implements \IteratorAggregate {
+abstract class DataObject implements \IteratorAggregate {
 	# NOTE: must be defined in child, to be in scope
 	abstract function initPoperty(string|int $k, mixed $v): void;
 
