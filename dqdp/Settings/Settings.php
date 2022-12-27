@@ -5,6 +5,7 @@ namespace dqdp\Settings;
 use dqdp\DBA\interfaces\DBAInterface;
 use dqdp\DBA\interfaces\TransactionInterface;
 use dqdp\Settings\SetType;
+use dqdp\Settings\Types\SettingsDummy;
 use dqdp\Settings\Types\SettingsFilter;
 use TypeError;
 
@@ -79,18 +80,14 @@ class Settings implements TransactionInterface
 				continue;
 			}
 
-			// $v = strtoupper($v);
-			$params = [
-				'SetDomain'=>$this->Domain,
-				'SetKey'=>$k,
-			];
+			$params = new SettingsDummy(SetDomain: $this->Domain, SetKey: $k);
 
 			switch($v) {
 				case SetType::serialize:
-					$params[$v->value] = serialize(get_prop($DATA, $k));
+					$params->{$v->value} = serialize(get_prop($DATA, $k));
 					break;
 				default:
-					$params[$v->value] = get_prop($DATA, $k);
+					$params->{$v->value} = get_prop($DATA, $k);
 			}
 
 			$ret = $ret && $this->Ent->save(new Types\Settings($params));
