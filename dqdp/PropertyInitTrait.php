@@ -100,7 +100,7 @@ trait PropertyInitTrait {
 		foreach($properties as $k=>$class_default){
 			if(prop_exists($data, $k) && prop_initialized($data, $k)){
 				$params[$k] = static::initValue($k, get_prop($data, $k));
-			} elseif(prop_exists($defaults, $k) && prop_initialized($defaults, $k)){
+			} elseif($defaults !== null && prop_exists($defaults, $k) && prop_initialized($defaults, $k)){
 				$params[$k] = static::initValue($k, get_prop($defaults, $k));
 			}
 		}
