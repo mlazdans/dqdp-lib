@@ -1546,11 +1546,11 @@ function vpdiv(){
 	return call_user_func_array('__vpbc', array_merge(['bcdiv'], func_get_args()));
 }
 
-function between($v, $s, $e){
+function between(mixed $v, mixed $s, mixed $e): bool {
 	return ($v >= $s) && ($v <= $e);
 }
 
-function within($v, $s, $e){
+function within(mixed $v, mixed $s, mixed $e): bool {
 	return ($v > $s) && ($v < $e);
 }
 
