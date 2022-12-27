@@ -54,8 +54,10 @@ function search_to_sql_cond($q, $fields, $minWordLen = 0, $options = []){
 		$Cond = new Condition();
 		foreach($fields as $field){
 			if(empty($options['wordboundary'])){
-				$Cond->add_condition(["UPPER($field) LIKE ?", "%".$word."%"], Condition::OR);
+				$Cond->add_condition(["$field CONTAINING ?", $word], Condition::OR);
+				// $Cond->add_condition(["UPPER($field) LIKE ?", "%".$word."%"], Condition::OR);
 			} else {
+				# MySQL specific?? Abstract!
 				$Cond->add_condition(["UPPER($field) REGEXP ?", '([[:blank:][:punct:]]|^)'.$word.'([[:blank:][:punct:]]|$)'], Condition::OR);
 				// $Cond->add_condition(["UPPER($field) REGEXP ?", "[[:<:]]".$word."[[:>:]]"], Condition::OR);
 			}
@@ -151,8 +153,11 @@ function search_to_sql($q, $fields, $minWordLen = 0){
 		$tmp = '';
 		foreach($fields as $field){
 			//$tmp .= "UPPER($field) LIKE ? COLLATE UNICODE_CI_AI ESCAPE '\\' OR ";
-			$tmp .= "UPPER($field) LIKE ? OR ";
-			$values[] = "%".$word."%";
+			// $tmp .= "UPPER($field) LIKE ? OR ";
+			// $values[] = "%".$word."%";
+			$tmp .= "$field CONTAINING ? OR ";
+			$values[] = $word;
+
 		}
 		$tmp = substr($tmp, 0, -4);
 		if($tmp)

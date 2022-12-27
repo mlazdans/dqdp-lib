@@ -1799,20 +1799,37 @@ function array_search_k(array|object $arr, $k, $v): mixed {
 	return null;
 }
 
-# TODO: refactor
-function parse_search_q($q, $minWordLen = 0){
-	$q = preg_replace('/[%,\'\.]/', ' ', $q);
-	$words = explode(' ', $q);
+function parse_search_q(string $q, int $minWordLen = 0): array {
+	$words = preg_split('/\s/', $q);
 
-	foreach($words as $k=>$word){
-		if(($word = trim($word)) && (mb_strlen($word) >= $minWordLen)){
-			$words[$k] = mb_strtoupper($word);
-		} else {
-			unset($words[$k]);
+	foreach($words as $word){
+		if(
+			($word = trim($word)) &&
+			($index = mb_strtolower($word)) &&
+			empty($buf[$index]) &&
+			(mb_strlen($word) >= $minWordLen)
+		){
+			$buf[$index] = true;
+			$ret[] = $word;
 		}
 	}
-	return array_unique($words);
+
+	return $ret??[];
 }
+
+// function parse_search_q($q, $minWordLen = 0){
+// 	$q = preg_replace('/[%,\'\.]/', ' ', $q);
+// 	$words = explode(' ', $q);
+
+// 	foreach($words as $k=>$word){
+// 		if(($word = trim($word)) && (mb_strlen($word) >= $minWordLen)){
+// 			$words[$k] = mb_strtoupper($word);
+// 		} else {
+// 			unset($words[$k]);
+// 		}
+// 	}
+// 	return array_unique($words);
+// }
 
 function split_words(string $q){
 	return preg_split('/\s+/', trim($q));
