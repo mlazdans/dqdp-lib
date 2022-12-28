@@ -12,9 +12,9 @@ interface EntityInterface {
 	function query(?AbstractFilter $filters = null): mixed;
 	function fetch(mixed $q): mixed;
 
-	function insert(array|object $DATA);
-	function update($ID, array|object $DATA);
-	function save(array|object $DATA);
+	function insert(array|object $DATA): mixed;
+	function update(int|string|array $ID, array|object $DATA): bool;
+	function save(array|object $DATA): mixed;
 
 	# TODO: nepieņemt array
 	function delete($ID);
