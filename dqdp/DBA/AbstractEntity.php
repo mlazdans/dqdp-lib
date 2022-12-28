@@ -5,8 +5,11 @@ namespace dqdp\DBA;
 use dqdp\DBA\interfaces\DBAInterface;
 use dqdp\DBA\interfaces\EntityInterface;
 use dqdp\DBA\interfaces\TransactionInterface;
+use dqdp\SQL\Condition;
 use dqdp\SQL\Insert;
 use dqdp\SQL\Select;
+use dqdp\SQL\Update;
+use dqdp\TODO;
 use InvalidArgumentException;
 
 // TODO: maybe do separate classes? ProcEntity, ReadOnlyEntity, etc
@@ -66,19 +69,11 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 	// }
 
 	# TODO: insert un update
-	function save(array|object $DATA){
+	function save(array|object $DATA): mixed {
 		return $this->_insert_query($DATA, true);
 	}
 
-	function update($ID, array|object $DATA){
-		if(is_null($TableName = $this->getTableName())){
-			throw new InvalidArgumentException("Table not found");
-		}
-
-		return $this->get_trans()->update($ID, $DATA, $TableName);
-	}
-
-	function insert(array|object $DATA){
+	function insert(array|object $DATA): mixed {
 		if(is_null($TableName = $this->getTableName())){
 			throw new InvalidArgumentException("Table not found");
 		}
@@ -86,28 +81,77 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 		return $this->get_trans()->insert($DATA, $TableName);
 	}
 
+	function update(int|string|array $ID, array|object $DATA): bool {
+		if(is_null($TableName = $this->getTableName())){
+			throw new InvalidArgumentException("Table not found");
+		}
+
+		if(is_null($PK = $this->getPK())){
+			throw new InvalidArgumentException("Primary key not set");
+		}
+
+		$Where = new Condition();
+		if(is_array($PK)){
+			foreach($PK as $i=>$k){
+				$Where->add_condition(["$k = ?", $ID[$i]]);
+			}
+		} else {
+			$Where->add_condition(["$PK = ?", $ID]);
+		}
+
+		$sql = (new Update($TableName))->Set($DATA)->Where($Where);
+
+		if($this->get_trans()->query($sql)){
+			return true;
+		}
+
+		return false;
+	}
+
+	private function _pk_in_data(array|object $DATA): bool {
+		$PK = $this->getPK();
+		if(is_null($PK)){
+			return false;
+		} elseif(is_array($PK)){
+			foreach($PK as $k){
+				if(!prop_exists($DATA, $k) || !prop_initialized($DATA, $k)){
+					return false;
+				}
+			}
+		} elseif(!prop_exists($DATA, $PK) || !prop_initialized($DATA, $PK)){
+			return false;
+		}
+
+		return true;
+	}
+
 	private function _insert_query(array|object $DATA, $update = false): mixed {
 		if(is_null($TableName = $this->getTableName())){
 			throw new InvalidArgumentException("Table not found");
 		}
 
-		$PK = $this->getPK();
-		# TODO: check null
-		$PK_fields_str = is_array($PK) ? join(",", $PK) : $PK;
+		$PKSetInData = $this->_pk_in_data($DATA);
 
-		$sql_fields = $this->get_sql_fields($DATA);
-
-		$sql = (new Insert)
-		->Into($TableName)
-		->Values($sql_fields);
-
-		if($update && $PK_fields_str){
-			$sql->Update()->Matching($PK);
-			// $sql->Update()->after("values", "matching", "MATCHING ($PK_fields_str)");
+		if($update && !$PKSetInData){
+			throw new InvalidArgumentException("Primary key not set");
 		}
 
-		# TODO: refactor out
-		// $sql->after("values", "returning", "RETURNING $PK_fields_str");
+		$PK = $this->getPK();
+		if(is_array($PK)){
+		} else {
+			if(!$PKSetInData && $Gen = $this->getGen()){
+				set_prop($DATA, $PK, function() use ($Gen) {
+					return "NEXT VALUE FOR $Gen";
+				});
+			}
+		}
+
+		$sql = (new Insert)->Into($TableName)->Values($DATA);
+
+		if($update){
+			$sql->Update()->Matching($PK);
+		}
+
 		$sql->Returning($PK);
 
 		if($q = $this->get_trans()->query($sql)){
@@ -121,26 +165,6 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 
 		return null;
 	}
-
-	# TODO: refactor out, rename
-	private function get_sql_fields(object|array $DATA){
-		$PK = $this->getPK();
-		if(is_array($PK)){
-		} else {
-			if(prop_exists($DATA, $PK)){
-				$DATA[$PK] = get_prop($DATA, $PK);
-			} else {
-				if($Gen = $this->getGen()){
-					set_prop($DATA, $PK, function() use ($Gen) {
-						return "NEXT VALUE FOR $Gen";
-					});
-				}
-			}
-		}
-
-		return $DATA;
-	}
-
 
 	function delete($ID){
 		if(is_null($TableName = $this->getTableName())){
