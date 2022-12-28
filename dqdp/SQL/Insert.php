@@ -73,8 +73,9 @@ class Insert extends Statement
 	}
 
 	function getVars(): array {
-		# Need array_values() otherwise unpacking to functions these will be treated as named parameters
-		return array_values($this->Values);
+		$build = build_sql(array_keys($this->Values), $this->Values, true);
+		return $build[2];
+
 	}
 
 	function getValues(): array {
