@@ -28,6 +28,10 @@ class Engine
 	static public ?Template $TEMPLATE = null;
 	static public $MOD_REWRITE;
 
+	# TODO: rename after old $REQ remove
+	static public Request  $R;
+	static public Response $RESP;
+
 	static function get_config($k = null){
 		return self::$CONFIG[$k]??null;
 	}
@@ -67,6 +71,10 @@ class Engine
 		self::$PUBLIC_ROOT = self::$SYS_ROOT.DIRECTORY_SEPARATOR."public";
 
 		if(is_climode()){
+			self::$R = new CliRequest;
+			self::$RESP = new CliResponse;
+
+			# Legacy
 			self::$MOD_REWRITE = false;
 			self::$IP = 'localhost';
 			# Parse parameters passed as --param=value
@@ -81,6 +89,13 @@ class Engine
 				}
 			}
 		} else {
+			self::$R = new HttpRequest;
+			self::$RESP = new HttpResponse;
+			self::$R->GET = Args::initFrom($_GET);
+			self::$R->POST = Args::initFrom($_POST);
+			self::$R->IP = getenv('REMOTE_ADDR');
+
+			# Legacy
 			self::$MOD_REWRITE = function_exists('apache_get_modules') && in_array('mod_rewrite', apache_get_modules());
 			self::$IP = getenv('REMOTE_ADDR');
 			self::$GET->merge(entdecode($_GET));
