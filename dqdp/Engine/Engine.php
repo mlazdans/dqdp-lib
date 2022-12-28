@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 
-namespace dqdp;
+namespace dqdp\Engine;
 
 class Engine
 {
@@ -25,7 +25,7 @@ class Engine
 	static public $MODULES_ROOT;
 	static public $MODULES;
 	static public $ROUTES;
-	static public ?EngineTemplate $TEMPLATE = null;
+	static public ?Template $TEMPLATE = null;
 	static public $MOD_REWRITE;
 
 	static function get_config($k = null){
@@ -55,9 +55,9 @@ class Engine
 		}
 		self::$START_TIME = microtime(true);
 		ini_set('display_errors', '0'); // 1, ja iebūvētais
-		set_error_handler('dqdp\Engine::error_handler', error_reporting());
-		set_exception_handler('dqdp\Engine::exception_handler');
-		register_shutdown_function('dqdp\Engine::shutdown');
+		set_error_handler([Engine::class, 'error_handler'], error_reporting());
+		set_exception_handler([Engine::class, 'exception_handler']);
+		register_shutdown_function([Engine::class, 'shutdown']);
 		self::$REQ = eo();
 		self::$GET = eo();
 		self::$POST = eo();
@@ -339,15 +339,9 @@ class Engine
 			$trace['line'] = 'unknown';
 		}
 		if(!empty($trace['class'])){
-			if($trace['class'] == 'dqdp\PHPTemplate'){
-				//return false;
-			}
 			$args = trim_includes_path($trace['file']);
 		} elseif(!empty($trace['args']) && in_array($trace['function'], ['include', 'require', 'include_once', 'require_once'])){
 			$from = trim_includes_path($trace['file']);
-			if($from == 'dqdp\PHPTemplate.php'){
-				return false;
-			}
 			$args = trim_includes_path($trace['args'][0]);
 		} else {
 			//printr($trace);
