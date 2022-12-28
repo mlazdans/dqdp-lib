@@ -8,13 +8,19 @@ use ReflectionProperty;
 
 trait PropertyInitTrait {
 	function initPoperty(string|int $k, mixed $v): void {
-		$this->{$k} = $this->initValue($k, $v);
+		// Skip setting non null-able properties to null
+		if(is_null($v = $this->initValue($k, $v))){
+			if(prop_is_nullable($this, $k)){
+				$this->$k = $v;
+			}
+		} else {
+			$this->$k = $v;
+		}
 	}
 
-	# NOTE: does not work with non null-able properties
-	// static function withDefaults(): static {
-	// 	return new static(get_class_public_vars(static::class));
-	// }
+	static function initFromDefaults(array|object|null $defaults = null): static {
+		return static::initFrom($defaults, get_class_public_vars(static::class));
+	}
 
 	static function initValue(string|int $k, mixed $v): mixed {
 		if(is_null($v)){
