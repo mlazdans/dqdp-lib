@@ -809,6 +809,8 @@ function format_debug(mixed $v): mixed {
 			return "[ARRAY]";
 		} elseif(is_object($item) && method_exists($item , '__toString')) {
 			return "$item";
+		} elseif(is_callable($item)) {
+			return "[FUNC]";
 		} else {
 			return "[BLOB]";
 		}
