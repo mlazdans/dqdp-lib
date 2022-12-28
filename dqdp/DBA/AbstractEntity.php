@@ -9,7 +9,6 @@ use dqdp\SQL\Condition;
 use dqdp\SQL\Insert;
 use dqdp\SQL\Select;
 use dqdp\SQL\Update;
-use dqdp\TODO;
 use InvalidArgumentException;
 
 // TODO: maybe do separate classes? ProcEntity, ReadOnlyEntity, etc
@@ -68,17 +67,12 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 	// 	return (int)($this->get_trans()->execute_single($sql)['sk']??0);
 	// }
 
-	# TODO: insert un update
 	function save(array|object $DATA): mixed {
 		return $this->_insert_query($DATA, true);
 	}
 
 	function insert(array|object $DATA): mixed {
-		if(is_null($TableName = $this->getTableName())){
-			throw new InvalidArgumentException("Table not found");
-		}
-
-		return $this->get_trans()->insert($DATA, $TableName);
+		return $this->_insert_query($DATA, false);
 	}
 
 	function update(int|string|array $ID, array|object $DATA): bool {
