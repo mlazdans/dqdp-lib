@@ -2039,6 +2039,7 @@ function &get_prop_ref(array|object|null $o, string|int $k): mixed {
 		throw new InvalidTypeException($o);
 	}
 }
+
 function get_prop(array|object|null $o, string|int $k): mixed {
 	if(is_null($o)){
 		return null;
@@ -2074,6 +2075,14 @@ function set_prop(array|object &$o, string|int $k, mixed $v): void {
 		$o->{$k} = $v;
 	} else {
 		throw new InvalidTypeException($o);
+	}
+}
+
+function prop_is_nullable(array|object|null $o, string|int $k): bool {
+	if(is_object($o)){
+		return (new ReflectionProperty($o, $k))->getType()->allowsNull();
+	} else {
+		return true;
 	}
 }
 
