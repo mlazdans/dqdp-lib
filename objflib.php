@@ -36,8 +36,10 @@ function __object_map(mixed $data, callable $func, mixed $parent = null, $parent
 		}
 
 		return $d;
+	// } elseif(is_callable($data)) {
 	} else {
-		throw new InvalidTypeException($data);
+		return $func($data, $parent_key, $parent);
+		// throw new InvalidTypeException($data);
 	}
 }
 
