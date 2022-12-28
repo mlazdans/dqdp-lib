@@ -20,7 +20,7 @@ class MultiIterator implements Iterator, ArrayAccess, Countable {
 		} elseif(is_object($this->data)){
 			$this->data = get_object_vars($data);
 		} elseif($this->data instanceof Generator) {
-			# TODO: test
+			new TODO("Implement and test");
 		} else {
 			throw new InvalidTypeException($data);
 		}
