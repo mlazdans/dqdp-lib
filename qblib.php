@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 use dqdp\SQL\Condition;
 
@@ -68,16 +68,17 @@ function search_to_sql_cond($q, $fields, $minWordLen = 0, $options = []){
 	return $MainCond;
 }
 
-# TODO: DATA arī array
-function build_sql($fields, $DATA = null, $skip_nulls = false){
+function build_sql(iterable $fields, array|object|null $DATA = null, $skip_nulls = false){
 	foreach($fields as $k){
-		if($skip_nulls && !property_exists($DATA, $k)){
+		if($skip_nulls && !($exists = (prop_exists($DATA, $k) && prop_initialized($DATA, $k)))){
 			continue;
 		}
 
-		if(property_exists($DATA, $k)){
-			if(is_callable([$DATA, $k]) || $DATA->{$k} instanceof Closure){
-				$fret = $DATA->$k->__invoke();
+		if($exists){
+			$item = get_prop($DATA, $k);
+			if(is_callable($item) || $item instanceof Closure){
+				// $fret = $item->__invoke();
+				$fret = $item();
 				if(is_array($fret)){
 					# Ja nav uzstādīts otrs parametrs, neliekam to pie fields vai holders
 					if(array_key_exists(0, $fret) && array_key_exists(1, $fret)){
@@ -95,7 +96,7 @@ function build_sql($fields, $DATA = null, $skip_nulls = false){
 				}
 			} else {
 				$h = "?";
-				$v = $DATA->{$k};
+				$v = $item;
 			}
 		} else {
 			$h = "?";
