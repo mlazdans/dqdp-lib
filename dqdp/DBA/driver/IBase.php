@@ -301,6 +301,8 @@ class IBase implements DBAInterface
 	// 	return $this->_insert_query($DATA, $Table, true);
 	// }
 
+	# TODO: maybe should use current transaction, if exists. Enforce explicit new transaction by param or another f-ion.
+	# Hmm...
 	function with_new_trans(callable $func, ...$args): mixed {
 		// printr("New trans!", $this->tr);
 		$tr = $this->tr;
