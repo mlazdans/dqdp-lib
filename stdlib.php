@@ -2239,3 +2239,25 @@ function static_prop_initialized(string $className, string|int $k): bool {
 function get_multitype(mixed $o): string {
 	return is_object($o) ? get_class($o) : gettype($o);
 }
+
+function name2prop(string $name): string {
+	$retName = "";
+
+	$name = mb_strtolower($name);
+	$parts = explode("_", $name);
+	foreach($parts as $v){
+		if(empty($v)){
+			continue;
+		}
+
+		if(($v[0] >= "0") && ($v[0] <= "9")){
+			$retName .= "_"; // restore _ for digits
+		} else {
+			$v[0] = mb_strtoupper($v[0]);
+		}
+
+		$retName .= $v;
+	}
+
+	return $retName;
+}
