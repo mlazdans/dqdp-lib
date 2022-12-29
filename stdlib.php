@@ -1984,8 +1984,12 @@ function substitute(string $str){
 		$str);
 }
 
-function join_paths(array $a): string {
-	return join(DIRECTORY_SEPARATOR, $a);
+function join_paths(...$args): string {
+	if(count($args) == 1) {
+		return join(DIRECTORY_SEPARATOR, $args);
+	} else {
+		return join(DIRECTORY_SEPARATOR, [...$args]);
+	}
 }
 
 function str_limiter($str, $limit, $append){
