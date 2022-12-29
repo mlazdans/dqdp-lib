@@ -7,8 +7,8 @@ use dqdp\SQL\Select;
 
 class SettingsFilter extends AbstractFilter {
 	function __construct(
-		readonly string $SET_KEY = "",
-		readonly string $SET_DOMAIN = "",
+		readonly ?string $SET_DOMAIN = null,
+		readonly ?string $SET_KEY = null,
 	) {
 	}
 
