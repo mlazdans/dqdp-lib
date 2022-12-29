@@ -1986,7 +1986,11 @@ function substitute(string $str){
 
 function join_paths(...$args): string {
 	if(count($args) == 1) {
-		return join(DIRECTORY_SEPARATOR, $args);
+		if(is_array($args[0])){
+			return join(DIRECTORY_SEPARATOR, $args[0]);
+		} else {
+			throw new InvalidTypeException($args[0]);
+		}
 	} else {
 		return join(DIRECTORY_SEPARATOR, [...$args]);
 	}
