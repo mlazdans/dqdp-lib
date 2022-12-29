@@ -2,6 +2,9 @@
 
 namespace dqdp\Engine;
 
+use ArgumentCountError;
+use dqdp\InvalidTypeException;
+
 class Engine
 {
 	static public $CONFIG = [];
@@ -13,51 +16,58 @@ class Engine
 	static public $DEV;
 	static public $DOMAIN;
 	static public $LOCALE;
-	static public $MSG = [
-		'DEBUG'=>[],
-		'WARN'=>[],
-		'ERR'=>[],
-		'INFO'=>[],
-	];
+	static public array $MSG;
 	static public $SYS_ROOT;
 	static public $TMP_ROOT;
 	static public $PUBLIC_ROOT;
 	static public $MODULES_ROOT;
 	static public $MODULES;
-	static public $ROUTES;
 	static public ?Template $TEMPLATE = null;
-	static public $MOD_REWRITE;
+
+	static public bool $MOD_REWRITE_ENABLED = false;
+	static string $REQUEST_METHOD;
+	static string $MODULE;
 
 	# TODO: rename after old $REQ remove
 	static public Request  $R;
-	static public Response $RESP;
 
-	static function get_config($k = null){
+	static function get_config(string $k = null): mixed {
 		return self::$CONFIG[$k]??null;
 	}
 
-	static function add_config(){
-		//func_get_arg();
-		$args = func_get_args();
+	static function initMsgs(): void {
+		self::$MSG = [
+			'DEBUG'=>[],
+			'WARN'=>[],
+			'ERR'=>[],
+			'INFO'=>[],
+		];
+	}
+
+	static function consumeMsgs(): array {
+		$m = self::$MSG;
+		self::initMsgs();
+		return $m;
+	}
+
+	static function add_config(...$args): void {
 		if(count($args) == 1){
 			if(is_array($args[0])){
 				self::$CONFIG = array_merge(self::$CONFIG, $args[0]);
-				return true;
+			} else {
+				throw new InvalidTypeException($args[0]);
 			}
 		} elseif(count($args) == 2){
 			self::$CONFIG[$args[0]] = $args[1];
-			return true;
+		} else {
+			throw new ArgumentCountError();
 		}
-		return false;
-		//self::$CONFIG = array_merge(self::$CONFIG, $nc);
 	}
 
 	static function init(){
-		ob_start();
-		if(empty(self::$SYS_ROOT) || !file_exists(self::$SYS_ROOT)){
-			trigger_error('self::$SYS_ROOT not set', E_USER_ERROR);
-		}
+		// ob_start();
 		self::$START_TIME = microtime(true);
+		self::initMsgs();
 		ini_set('display_errors', '0'); // 1, ja iebūvētais
 		set_error_handler([Engine::class, 'error_handler'], error_reporting());
 		set_exception_handler([Engine::class, 'exception_handler']);
@@ -66,16 +76,13 @@ class Engine
 		self::$GET = eo();
 		self::$POST = eo();
 
-		self::$TMP_ROOT = self::$SYS_ROOT.DIRECTORY_SEPARATOR.'tmp';
-		self::$MODULES_ROOT = self::$SYS_ROOT.DIRECTORY_SEPARATOR.'modules';
-		self::$PUBLIC_ROOT = self::$SYS_ROOT.DIRECTORY_SEPARATOR."public";
-
 		if(is_climode()){
+			# TODO: add as command line argument
+			self::$REQUEST_METHOD = "";
+			self::$MOD_REWRITE_ENABLED = false;
 			self::$R = new CliRequest;
-			self::$RESP = new CliResponse;
 
 			# Legacy
-			self::$MOD_REWRITE = false;
 			self::$IP = 'localhost';
 			# Parse parameters passed as --param=value
 			$arg = $_SERVER['argv']??[];
@@ -89,14 +96,15 @@ class Engine
 				}
 			}
 		} else {
+			self::$REQUEST_METHOD = $_SERVER['REQUEST_METHOD'];
+			self::$MOD_REWRITE_ENABLED = function_exists('apache_get_modules') && in_array('mod_rewrite', apache_get_modules());
+
 			self::$R = new HttpRequest;
-			self::$RESP = new HttpResponse;
 			self::$R->GET = Args::initFrom($_GET);
 			self::$R->POST = Args::initFrom($_POST);
 			self::$R->IP = getenv('REMOTE_ADDR');
 
 			# Legacy
-			self::$MOD_REWRITE = function_exists('apache_get_modules') && in_array('mod_rewrite', apache_get_modules());
 			self::$IP = getenv('REMOTE_ADDR');
 			self::$GET->merge(entdecode($_GET));
 			self::$POST->merge(entdecode($_POST));
@@ -105,28 +113,28 @@ class Engine
 		}
 
 		# Module loader
-		spl_autoload_register(function ($class) {
-			if(strpos($class, "App\\modules\\") === 0){
-				$parts = array_slice(explode("\\", $class), 2);
-				$Class = $parts[0];
-				$module = strtolower($Class);
+		// spl_autoload_register(function ($class) {
+		// 	if(strpos($class, "App\\modules\\") === 0){
+		// 		$parts = array_slice(explode("\\", $class), 2);
+		// 		$Class = $parts[0];
+		// 		$module = strtolower($Class);
 
-				$path = join_paths([self::$MODULES_ROOT, $module, "$Class.php"]);
-				if(file_exists($path)){
-					require_once($path);
-				}
-			}
-		});
+		// 		$path = join_paths([self::$MODULES_ROOT, $module, "$Class.php"]);
+		// 		if(file_exists($path)){
+		// 			require_once($path);
+		// 		}
+		// 	}
+		// });
 	}
 
 	static function __url($params, $delim){
-		if(self::get_config('use_mod_rewrite') && self::$MOD_REWRITE){
+		if(self::get_config('use_mod_rewrite') && self::$MOD_REWRITE_ENABLED){
 			$MID = $params['MID']??"/";
 			unset($params['MID']);
 			$Q = __query('', $params, $delim);
 			return "/$MID".($Q ? "?$Q" : "");
 		} else {
-			return "/index.php?".__query('', $params, $delim);
+			return "/main.php?".__query('', $params, $delim);
 		}
 	}
 
@@ -373,35 +381,81 @@ class Engine
 		return sprintf($msg, $trace['function'], $args, trim_includes_path($trace['file']), $trace['line']);
 	}
 
-	static function shutdown(){
-		if($err = error_get_last()){
-			if(is_php_fatal_error($err['type'])){
-				if(!is_climode())header503(null);
-				self::error_handler($err['type'], $err['message'], $err['file'], $err['line']);
-			}
+	static function run(){
+		$MID = $_GET["MID"]??$_POST["MID"]??"";
+		$Prefix = match(self::$REQUEST_METHOD){
+			"GET"=>"get",
+			"POST"=>"post",
+			default=>"",
+		};
+
+		$ROUTES = array_reverse(explode("/", $MID));
+
+		$Module = mb_strtolower(array_pop($ROUTES));
+		if(!($Module)){
+			$Module = "main";
+		}
+		$Module[0] = name2prop($Module[0]);
+
+		self::$MODULE = $Module;
+
+		$ModuleClass = self::$MODULES_ROOT."\\$Module";
+
+		$Method = "";
+		while($ROUTES){
+			$Method .= name2prop(array_pop($ROUTES));
 		}
 
-		$MODULE_DATA = '';
-		while(ob_get_level()){
-			$MODULE_DATA .= ob_get_clean();
+		if(!$Method){
+			$Method = "index";
 		}
+
+		$PrefixMethod = "$Prefix$Method";
 
 		try {
+			if(method_exists($ModuleClass, $PrefixMethod)){
+				ob_start();
+				(new ($ModuleClass))->$PrefixMethod();
+				$MODULE_DATA = ob_get_clean();
+			} elseif(method_exists($ModuleClass, $Method)){
+				ob_start();
+				(new ($ModuleClass))->$Method();
+				$MODULE_DATA = ob_get_clean();
+			} else {
+				printr("$ModuleClass\\$Method not found");
+				// header404("$ModuleClass->$Method not found");
+				return;
+			}
+
 			if(self::$TEMPLATE){
 				self::$TEMPLATE->out($MODULE_DATA);
 			} else {
 				print $MODULE_DATA;
 			}
+			self::dump_msg();
 		} catch(\Error $ex){
-			print $MODULE_DATA;
 			self::exception_handler($ex);
-			println("Fatal error:");
-			foreach(self::$MSG as $k=>$m){
+			self::dump_msg();
+		}
+	}
+
+	static function dump_msg(): void {
+		foreach(self::consumeMsgs() as $k=>$m){
+			if(count($m)){
 				println("$k:");
 				foreach($m as $msg){
 					println($msg);
 				}
 			}
 		}
+	}
+
+	static function shutdown(){
+		$MODULE_DATA = '';
+		while(ob_get_level()){
+			$MODULE_DATA .= ob_get_clean();
+		}
+		self::dump_msg();
+		print $MODULE_DATA;
 	}
 }
