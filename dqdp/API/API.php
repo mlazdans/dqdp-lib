@@ -5,7 +5,7 @@ namespace dqdp\API;
 abstract class API {
 	static string $URL;
 	static SerializationMethod $serializationMethod = SerializationMethod::JSON;
-	static string $RAW_RESPONSE_DATA;
+	static string $RAW_RESPONSE_DATA = "";
 
 	abstract static function set_host(string $host): void;
 
