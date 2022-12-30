@@ -447,7 +447,7 @@ class Engine
 		$templateTried = false;
 		try {
 			$initModule();
-			$ModuleClass = self::$MODULES_ROOT."\\".self::$MODULE;
+			$ModuleClass = self::$MODULES_ROOT."\\".self::$MODULE."Module";
 			$RequestMethod = self::$MODULE_METHOD."_".self::$REQUEST_METHOD;
 			if($method_is_callable($ModuleClass, $RequestMethod)){
 				ob_start();
