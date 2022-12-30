@@ -159,63 +159,63 @@ class Engine
 		return sprintf('<a %s>%s</a>', join(" ", $u_params??""), ent($name));
 	}
 
-	static function module_filter_chars($MID){
-		$module_chars = '/[^a-z_\/0-9]/';
-		return preg_replace($module_chars, "", $MID);
-	}
+	// static function module_filter_chars($MID){
+	// 	$module_chars = '/[^a-z_\/0-9]/';
+	// 	return preg_replace($module_chars, "", $MID);
+	// }
 
-	static function module_exists($ROUTES){
-		if(is_scalar($ROUTES)){
-			$ROUTES = explode("/", $ROUTES);
-		}
+	// static function module_exists($ROUTES){
+	// 	if(is_scalar($ROUTES)){
+	// 		$ROUTES = explode("/", $ROUTES);
+	// 	}
 
-		if(!is_array($ROUTES)){
-			return false;
-		}
+	// 	if(!is_array($ROUTES)){
+	// 		return false;
+	// 	}
 
-		do {
-			$path = self::$MODULES_ROOT.DIRECTORY_SEPARATOR.join_paths($ROUTES);
-			$path1 = $path.DIRECTORY_SEPARATOR."index.php";
-			if(file_exists($path1)){
-				return $path1;
-			}
-			$path2 = $path.".php";
-			if(file_exists($path2)){
-				return $path2;
-			}
-			array_pop($ROUTES);
-		} while($ROUTES);
+	// 	do {
+	// 		$path = self::$MODULES_ROOT.DIRECTORY_SEPARATOR.join_paths($ROUTES);
+	// 		$path1 = $path.DIRECTORY_SEPARATOR."index.php";
+	// 		if(file_exists($path1)){
+	// 			return $path1;
+	// 		}
+	// 		$path2 = $path.".php";
+	// 		if(file_exists($path2)){
+	// 			return $path2;
+	// 		}
+	// 		array_pop($ROUTES);
+	// 	} while($ROUTES);
 
-		return false;
-	}
+	// 	return false;
+	// }
 
-	static function module_path($ROUTES, $max_d = INF){
-		$path = [self::$MODULES_ROOT];
+	// static function module_path($ROUTES, $max_d = INF){
+	// 	$path = [self::$MODULES_ROOT];
 
-		if(is_scalar($ROUTES)){
-			$ROUTES = explode("/", $ROUTES);
-		}
+	// 	if(is_scalar($ROUTES)){
+	// 		$ROUTES = explode("/", $ROUTES);
+	// 	}
 
-		if($max_d === INF) {
-			$ep = $ROUTES;
-		} else {
-			$ep = array_slice($ROUTES, 0, $max_d);
-		}
-		$path = array_merge($path, $ep);
+	// 	if($max_d === INF) {
+	// 		$ep = $ROUTES;
+	// 	} else {
+	// 		$ep = array_slice($ROUTES, 0, $max_d);
+	// 	}
+	// 	$path = array_merge($path, $ep);
 
-		return join_paths($path).".php";
-		// $path = self::$MODULE_PATH;
+	// 	return join_paths($path).".php";
+	// 	// $path = self::$MODULE_PATH;
 
-		// if(is_scalar($ROUTES)){
-		// 	$ROUTES = explode("/", $ROUTES);
+	// 	// if(is_scalar($ROUTES)){
+	// 	// 	$ROUTES = explode("/", $ROUTES);
+	// 	// }
+
+	// 	// if($ep = array_slice($ROUTES, 0, $max_d)){
+	// 	// 	$path = array_merge($path, $ep);
+	// 	// }
+
+	// 	// return join('/', $path).".php";
 		// }
-
-		// if($ep = array_slice($ROUTES, 0, $max_d)){
-		// 	$path = array_merge($path, $ep);
-		// }
-
-		// return join('/', $path).".php";
-	}
 
 	/*
 	static function module_path($ROUTES, $max_d){
