@@ -3,7 +3,6 @@
 namespace dqdp\Settings;
 
 use dqdp\DBA\interfaces\ORMInterface;
-use dqdp\Settings\Traits\SettingsEntityTrait;
 
 class Entity extends \dqdp\DBA\AbstractEntity implements ORMInterface
 {

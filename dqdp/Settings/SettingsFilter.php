@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 
-namespace dqdp\Settings\Types;
+namespace dqdp\Settings;
 
 use dqdp\DBA\AbstractFilter;
 use dqdp\SQL\Select;

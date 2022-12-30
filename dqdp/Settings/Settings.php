@@ -2,12 +2,9 @@
 
 namespace dqdp\Settings;
 
+use TypeError;
 use dqdp\DBA\interfaces\DBAInterface;
 use dqdp\DBA\interfaces\TransactionInterface;
-use dqdp\Settings\SetType;
-use dqdp\Settings\Types\SettingsDummy;
-use dqdp\Settings\Types\SettingsFilter;
-use TypeError;
 
 /* Ibase
 CREATE TABLE SETTINGS
@@ -90,7 +87,7 @@ class Settings implements TransactionInterface
 					$params->{$v->value} = get_prop($DATA, $k);
 			}
 
-			$ret = $ret && $this->Ent->save(new Types\Settings($params));
+			$ret = $ret && $this->Ent->save(new SettingsType($params));
 		}
 
 		return $ret;
