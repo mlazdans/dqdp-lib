@@ -439,10 +439,18 @@ class Engine
 		}
 	}
 
+	private static function ob_get_clean_all(): string {
+		$buf = '';
+		while(ob_get_level()){
+			$buf .= ob_get_clean();
+		}
+
+		return $buf;
+	}
+
 	static function dump_msg(): void {
 		foreach(self::consumeMsgs() as $k=>$m){
 			if(count($m)){
-				println("$k:");
 				foreach($m as $msg){
 					println($msg);
 				}
@@ -451,10 +459,7 @@ class Engine
 	}
 
 	static function shutdown(){
-		$MODULE_DATA = '';
-		while(ob_get_level()){
-			$MODULE_DATA .= ob_get_clean();
-		}
+		$MODULE_DATA = self::ob_get_clean_all();
 		self::dump_msg();
 		print $MODULE_DATA;
 	}
