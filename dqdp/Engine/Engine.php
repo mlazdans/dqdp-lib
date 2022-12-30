@@ -14,10 +14,10 @@ class Engine
 {
 	static public $CONFIG = [];
 	static public $START_TIME;
-	static public $REQ;
-	static public $GET;
-	static public $POST;
-	static public $IP;
+	static public Args $REQ;
+	static public Args $GET;
+	static public Args $POST;
+	static public string $IP = "";
 	static public $DEV;
 	static public $DOMAIN;
 	static public $LOCALE;
@@ -77,9 +77,9 @@ class Engine
 		set_error_handler([Engine::class, 'error_handler'], error_reporting());
 		set_exception_handler([Engine::class, 'exception_handler']);
 		register_shutdown_function([Engine::class, 'shutdown']);
-		self::$REQ = eo();
-		self::$GET = eo();
-		self::$POST = eo();
+		// self::$REQ = eo();
+		// self::$GET = eo();
+		// self::$POST = eo();
 
 		if(is_climode()){
 			# TODO: add as command line argument
@@ -102,17 +102,31 @@ class Engine
 		} else {
 			self::$REQUEST_METHOD = $_SERVER['REQUEST_METHOD'];
 
-			self::$R = new HttpRequest;
-			self::$R->GET = Args::initFrom($_GET);
-			self::$R->POST = Args::initFrom($_POST);
-			self::$R->IP = getenv('REMOTE_ADDR');
+			// self::$R = new HttpRequest;
+			// self::$R->GET = Args::initFrom($_GET);
+			// self::$R->POST = Args::initFrom($_POST);
+			// if(self::$REQUEST_METHOD == "POST"){
+			// 	self::$R->REQ = Args::initFrom($_POST, $_GET);
+			// } else {
+			// 	self::$R->REQ = Args::initFrom($_GET, $_POST);
+			// }
+			// self::$R->IP = getenv('REMOTE_ADDR');
+
+			self::$GET = Args::initFrom($_GET);
+			self::$POST = Args::initFrom($_POST);
+			if(self::$REQUEST_METHOD == "POST"){
+				self::$REQ = Args::initFrom($_POST, $_GET);
+			} else {
+				self::$REQ = Args::initFrom($_GET, $_POST);
+			}
+			self::$IP = getenv('REMOTE_ADDR');
 
 			# Legacy
-			self::$IP = getenv('REMOTE_ADDR');
-			self::$GET->merge(entdecode($_GET));
-			self::$POST->merge(entdecode($_POST));
-			self::$REQ->merge(entdecode($_GET));
-			self::$REQ->merge(entdecode($_POST));
+			// self::$IP = getenv('REMOTE_ADDR');
+			// self::$GET->merge(entdecode($_GET));
+			// self::$POST->merge(entdecode($_POST));
+			// self::$REQ->merge(entdecode($_GET));
+			// self::$REQ->merge(entdecode($_POST));
 		}
 
 		# Module loader
