@@ -29,7 +29,6 @@ class Engine
 	static public $MODULES;
 	static public ?Template $TEMPLATE = null;
 
-	static public bool $MOD_REWRITE_ENABLED = false;
 	static string $REQUEST_METHOD;
 	static string $MODULE;
 	static string $MODULE_METHOD;
@@ -85,7 +84,6 @@ class Engine
 		if(is_climode()){
 			# TODO: add as command line argument
 			self::$REQUEST_METHOD = "";
-			self::$MOD_REWRITE_ENABLED = false;
 			self::$R = new CliRequest;
 
 			# Legacy
@@ -103,7 +101,6 @@ class Engine
 			}
 		} else {
 			self::$REQUEST_METHOD = $_SERVER['REQUEST_METHOD'];
-			self::$MOD_REWRITE_ENABLED = function_exists('apache_get_modules') && in_array('mod_rewrite', apache_get_modules());
 
 			self::$R = new HttpRequest;
 			self::$R->GET = Args::initFrom($_GET);
@@ -134,7 +131,7 @@ class Engine
 	}
 
 	static function __url($params, $delim){
-		if(self::get_config('use_mod_rewrite') && self::$MOD_REWRITE_ENABLED){
+		if(self::get_config('use_mod_rewrite')){
 			$MID = $params['MID']??"/";
 			unset($params['MID']);
 			$Q = __query('', $params, $delim);
