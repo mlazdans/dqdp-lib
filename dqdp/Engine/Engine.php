@@ -3,9 +3,12 @@
 namespace dqdp\Engine;
 
 use ArgumentCountError;
-use dqdp\InvalidTypeException;
+use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionException;
+use Throwable;
+use dqdp\InvalidTypeException;
+use dqdp\UnsupportedRequestMethodException;
 
 class Engine
 {
@@ -29,6 +32,7 @@ class Engine
 	static public bool $MOD_REWRITE_ENABLED = false;
 	static string $REQUEST_METHOD;
 	static string $MODULE;
+	static string $MODULE_METHOD;
 
 	# TODO: rename after old $REQ remove
 	static public Request  $R;
@@ -215,7 +219,7 @@ class Engine
 	// 	// }
 
 	// 	// return join('/', $path).".php";
-		// }
+	// }
 
 	/*
 	static function module_path($ROUTES, $max_d){
@@ -384,60 +388,66 @@ class Engine
 	}
 
 	static function run(){
-		$MID = $_GET["MID"]??$_POST["MID"]??"";
-		$Prefix = match(self::$REQUEST_METHOD){
-			"GET"=>"get",
-			"POST"=>"post",
-			default=>"",
+		$initModule = function(){
+			$SupportedRequstMethods = ["GET", "POST"];
+			if(self::$REQUEST_METHOD == "GET"){
+				$MID = $_GET["MID"]??"";
+			} elseif(self::$REQUEST_METHOD == "POST"){
+				$MID = $_POST["MID"]??$_GET["MID"]??"";
+			} else {
+				throw new UnsupportedRequestMethodException(self::$REQUEST_METHOD);
+			}
+
+			$ROUTES = array_reverse(explode("/", $MID));
+
+			self::$MODULE = (function() use (&$ROUTES): string {
+				if($Module = array_pop($ROUTES)){
+					$Module = name2prop($Module);
+				}
+
+				return $Module ? $Module : "Main";
+			})();
+
+			self::$MODULE_METHOD = (function() use (&$ROUTES): string {
+				$Method = "";
+				while($ROUTES){
+					$Method .= name2prop(array_pop($ROUTES));
+				}
+
+				return $Method ? $Method : "index";
+			})();
+
+			foreach($SupportedRequstMethods as $m){
+				if((stripos(self::$MODULE_METHOD, $m) === 0) && self::$REQUEST_METHOD != $m){
+					throw new InvalidArgumentException("Request method mismatch");
+				}
+			}
 		};
-
-		$ROUTES = array_reverse(explode("/", $MID));
-
-		$Module = mb_strtolower(array_pop($ROUTES));
-		if(!($Module)){
-			$Module = "main";
-		}
-		$Module[0] = name2prop($Module[0]);
-
-		self::$MODULE = $Module;
-
-		$ModuleClass = self::$MODULES_ROOT."\\$Module";
-
-		$Method = "";
-		while($ROUTES){
-			$Method .= name2prop(array_pop($ROUTES));
-		}
-
-		if(!$Method){
-			$Method = "index";
-		}
-
-		$PrefixMethod = "$Prefix$Method";
 
 		$method_is_callable = function(string $className, string|int $k): bool {
 			try {
 				$method = (new ReflectionClass($className))->getMethod($k);
 				return $method->isPublic() && !$method->isStatic();
-			} catch(ReflectionException $e){
+			} catch(ReflectionException){
 				return false;
 			}
 		};
 
 		$templateTried = false;
-		$MODULE_DATA = "";
 		try {
+			$initModule();
+			$ModuleClass = self::$MODULES_ROOT."\\".self::$MODULE;
+			$PrefixMethod = self::$REQUEST_METHOD.self::$MODULE_METHOD;
 			if($method_is_callable($ModuleClass, $PrefixMethod)){
 				ob_start();
 				(new ($ModuleClass))->$PrefixMethod();
 				$MODULE_DATA = ob_get_clean();
-			} elseif($method_is_callable($ModuleClass, $Method)){
+			} elseif($method_is_callable($ModuleClass, self::$MODULE_METHOD)){
 				ob_start();
-				(new ($ModuleClass))->$Method();
+				(new ($ModuleClass))->{self::$MODULE_METHOD}();
 				$MODULE_DATA = ob_get_clean();
 			} else {
-				printr("$ModuleClass\\$Method not found");
-				// header404("$ModuleClass->$Method not found");
-				return;
+				throw new InvalidArgumentException(self::$MODULE."::".self::$MODULE_METHOD." not found");
 			}
 
 			if(self::$TEMPLATE){
@@ -447,16 +457,15 @@ class Engine
 				print $MODULE_DATA;
 			}
 			self::dump_msg();
-		} catch(\Error $e1){
+		} catch(Throwable $e1){
 			self::exception_handler($e1);
-			if(!$templateTried){
-				$MODULE_DATA = self::ob_get_clean_all();
+			if(self::$TEMPLATE && !$templateTried){
 				try {
-					self::$TEMPLATE->out($MODULE_DATA);
-				} catch(\Error $e2){
+					self::$TEMPLATE->out(self::ob_get_clean_all());
+				} catch(Throwable $e2){
 					self::exception_handler($e2);
 				}
-			};
+			}
 
 			self::dump_msg();
 		}
@@ -472,7 +481,7 @@ class Engine
 	}
 
 	static function dump_msg(): void {
-		foreach(self::consumeMsgs() as $k=>$m){
+		foreach(self::consumeMsgs() as $m){
 			if(count($m)){
 				foreach($m as $msg){
 					println($msg);
