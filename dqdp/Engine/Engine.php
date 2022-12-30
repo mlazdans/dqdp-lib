@@ -439,13 +439,23 @@ class Engine
 			}
 
 			if(self::$TEMPLATE){
+				$templateTried = true;
 				self::$TEMPLATE->out($MODULE_DATA);
 			} else {
 				print $MODULE_DATA;
 			}
 			self::dump_msg();
-		} catch(\Error $ex){
-			self::exception_handler($ex);
+		} catch(\Error $e1){
+			self::exception_handler($e1);
+			if(!$templateTried){
+				$MODULE_DATA = self::ob_get_clean_all();
+				try {
+					self::$TEMPLATE->out($MODULE_DATA);
+				} catch(\Error $e2){
+					self::exception_handler($e2);
+				}
+			};
+
 			self::dump_msg();
 		}
 	}
