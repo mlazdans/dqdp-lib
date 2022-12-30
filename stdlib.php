@@ -861,7 +861,7 @@ function __pre_wrapper(callable $func, ...$args){
 
 	print ($t = debug_backtrace()) ? __back_trace_fmt($t[1])."\n------------------------------------------------------------------------------\n" : '';
 
-	if(!is_climode())print '<code class="bash" style="background: gainsboro;">';
+	if(!is_climode())print '<code class="accesslog" style="background: gainsboro;">';
 	__output_wrapper($func, ...$args);
 	if(!is_climode())print "</code>";
 
