@@ -819,9 +819,11 @@ function format_debug(mixed $v): mixed {
 
 # NOTE: dep on https://highlightjs.org/
 function sqlr(){
-	if(!is_climode())print "<pre><code class=\"sql\">";
+	print is_climode() ? "\n" : '<pre style="background: gainsboro; color: black">';
 
-	print ($t = debug_backtrace()) ? __back_trace_fmt($t[0])."\n\n" : '';
+	print ($t = debug_backtrace()) ? __back_trace_fmt($t[0])."\n------------------------------------------------------------------------------\n" : '';
+
+	if(!is_climode())print '<code class="sql" style="background: gainsboro;">';
 	__output_wrapper(function($v){
 		if($v instanceof dqdp\SQL\Statement){
 			print (string)$v;
@@ -841,7 +843,7 @@ function sqlr(){
 		}
 	}, ...func_get_args());
 
-	print is_climode() ? "\n-------------------------------------------------\n" : "</code></pre>";
+	print is_climode() ? "\n------------------------------------------------------------------------------\n" : "</code></pre>";
 
 	print "\n";
 }
@@ -855,12 +857,16 @@ function printr(){
 }
 
 function __pre_wrapper(callable $func, ...$args){
-	if(!is_climode())print '<pre style="background: lightgrey; color: black">';
+	print is_climode() ? "\n" : '<pre style="background: gainsboro; color: black">';
 
 	print ($t = debug_backtrace()) ? __back_trace_fmt($t[1])."\n------------------------------------------------------------------------------\n" : '';
+
+	if(!is_climode())print '<code class="bash" style="background: gainsboro;">';
 	__output_wrapper($func, ...$args);
+	if(!is_climode())print "</code>";
 
 	print is_climode() ? "\n------------------------------------------------------------------------------\n" : "</pre>";
+
 	print "\n";
 }
 
