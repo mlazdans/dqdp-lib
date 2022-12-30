@@ -412,12 +412,23 @@ class Engine
 
 		$PrefixMethod = "$Prefix$Method";
 
+		$method_is_callable = function(string $className, string|int $k): bool {
 		try {
-			if(method_exists($ModuleClass, $PrefixMethod)){
+				$method = (new ReflectionClass($className))->getMethod($k);
+				return $method->isPublic() && !$method->isStatic();
+			} catch(ReflectionException $e){
+				return false;
+			}
+		};
+
+		$templateTried = false;
+		$MODULE_DATA = "";
+		try {
+			if($method_is_callable($ModuleClass, $PrefixMethod)){
 				ob_start();
 				(new ($ModuleClass))->$PrefixMethod();
 				$MODULE_DATA = ob_get_clean();
-			} elseif(method_exists($ModuleClass, $Method)){
+			} elseif($method_is_callable($ModuleClass, $Method)){
 				ob_start();
 				(new ($ModuleClass))->$Method();
 				$MODULE_DATA = ob_get_clean();
