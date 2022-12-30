@@ -428,11 +428,11 @@ class Engine
 				return $Method ? $Method : "index";
 			})();
 
-			foreach($SupportedRequstMethods as $m){
-				if((stripos(self::$MODULE_METHOD, $m) === 0) && self::$REQUEST_METHOD != $m){
-					throw new InvalidArgumentException("Request method mismatch");
-				}
-			}
+			// foreach($SupportedRequstMethods as $m){
+			// 	if((stripos(self::$MODULE_METHOD, $m) === 0) && self::$REQUEST_METHOD != $m){
+			// 		throw new InvalidArgumentException("Request method mismatch");
+			// 	}
+			// }
 		};
 
 		$method_is_callable = function(string $className, string|int $k): bool {
@@ -448,10 +448,10 @@ class Engine
 		try {
 			$initModule();
 			$ModuleClass = self::$MODULES_ROOT."\\".self::$MODULE;
-			$PrefixMethod = self::$REQUEST_METHOD.self::$MODULE_METHOD;
-			if($method_is_callable($ModuleClass, $PrefixMethod)){
+			$RequestMethod = self::$MODULE_METHOD."_".self::$REQUEST_METHOD;
+			if($method_is_callable($ModuleClass, $RequestMethod)){
 				ob_start();
-				(new ($ModuleClass))->$PrefixMethod();
+				(new ($ModuleClass))->$RequestMethod();
 				$MODULE_DATA = ob_get_clean();
 			} elseif($method_is_callable($ModuleClass, self::$MODULE_METHOD)){
 				ob_start();
