@@ -4,6 +4,8 @@ namespace dqdp\Engine;
 
 use ArgumentCountError;
 use dqdp\InvalidTypeException;
+use ReflectionClass;
+use ReflectionException;
 
 class Engine
 {
@@ -413,7 +415,7 @@ class Engine
 		$PrefixMethod = "$Prefix$Method";
 
 		$method_is_callable = function(string $className, string|int $k): bool {
-		try {
+			try {
 				$method = (new ReflectionClass($className))->getMethod($k);
 				return $method->isPublic() && !$method->isStatic();
 			} catch(ReflectionException $e){
