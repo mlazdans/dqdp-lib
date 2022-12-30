@@ -36,6 +36,8 @@ class Engine
 	# TODO: rename after old $REQ remove
 	static public Request  $R;
 
+	private static $templateTried = false;
+
 	static function get_config(string $k = null): mixed {
 		return self::$CONFIG[$k]??null;
 	}
@@ -444,7 +446,6 @@ class Engine
 			}
 		};
 
-		$templateTried = false;
 		try {
 			$initModule();
 			$ModuleClass = self::$MODULES_ROOT."\\".self::$MODULE."Module";
@@ -462,24 +463,15 @@ class Engine
 			}
 
 			if(self::$TEMPLATE){
-				$templateTried = true;
+				self::$templateTried = true;
 				self::$TEMPLATE->out($MODULE_DATA);
 			} else {
 				print $MODULE_DATA;
 			}
-			self::dump_msg();
 		} catch(Throwable $e1){
 			self::exception_handler($e1);
-			if(self::$TEMPLATE && !$templateTried){
-				try {
-					self::$TEMPLATE->out(self::ob_get_clean_all());
-				} catch(Throwable $e2){
-					self::exception_handler($e2);
-				}
-			}
-
-			self::dump_msg();
 		}
+
 	}
 
 	private static function ob_get_clean_all(): string {
@@ -502,8 +494,22 @@ class Engine
 	}
 
 	static function shutdown(){
-		$MODULE_DATA = self::ob_get_clean_all();
+		if($err = error_get_last()){
+			if($err['type'] == E_ERROR){
+				self::error_handler($err['type'], $err['message'], $err['file'], $err['line']);
+			}
+		}
+
+		if(self::$TEMPLATE && !self::$templateTried){
+			try {
+				self::$TEMPLATE->out(self::ob_get_clean_all());
+			} catch(Throwable $e2){
+				self::exception_handler($e2);
+			}
+		}
+
+		// $MODULE_DATA = self::ob_get_clean_all();
 		self::dump_msg();
-		print $MODULE_DATA;
+		// print $MODULE_DATA;
 	}
 }
