@@ -16,6 +16,5 @@ interface EntityInterface {
 	function update(int|string|array $ID, array|object $DATA): bool;
 	function save(array|object $DATA): mixed;
 
-	# TODO: nepieņemt array
-	function delete($ID);
+	function delete(int|string|array $ID);
 }

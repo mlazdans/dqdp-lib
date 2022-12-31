@@ -160,24 +160,42 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 		return null;
 	}
 
-	function delete($ID){
+	function delete(int|string|array $ID){
 		if(is_null($TableName = $this->getTableName())){
 			throw new InvalidArgumentException("Table not found");
 		}
 
-		// $ID = func_get_arg(0);
-		# TODO: multi field PK
-		# TODO: dqdp\SQL\Statement
-		$prep = $this->get_trans()->prepare("DELETE FROM $TableName WHERE $this->PK = ?");
-		$ret = true;
-		foreach(array_enfold($ID) as $id){
-			$ret = $ret && $this->get_trans()->execute_prepared($prep, $id);
+		if(is_null($PK = $this->getPK())){
+			throw new InvalidArgumentException("Primary key not set");
 		}
 
-		return $ret;
+		# TODO: code duplication from update
+		$Where = new Condition();
+		if(is_array($PK)){
+			foreach($PK as $i=>$k){
+				$Where->add_condition(["$k = ?", $ID[$i]]);
+			}
+		} else {
+			$Where->add_condition(["$PK = ?", $ID]);
+		}
+
+		$sql = "DELETE FROM $TableName WHERE $Where";
+		# TODO: dqdp\SQL\Statement
+		// $sql = (new Delete)->From($TableName)->Where($Where);
+
+		return $this->get_trans()->query($sql, ...$Where->getVars());
+
+		# TODO: delete_multiple
+		// $prep = $this->get_trans()->prepare("DELETE FROM $TableName WHERE $this->PK = ?");
+		// $ret = true;
+		// foreach(array_enfold($ID) as $id){
+		// 	$ret = $ret && $this->get_trans()->execute_prepared($prep, $id);
+		// }
+
+		// return $ret;
 	}
 
-	function set_trans(DBAInterface $dba){
+	function set_trans(DBAInterface $dba): static {
 		$this->dba = $dba;
 
 		return $this;
