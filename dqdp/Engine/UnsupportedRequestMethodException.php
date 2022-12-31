@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 
-namespace dqdp;
+namespace dqdp\Engine;
 
 class UnsupportedRequestMethodException extends \InvalidArgumentException {
 	function __construct(string $m){
