@@ -8,7 +8,6 @@ use ReflectionClass;
 use ReflectionException;
 use Throwable;
 use dqdp\InvalidTypeException;
-use dqdp\UnsupportedRequestMethodException;
 
 class Engine
 {
@@ -459,7 +458,7 @@ class Engine
 				(new ($ModuleClass))->{self::$MODULE_METHOD}();
 				$MODULE_DATA = ob_get_clean();
 			} else {
-				throw new InvalidArgumentException(self::$MODULE."::".self::$MODULE_METHOD." not found");
+				throw new InvalidArgumentException("Module $ModuleClass::".self::$MODULE_METHOD." not found");
 			}
 
 			if(self::$TEMPLATE){
