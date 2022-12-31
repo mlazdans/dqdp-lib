@@ -164,16 +164,16 @@ class Engine
 		return self::__url($params, '&');
 	}
 
-	static function a($name, Array $url, Array $url_params = []){
-		if(empty($url_params['href'])){
-			$url_params['href'] = self::url($url);
-		}
-		foreach($url_params as $k=>$v){
-			$u_params[] = sprintf('%s="%s"', $k, $v);
-		}
+	// static function a($name, Array $url, Array $url_params = []){
+	// 	if(empty($url_params['href'])){
+	// 		$url_params['href'] = self::url($url);
+	// 	}
+	// 	foreach($url_params as $k=>$v){
+	// 		$u_params[] = sprintf('%s="%s"', $k, $v);
+	// 	}
 
-		return sprintf('<a %s>%s</a>', join(" ", $u_params??""), ent($name));
-	}
+	// 	return sprintf('<a %s>%s</a>', join(" ", $u_params??""), ent($name));
+	// }
 
 	// static function module_filter_chars($MID){
 	// 	$module_chars = '/[^a-z_\/0-9]/';
