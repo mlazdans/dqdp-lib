@@ -68,7 +68,7 @@ class StdObject extends \stdClass implements \Countable, \ArrayAccess, \Iterator
 		}
 	}
 
-	function &offsetGet(mixed $k): mixed {
+	function offsetGet(mixed $k): mixed {
 		return $this->{$k};
 	}
 
