@@ -6,6 +6,7 @@ require_once('stdlib.php');
 
 use dqdp\DBA\interfaces\DBAInterface;
 use dqdp\DBA\Types\IbaseConnectParams;
+use Error;
 
 require_once('ibaselib.php');
 
@@ -169,6 +170,10 @@ class IBase implements DBAInterface
 		return $ret;
 	}
 
+	function rollback_ret(): bool {
+		return ibase_rollback_ret($this->tr);
+	}
+
 	function affected_rows(): int {
 		return ibase_affected_rows($this->tr??$this->conn);
 	}
@@ -203,6 +208,10 @@ class IBase implements DBAInterface
 		$tr = $this->tr;
 		$this->new_trans(...$args);
 		try {
+			if(!$this->tr){
+				throw new Error("Could not initiate transaction");
+			}
+
 			if($result = $func($this)){
 				$this->commit();
 			}
@@ -215,4 +224,27 @@ class IBase implements DBAInterface
 
 		return $result;
 	}
+
+	function inTransaction(callable $func, ...$args): mixed {
+		if(!$this->tr){
+			$this->new_trans(...$args);
+		}
+
+		try {
+			if(!$this->tr){
+				throw new Error("Could not initiate transaction");
+			}
+
+			if($result = $func($this)){
+				$this->commit_ret();
+			}
+		} finally {
+			if(empty($result) && $this->tr){
+				$this->rollback_ret();
+			}
+		}
+
+		return $result;
+	}
+
 }
