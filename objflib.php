@@ -11,9 +11,13 @@ use dqdp\InvalidTypeException;
 function __object_walk(mixed &$data, callable $func, mixed &$parent = null, &$parent_key = null): void {
 	if(is_null($data) || is_scalar($data)){
 		$func($data, $parent_key, $parent);
-	} elseif(is_array($data) || $data instanceof ArrayAccess || $data instanceof stdClass || $data instanceof Traversable) {
-		foreach($data as $k=>&$v){
-			__object_walk($v, $func, $data, $k);
+	} elseif(is_array($data) || $data instanceof ArrayAccess || $data instanceof Traversable) {
+		foreach($data as $k=>$v){
+			__object_walk($data[$k], $func, $data, $k);
+		}
+	} elseif($data instanceof stdClass){
+		foreach($data as $k=>$v){
+			__object_walk($data->$k, $func, $data, $k);
 		}
 	} else {
 		throw new InvalidTypeException($data);
