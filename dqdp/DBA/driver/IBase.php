@@ -106,17 +106,6 @@ class IBase implements DBAInterface
 			}
 		}
 
-		// if($this->is_dqdp_statement($args)){
-		// 	$q = ibase_query($this->tr??$this->conn, $args[0], ...$args[0]->vars());
-		// } elseif(is_resource($args[0])) {
-		// 	$q = ibase_execute(...$args);
-		// 	//$q = ibase_execute($args[0], ...$args[1]);
-		// } elseif(count($args) == 2) {
-		// 	$q = ibase_query($this->tr??$this->conn, $args[0], ...$args[1]);
-		// } else {
-		// 	$q = ibase_query($this->tr??$this->conn, ...$args);
-		// }
-
 		return $q;
 	}
 
@@ -156,7 +145,7 @@ class IBase implements DBAInterface
 		return $this->__fetch("ibase_fetch_object", ...$args);
 	}
 
-	function new_trans(): self {
+	function new_trans(): static {
 		$this->tr = ibase_trans(...[...func_get_args(), $this->conn]);
 
 		return $this;
@@ -210,130 +199,15 @@ class IBase implements DBAInterface
 		return ibase_escape($v);
 	}
 
-	// private function get_sql_fields(iterable $DATA, TableInterface $Table){
-	// 	$sql_fields = (array)merge_only($Table->getFields(), $DATA);
-
-	// 	$PK = $Table->getPK();
-	// 	if(is_array($PK)){
-	// 	} else {
-	// 		if($this->fetch_case === 'lower'){
-	// 			$PK = strtolower($PK);
-	// 		}
-	// 		$PK_val = get_prop($DATA, $PK);
-	// 		if(is_null($PK_val)){
-	// 			if($Gen = $Table->getGen()){
-	// 				$sql_fields[$PK] = function() use ($Gen) {
-	// 					return "NEXT VALUE FOR $Gen";
-	// 				};
-	// 			}
-	// 		} else {
-	// 			$sql_fields[$PK] = $PK_val;
-	// 		}
-	// 	}
-
-	// 	return $sql_fields;
-	// }
-
-	# TODO:
-	// UPDATE target [[AS] alias]
-	// SET col = <value> [, col = <value> ...]
-	// [WHERE {<search-conditions> | CURRENT OF cursorname}]
-	// [PLAN <plan_items>]
-	// [ORDER BY <sort_items>]
-	// [ROWS m [TO n]]
-	// [RETURNING <returning_list> [INTO <variables>]]
-	// <returning_list> ::=
-	// <ret_value> [[AS] ret_alias] [, <ret_value> [[AS] ret_alias] ...]
-	// <ret_value> ::=
-	// colname
-	// | table_or_alias.colname
-	// | NEW.colname
-	// | OLD.colname
-	// | <value>
-	// <variables> ::= [:]varname [, [:]varname ...]
-	// function update($ID, iterable $DATA, TableInterface $Table){
-	// 	$sql_fields = $this->get_sql_fields($DATA, $Table);
-	// 	$sql = (new Update($Table->getName()))
-	// 		->Set($sql_fields)
-	// 		->Where([$Table->getPK().' = ?', $ID])
-	// 	;
-
-	// 	return $this->query($sql);
-	// }
-
-	// Returns PK or null
-	// private function _insert_query(iterable $DATA, TableInterface $Table, $update = false): mixed {
-	// 	$PK = $Table->getPK();
-	// 	$PK_fields_str = is_array($PK) ? join(",", $PK) : $PK;
-
-	// 	$sql_fields = $this->get_sql_fields($DATA, $Table);
-
-	// 	$sql = (new Insert)
-	// 	->Into($Table->getName())
-	// 	->Values($sql_fields);
-
-	// 	if($update){
-	// 		if(!is_null($sql_fields[$PK])){
-	// 			$sql->Update()->after("values", "matching", "MATCHING ($PK_fields_str)");
-	// 		}
-	// 	}
-
-	// 	$sql->after("values", "returning", "RETURNING $PK_fields_str");
-
-	// 	if($q = $this->query($sql)){
-	// 		$retPK = $this->fetch_object($q);
-	// 		if(is_array($PK)){
-	// 			return $retPK;
-	// 		} else {
-	// 			return get_prop($retPK, $PK);
-	// 		}
-	// 	}
-
-	// 	return null;
-	// }
-
-
-	// function insert(iterable $DATA, TableInterface $Table): mixed {
-	// 	return $this->_insert_query($DATA, $Table, false);
-	// }
-
-	// function save(iterable $DATA, TableInterface $Table): mixed {
-	// 	return $this->_insert_query($DATA, $Table, true);
-	// }
-
-	# TODO: maybe should use current transaction, if exists. Enforce explicit new transaction by param or another f-ion.
-	# Hmm...
 	function with_new_trans(callable $func, ...$args): mixed {
-		// printr("New trans!", $this->tr);
 		$tr = $this->tr;
-		// if($this->tr){
-		// 	trigger_error("Transaction in use, rollback", E_USER_WARNING);
-		// 	$this->rollback();
-		// }
-
-		// $tr = $this->tr;
-
 		$this->new_trans(...$args);
 		try {
-			// register_shutdown_function(function(DBA $db){
-			// 	printr("Shut!", $this->tr);
-			// 	if($db->tr){
-			// 		printr("Shut - rollback!", $this->tr);
-			// 		$db->rollback();
-			// 	}
-			// 	// dumpr($db);
-			// }, $this);
-
 			if($result = $func($this)){
-				// printr("Commit!", $this->tr);
 				$this->commit();
-			// } else {
-			// 	$this->rollback();
 			}
 		} finally {
-			// printr("Finally!", $this->tr);
 			if(empty($result)){
-				// printr("Finally - rollback!", $this->tr);
 				$this->rollback();
 			}
 			$this->tr = $tr;
