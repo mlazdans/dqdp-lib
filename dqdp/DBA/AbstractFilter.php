@@ -64,6 +64,16 @@ abstract class AbstractFilter extends StricStdObject implements EntityFilterInte
 
 	protected function apply_fields_with_values(Select $sql, array $fields, string $prefix = null): Select {
 		foreach($fields as $k){
+			if(!empty($this->$k)){
+				$sql->Where(["$prefix$k = ?", $this->$k]);
+			}
+		}
+
+		return $sql;
+	}
+
+	protected function apply_set_fields(Select $sql, array $fields, string $prefix = null): Select {
+		foreach($fields as $k){
 			if(isset($this->$k)){
 				$sql->Where(["$prefix$k = ?", $this->$k]);
 			}
