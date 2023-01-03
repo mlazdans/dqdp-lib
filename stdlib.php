@@ -799,6 +799,8 @@ function format_debug(mixed $v): mixed {
 	return __object_map($v, function($item) {
 		if((is_string($item) || $item instanceof Stringable) && mb_detect_encoding($item)){
 			return mb_substr($item, 0, 1024).(mb_strlen($item) > 1024 ? '...' : '');
+		} elseif(is_bool($item)){
+			return $item ? "treu" : "false";
 		} elseif(is_scalar($item)){
 			return $item;
 		} elseif(is_null($item)) {
