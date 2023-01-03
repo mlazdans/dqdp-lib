@@ -387,27 +387,29 @@ function upload($key, $default = ''){
 	return isset($_FILES[$key]) ? $_FILES[$key] : $default;
 }
 
-function redirect(string $url = null): void {
+function redirect(string $url = null): bool {
 	header("Location: ".($url??php_self()));
+	return true;
 }
 
-function redirectp($url): void {
+function redirectp($url): bool {
 	header("Location: $url", true, 301);
+	return true;
 }
 
-function redirect_not_found(string $url = '/', string $msg = ''): void {
+function redirect_not_found(string $url = '/', string $msg = ''): bool {
 	header404($msg);
 	redirect($url);
+	return true;
 }
 
-function redirect_referer(string $default = "/"): void {
+function redirect_referer(string $default = "/"): bool {
 	if(empty($_SERVER['HTTP_REFERER'])){
-		redirect($default);
+		return redirect($default);
 	} else {
-		redirect($_SERVER["HTTP_REFERER"]);
+		return redirect($_SERVER["HTTP_REFERER"]);
 	}
 }
-
 
 function floatpoint(mixed $val): float {
 	$val = preg_replace('/[^0-9,\.\-]/', '', (string)$val);
