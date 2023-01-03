@@ -494,7 +494,7 @@ class Engine
 
 	static function shutdown(){
 		if($err = error_get_last()){
-			if($err['type'] == E_ERROR){
+			if(is_fatal_error($err['type'])){
 				self::error_handler($err['type'], $err['message'], $err['file'], $err['line']);
 			}
 		}
