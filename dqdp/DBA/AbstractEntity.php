@@ -26,6 +26,7 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 	protected abstract function getGen(): ?string;
 	protected abstract function getProcArgs(): ?array;
 
+	# TODO: SelectFields() or SelectOnly() or similar
 	protected function select(): Select {
 		if($TableName = $this->getTableName()){
 			return (new Select("$TableName.*"))->From($TableName);
