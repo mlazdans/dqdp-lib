@@ -15,6 +15,12 @@ use dqdp\SQL\Select;
 use dqdp\StricStdObject;
 
 abstract class AbstractFilter extends StricStdObject implements EntityFilterInterface, ParametersConstructor {
+	function __construct(
+		public ?string $ORDER_BY = null,
+		public ?int $ROWS = null,
+		public ?int $OFFSET = null
+	) { }
+
 	function merge(?AbstractFilter $F): static {
 		return static::initFrom($this, $F);
 	}
