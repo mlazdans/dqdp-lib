@@ -519,21 +519,21 @@ function compacto($data): mixed {
 }
 
 function utf2win(mixed $data): mixed {
-	return __object_map($data, function(mixed $item): string {
-		return mb_convert_encoding((string)$item, 'ISO-8859-13', 'UTF-8');
-	});
+	return __object_map($data, stringwrap(fn(string $item): string|false =>
+		mb_convert_encoding($item, 'ISO-8859-13', 'UTF-8')
+	));
 }
 
 function win2utf(mixed $data): mixed {
-	return __object_map($data, function(mixed $item): string {
-		return mb_convert_encoding($item, 'UTF-8', 'ISO-8859-13');
-	});
+	return __object_map($data, stringwrap(fn(string $item): string|false =>
+		mb_convert_encoding($item, 'UTF-8', 'ISO-8859-13')
+	));
 }
 
 function translit(mixed $data): mixed {
-	return __object_map($data, function($item): string {
-		return iconv("utf-8","ascii//TRANSLIT", $item);
-	});
+	return __object_map($data, stringwrap(fn(string $item): string|false =>
+		iconv("utf-8","ascii//TRANSLIT", $item)
+	));
 }
 
 function is_empty(mixed $data): bool {
@@ -547,15 +547,15 @@ function non_empty(mixed $data): bool {
 }
 
 function ent(mixed $data): mixed {
-	return __object_map($data, function(mixed $item): string {
-		return htmlentities($item);
-	});
+	return __object_map($data, stringwrap(fn(string $item): string =>
+		htmlentities($item)
+	));
 }
 
 function entdecode(mixed $data): mixed {
-	return __object_map($data, function(mixed $item): string {
-		return html_entity_decode($item);
-	});
+	return __object_map($data, stringwrap(fn(string $item): string =>
+		html_entity_decode($item)
+	));
 }
 
 # https://www.gyrocode.com/articles/php-urlencode-vs-rawurlencode/
@@ -563,31 +563,31 @@ function entdecode(mixed $data): mixed {
 # If you are encoding *path* segment, use rawurlencode().
 # If you are encoding *query* component, use urlencode().
 function urlenc(mixed $data): mixed {
-	return __object_map($data, function($item): string {
-		return urlencode($item);
-	});
+	return __object_map($data, stringwrap(fn(string $item): string =>
+		urlencode($item)
+	));
 }
 function urldec(mixed $data): mixed {
-	return __object_map($data, function(mixed $item): string {
-		return urldecode($item);
-	});
+	return __object_map($data, stringwrap(fn(string $item): string =>
+		urldecode($item)
+	));
 }
 function rawurlenc(mixed $data): mixed {
-	return __object_map($data, function(mixed $item): string {
-		return rawurlencode($item);
-	});
+	return __object_map($data, stringwrap(fn(string $item): string =>
+		rawurlencode($item)
+	));
 }
 function rawurldec(mixed $data): mixed {
-	return __object_map($data, function(mixed $item): string {
-		return rawurldecode($item);
-	});
+	return __object_map($data, stringwrap(fn(string $item): string =>
+		rawurldecode($item)
+	));
 }
 ##
 
 function specialchars(mixed $data){
-	return __object_map($data, function(mixed $item): string {
-		return htmlspecialchars(string: (string)$item, double_encode: false);
-	});
+	return __object_map($data, stringwrap(fn(string $item): string =>
+		htmlspecialchars(string: $item, double_encode: false)
+	));
 }
 
 function date_in_periods($date, array $periods): bool {
@@ -1017,9 +1017,9 @@ function locale_money_format($t, $places = 2){
 }
 
 function strip_path(mixed $data): mixed {
-	return __object_map($data, function(mixed $item): string {
-		return preg_replace('/[\/\.\\\]/', '', $item);
-	});
+	return __object_map($data, stringwrap(fn(string $item): string|null =>
+		preg_replace('/[\/\.\\\]/', '', $item)
+	));
 }
 
 function urlize($name){
@@ -1643,9 +1643,9 @@ function trim_includes_path(string $path): ?string {
 }
 
 function trimmer($data){
-	return __object_map($data, function(string $item){
-		return trim($item);
-	});
+	return __object_map($data, stringwrap(fn(string $item): string =>
+		trim($item)
+	));
 }
 
 function is_fatal_error($errno): bool {
@@ -2270,4 +2270,14 @@ function name2prop(string $name): string {
 	}
 
 	return $retName;
+}
+
+function stringwrap(callable $f): callable {
+	return function(mixed $item) use ($f) {
+		if(is_string($item) || $item instanceof Stringable){
+			return $f($item);
+		} else {
+			return $item;
+		}
+	};
 }
