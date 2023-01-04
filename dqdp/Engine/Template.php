@@ -5,5 +5,5 @@ namespace dqdp\Engine;
 use dqdp\PHPTemplate;
 
 abstract class Template extends PHPTemplate {
-	abstract static function out(string $MODULE_DATA): void;
+	abstract function out(string $MODULE_DATA): void;
 }
