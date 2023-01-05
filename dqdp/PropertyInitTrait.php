@@ -97,14 +97,14 @@ trait PropertyInitTrait {
 	// }
 
 	private static function initiator(int $way, array|object|null $data = null, array|object|null $defaults = null): static {
-		if(empty($data)){
-			return new static;
-		}
+		// if(empty($data)){
+		// 	return new static;
+		// }
 
 		$params = [];
 		$properties = get_class_public_vars(static::class);
 		foreach($properties as $k=>$class_default){
-			if(prop_exists($data, $k) && prop_initialized($data, $k)){
+			if($data !== null && prop_exists($data, $k) && prop_initialized($data, $k)){
 				$params[$k] = static::initValue($k, get_prop($data, $k));
 			} elseif($defaults !== null && prop_exists($defaults, $k) && prop_initialized($defaults, $k)){
 				$params[$k] = static::initValue($k, get_prop($defaults, $k));
