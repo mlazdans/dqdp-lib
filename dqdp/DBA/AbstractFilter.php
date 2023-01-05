@@ -10,11 +10,10 @@
 namespace dqdp\DBA;
 
 use dqdp\DBA\interfaces\EntityFilterInterface;
-use dqdp\ParametersConstructor;
 use dqdp\SQL\Select;
 use dqdp\StricStdObject;
 
-abstract class AbstractFilter extends StricStdObject implements EntityFilterInterface, ParametersConstructor {
+abstract class AbstractFilter extends StricStdObject implements EntityFilterInterface {
 	abstract function apply_filter(Select $sql): Select;
 
 	function __construct(

@@ -2,10 +2,9 @@
 
 namespace dqdp\Date;
 
-use dqdp\ParametersConstructor;
 use dqdp\StricStdObject;
 
-class DateFilter extends StricStdObject implements ParametersConstructor {
+class DateFilter extends StricStdObject {
 	function __construct(
 		readonly ?string $START = null,
 		readonly ?string $END = null,

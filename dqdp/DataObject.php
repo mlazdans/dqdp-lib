@@ -2,9 +2,9 @@
 
 namespace dqdp;
 
-abstract class DataObject implements \IteratorAggregate, TraversableConstructor {
+abstract class DataObject implements \IteratorAggregate, TraversableConstructor, PropertyInitInterface {
 	# NOTE: must be defined in child, to be in scope
-	abstract function initPoperty(string|int $k, mixed $v): void;
+	// abstract function initPoperty(string|int $k, mixed $v): void;
 
 	function __construct(array|object|null $data = null, array|object|null $defaults = null){
 		if(empty($data)){
