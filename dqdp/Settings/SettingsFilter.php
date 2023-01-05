@@ -11,7 +11,7 @@ class SettingsFilter extends AbstractFilter {
 		public ?string $SET_KEY = null,
 	) { }
 
-	function apply(Select $sql): Select {
+	function apply_filter(Select $sql): Select {
 		$this->apply_fields_with_values($sql, ['SET_KEY', 'SET_DOMAIN']);
 
 		return $sql;
