@@ -130,6 +130,8 @@ class Engine
 			// self::$REQ->merge(entdecode($_POST));
 		}
 
+		self::initModule();
+
 		# Module loader
 		// spl_autoload_register(function ($class) {
 		// 	if(strpos($class, "App\\modules\\") === 0){
@@ -399,42 +401,43 @@ class Engine
 		return sprintf($msg, $trace['function'], $args, trim_includes_path($trace['file']), $trace['line']);
 	}
 
-	static function run(){
-		$initModule = function(){
-			$SupportedRequstMethods = ["GET", "POST"];
-			if(self::$REQUEST_METHOD == "GET"){
-				$MID = $_GET["MID"]??"";
-			} elseif(self::$REQUEST_METHOD == "POST"){
-				$MID = $_POST["MID"]??$_GET["MID"]??"";
-			} else {
-				throw new UnsupportedRequestMethodException(self::$REQUEST_METHOD);
+	static function initModule() {
+		// $SupportedRequstMethods = ["GET", "POST"];
+		if(self::$REQUEST_METHOD == "GET"){
+			$MID = $_GET["MID"]??"";
+		} elseif(self::$REQUEST_METHOD == "POST"){
+			$MID = $_POST["MID"]??$_GET["MID"]??"";
+		} else {
+			throw new UnsupportedRequestMethodException(self::$REQUEST_METHOD);
+		}
+
+		$ROUTES = array_reverse(explode("/", $MID));
+
+		self::$MODULE = (function() use (&$ROUTES): string {
+			if($Module = array_pop($ROUTES)){
+				$Module = name2prop($Module);
 			}
 
-			$ROUTES = array_reverse(explode("/", $MID));
+			return $Module ? $Module : "Main";
+		})();
 
-			self::$MODULE = (function() use (&$ROUTES): string {
-				if($Module = array_pop($ROUTES)){
-					$Module = name2prop($Module);
-				}
+		self::$MODULE_METHOD = (function() use (&$ROUTES): string {
+			$Method = "";
+			while($ROUTES){
+				$Method .= name2prop(array_pop($ROUTES));
+			}
 
-				return $Module ? $Module : "Main";
-			})();
+			return $Method ? $Method : "index";
+		})();
 
-			self::$MODULE_METHOD = (function() use (&$ROUTES): string {
-				$Method = "";
-				while($ROUTES){
-					$Method .= name2prop(array_pop($ROUTES));
-				}
+		// foreach($SupportedRequstMethods as $m){
+		// 	if((stripos(self::$MODULE_METHOD, $m) === 0) && self::$REQUEST_METHOD != $m){
+		// 		throw new InvalidArgumentException("Request method mismatch");
+		// 	}
+		// }
+	}
 
-				return $Method ? $Method : "index";
-			})();
-
-			// foreach($SupportedRequstMethods as $m){
-			// 	if((stripos(self::$MODULE_METHOD, $m) === 0) && self::$REQUEST_METHOD != $m){
-			// 		throw new InvalidArgumentException("Request method mismatch");
-			// 	}
-			// }
-		};
+	static function run(){
 
 		$method_is_callable = function(string $className, string|int $k): bool {
 			try {
@@ -446,7 +449,7 @@ class Engine
 		};
 
 		try {
-			$initModule();
+			// $initModule();
 			$ModuleClass = self::$MODULES_ROOT."\\".self::$MODULE."Module";
 			$RequestMethod = self::$MODULE_METHOD."_".self::$REQUEST_METHOD;
 			if($method_is_callable($ModuleClass, $RequestMethod)){
