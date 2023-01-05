@@ -2,5 +2,10 @@
 
 namespace dqdp;
 
-class TODO extends \Error {
+use Exception;
+
+class TODO {
+	function __construct(?string $m = ""){
+		throw new Exception("TODO".($m ? ": $m" : ""));
+	}
 }
