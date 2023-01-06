@@ -67,9 +67,9 @@ class IBase extends AbstractDBA
 			} else {
 				$q = ibase_query($this->conn, (string)$args[0], ...$args[0]->vars());
 			}
-			// if(!$q){
-				// sqlr($args[0]);
-			// }
+			if(!$q){
+				sqlr($args[0]);
+			}
 		// } elseif((count($args) == 2) && is_resource($args[0]) && is_array($args[1])) {
 		// 	//$q = ibase_execute(...$args);
 		// 	$q = ibase_execute($args[0], ...$args[1]);
@@ -249,12 +249,24 @@ class IBase extends AbstractDBA
 
 		$sql_fields = $this->get_sql_fields($DATA, $Table);
 
+		$PKSet = false;
+		if($PK){
+			$PKSet = true;
+			if(is_array($PK)){
+				foreach($PK as $k){
+					$PKSet = $PKSet && get_prop($DATA, $k);
+				}
+			} else {
+				$PKSet = get_prop($DATA, $PK);
+			}
+		}
+
 		$sql = (new Insert)
 		->Into($Table->getName())
 		->Values($sql_fields);
 
 		if($update){
-			if(!is_null($sql_fields[$PK])){
+			if($PKSet){
 				$sql->Update()->after("values", "matching", "MATCHING ($PK_fields_str)");
 			}
 		}
