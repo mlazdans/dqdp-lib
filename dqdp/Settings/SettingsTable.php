@@ -12,7 +12,7 @@ class SettingsTable extends AbstractTable {
 	}
 
 	function getPK(){
-		return ['SET_CLASS','SET_KEY'];
+		return ['SET_DOMAIN','SET_KEY'];
 	}
 
 	function getGen(): ?string {
@@ -20,6 +20,6 @@ class SettingsTable extends AbstractTable {
 	}
 
 	function getFields(): array {
-		return ['SET_CLASS', 'SET_KEY', 'SET_INT', 'SET_BOOLEAN', 'SET_FLOAT', 'SET_STRING', 'SET_DATE', 'SET_BINARY', 'SET_SERIALIZE'];
+		return ['SET_DOMAIN', 'SET_KEY', 'SET_INT', 'SET_BOOLEAN', 'SET_FLOAT', 'SET_STRING', 'SET_DATE', 'SET_BINARY', 'SET_SERIALIZE'];
 	}
 }
