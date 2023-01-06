@@ -800,7 +800,7 @@ function __query($query_string = '', $format = '', $delim = '&amp;', $allowed = 
 function format_debug(mixed $v): mixed {
 	return __object_map($v, function($item) {
 		if((is_string($item) || $item instanceof Stringable) && mb_detect_encoding($item)){
-			return mb_substr($item, 0, 1024).(mb_strlen($item) > 1024 ? '...' : '');
+			return mb_substr($item, 0, 4096).(mb_strlen($item) > 4096 ? '...' : '');
 		} elseif(is_bool($item)){
 			return $item ? "treu" : "false";
 		} elseif(is_scalar($item)){
