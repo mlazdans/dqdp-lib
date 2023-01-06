@@ -38,4 +38,10 @@ class DateFilter extends StricStdObject {
 
 		return [$start_date, $end_date];
 	}
+
+	function to_range_formatted(string $format): array {
+		list($DATE_FROM, $DATE_TO) = $this->to_range();
+
+		return [date($format, $DATE_FROM), date($format, $DATE_TO)];
+	}
 }
