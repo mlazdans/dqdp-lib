@@ -11,14 +11,16 @@ class Form {
 	function Text(
 		string $name,
 		?int $size = null,
+		?string $class = null,
 	): void { ?>
 		<tr>
 			<th><?=$this->LabelsClass::$$name ?>:</th>
 			<td><?=(new TextElement(
 				name: $name,
 				size: $size,
-				value: $this->Data->$name)
-			)->parse() ?></td>
+				value: $this->Data->$name,
+				class: $class,
+				))->parse() ?></td>
 		</tr>
 		<?
 	}
@@ -27,6 +29,7 @@ class Form {
 		string $name,
 		?int $cols = null,
 		?int $rows = null,
+		?string $class = null,
 	){?>
 		<tr>
 			<th><?=$this->LabelsClass::$$name ?>:</th>
@@ -34,7 +37,8 @@ class Form {
 				name: $name,
 				cols: $cols,
 				rows: $rows,
-				value: $this->Data->$name)
+				value: $this->Data->$name),
+				class: $class,
 			)->parse() ?></td>
 		</tr>
 		<?

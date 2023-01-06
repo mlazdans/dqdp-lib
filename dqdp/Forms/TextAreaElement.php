@@ -7,13 +7,14 @@ class TextAreaElement extends AbstractElement {
 		protected readonly string $name,
 		protected readonly ?int $cols = null,
 		protected readonly ?int $rows = null,
-		protected readonly mixed $value = null
+		protected readonly mixed $value = null,
+		protected readonly ?string $class = null,
 	) {
 	}
 
 	function parse(): ?string {
 		$props = [];
-		$this->addPropsIfSet($props, ["name", "cols", "rows"]);
+		$this->addPropsIfSet($props, ["name", "cols", "rows", "class"]);
 
 		foreach($props as $k=>$v){
 			$p[] = $k.'="'.specialchars($v).'"';
