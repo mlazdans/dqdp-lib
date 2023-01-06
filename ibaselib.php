@@ -1,14 +1,28 @@
 <?php declare(strict_types = 1);
 
-use dqdp\DBA\AbstractDBA;
+# TODO: in future use dqdp\FireBird\*; !!
+
+use dqdp\DBA\driver\IBase;
 use dqdp\SQL\Select;
 
 require_once("stdlib.php");
 
 function ibase_field_types(){
 	return [
-		7=>'SMALLINT', 8=>'INTEGER', 9=>'QUAD', 10=>'FLOAT', 11=>'D_FLOAT', 12=>'DATE', 13=>'TIME',
-		14=>'CHAR', 16=>'INT64', 27=>'DOUBLE', 35=>'TIMESTAMP', 37=>'VARCHAR', 40=>'CSTRING', 261=>'BLOB'
+		7=>'SMALLINT',
+		8=>'INTEGER',
+		9=>'QUAD',
+		10=>'FLOAT',
+		11=>'D_FLOAT',
+		12=>'DATE',
+		13=>'TIME',
+		14=>'CHAR',
+		16=>'INT64',
+		27=>'DOUBLE',
+		35=>'TIMESTAMP',
+		37=>'VARCHAR',
+		40=>'CSTRING',
+		261=>'BLOB'
 	];
 }
 
@@ -189,17 +203,26 @@ function ibase_get_meta($database, $params = null){
 	return ibase_isql_exec(__ibase_isql_args($params, ['-x']));
 }
 
-function ibase_strip_rdb($data){
-	__object_walk_ref($data, function(&$item, &$k){
-		if((strpos($k, 'RDB$') === 0) || (strpos($k, 'SEC$') === 0)){
-			$k = trim(substr($k, 4));
-			if(is_string($item)){
-				$item = trim($item);
-			}
+function ibase_strip_rdb(array|object &$data) {
+	__object_walk($data, function(&$item, &$k, &$parent){
+		if(!(is_string($k) || $k instanceof Stringable)){
+			return;
 		}
-	});
 
-	return $data;
+		if((strpos($k, 'RDB$') !== 0) && (strpos($k, 'SEC$') !== 0)){
+			return;
+		}
+
+		unset_prop($parent, $k);
+
+		$k = trim(substr($k, 4));
+
+		if(is_string($item) || $item instanceof Stringable){
+			$item = trim($item);
+		}
+
+		set_prop($parent, $k, $item);
+	});
 }
 
 function ibase_pathinfo(string $DB_PATH){
@@ -238,11 +261,11 @@ function ibase_quote($data){
 }
 
 # TODO: Zemāk esošajām f-ijām lietot Firebird lib
-function ibase_get_current_user(AbstractDBA $db){
+function ibase_get_current_user(Ibase $db){
 	return ($u = ibase_get_users($db, ["CURRENT_USER"=>true])) ? $u[0] : $u;
 }
 
-function ibase_get_users(AbstractDBA $db, ?iterable $F = null): array {
+function ibase_get_users(Ibase $db, ?iterable $F = null): array {
 	$F = eoe($F);
 
 	$sql = (new Select)
@@ -261,27 +284,40 @@ function ibase_get_users(AbstractDBA $db, ?iterable $F = null): array {
 	}
 
 	if(!($q = $db->query($sql))){
-		return false;
+		return null;
 	}
 
-	return ibase_strip_rdb($db->fetch_all($q));
+	while($r = $db->fetch_object($q)){
+		ibase_strip_rdb($r);
+		$ret[] = $r;
+	}
+
+	// $ret2 = ibase_strip_rdb($ret);
+	// return ibase_strip_rdb($ret??[]);
+	// return ibase_strip_rdb($db->fetch_all($q));
+	return $ret??[];
 }
 
-function ibase_get_current_role(AbstractDBA $db): string {
-	return trim(get_prop($db->execute_single('SELECT CURRENT_ROLE AS RLE FROM RDB$DATABASE'), 'RLE'));
+function ibase_get_current_role(Ibase $db): string {
+	return trim(get_prop(
+		$db->fetch_assoc($db->query('SELECT CURRENT_ROLE AS RLE FROM RDB$DATABASE'))
+	, 'RLE'));
 }
 
-function ibase_get_object_types(AbstractDBA $db): array {
+function ibase_get_object_types(Ibase $db): array {
 	$sql = 'SELECT RDB$TYPE, RDB$TYPE_NAME FROM RDB$TYPES WHERE RDB$FIELD_NAME=\'RDB$OBJECT_TYPE\'';
-	$data = ibase_strip_rdb($db->execute($sql));
-	foreach($data as $r){
+	// $data = ibase_strip_rdb($db->execute($sql));
+	$q = $db->query($sql);
+	// foreach($data as $r){
+	while($r = $db->fetch_object($q)){
+		ibase_strip_rdb($r);
 		$ret[$r->TYPE] = $r->TYPE_NAME;
 	}
 
 	return $ret??[];
 }
 
-function ibase_get_privileges(AbstractDBA $db, $PARAMS = null): array {
+function ibase_get_privileges(Ibase $db, $PARAMS = null): array {
 	$ret = [];
 
 	if(is_scalar($PARAMS)){
@@ -306,7 +342,7 @@ function ibase_get_privileges(AbstractDBA $db, $PARAMS = null): array {
 	}
 
 	while($r = $db->fetch_object($q)){
-		$r = ibase_strip_rdb($r);
+		ibase_strip_rdb($r);
 
 		$k = $r->USER;
 		if($r->USER_TYPE == 13){
@@ -347,4 +383,129 @@ function ibase_get_privileges(AbstractDBA $db, $PARAMS = null): array {
 	}
 
 	return $ret;
+}
+
+function get_relation_fields(IBase $db, string $table): mixed {
+	$sql = 'SELECT rf.*,
+		f.RDB$FIELD_SUB_TYPE,
+		f.RDB$FIELD_TYPE,
+		f.RDB$FIELD_LENGTH,
+		f.RDB$CHARACTER_LENGTH,
+		f.RDB$FIELD_PRECISION,
+		f.RDB$FIELD_SCALE,
+		f.RDB$NULL_FLAG,
+		rf.RDB$FIELD_NAME AS RDB$ITEM_NAME
+	FROM RDB$RELATION_FIELDS rf
+	JOIN RDB$FIELDS f ON f.RDB$FIELD_NAME = rf.RDB$FIELD_SOURCE
+	WHERE rf.RDB$RELATION_NAME = ?
+	ORDER BY rf.RDB$FIELD_POSITION';
+
+	if(!($q = $db->query($sql, $table))){
+		return null;
+	}
+
+	while($r = $db->fetch_object($q)){
+		ibase_strip_rdb($r);
+		$ret[] = $r;
+	}
+
+	return $ret??[];
+}
+
+function get_proc_fields(IBase $db, string $proc): mixed {
+	$sql = 'SELECT pp.*,
+	f.RDB$FIELD_SUB_TYPE,
+	f.RDB$FIELD_TYPE,
+	f.RDB$FIELD_LENGTH,
+	f.RDB$CHARACTER_LENGTH,
+	f.RDB$FIELD_PRECISION,
+	f.RDB$FIELD_SCALE,
+	f.RDB$NULL_FLAG,
+	pp.RDB$PARAMETER_NAME AS RDB$ITEM_NAME
+FROM RDB$PROCEDURE_PARAMETERS pp
+JOIN RDB$FIELDS f ON f.RDB$FIELD_NAME = pp.RDB$FIELD_SOURCE
+WHERE pp.RDB$PROCEDURE_NAME = ? AND pp.RDB$PARAMETER_TYPE = 1
+ORDER BY pp.RDB$PARAMETER_NUMBER';
+
+	if(!($q = $db->query($sql, $proc))){
+		return null;
+	}
+
+	while($r = $db->fetch_object($q)){
+		ibase_strip_rdb($r);
+		$ret[] = $r;
+	}
+
+	return $ret??[];
+}
+
+function get_proc_args(IBase $db, string $proc): mixed {
+	$sql = 'SELECT pp.*,
+	f.RDB$FIELD_SUB_TYPE,
+	f.RDB$FIELD_TYPE,
+	f.RDB$FIELD_LENGTH,
+	f.RDB$CHARACTER_LENGTH,
+	f.RDB$FIELD_PRECISION,
+	f.RDB$FIELD_SCALE,
+	f.RDB$NULL_FLAG,
+	pp.RDB$PARAMETER_NAME AS RDB$ITEM_NAME
+FROM RDB$PROCEDURE_PARAMETERS pp
+JOIN RDB$FIELDS f ON f.RDB$FIELD_NAME = pp.RDB$FIELD_SOURCE
+WHERE pp.RDB$PROCEDURE_NAME = ? AND pp.RDB$PARAMETER_TYPE = 0
+ORDER BY pp.RDB$PARAMETER_NUMBER';
+
+	if(!($q = $db->query($sql, $proc))){
+		return null;
+	}
+
+	while($r = $db->fetch_object($q)){
+		ibase_strip_rdb($r);
+		$ret[] = $r;
+	}
+
+	return $ret??[];
+}
+
+function ibase_get_pk(IBase $db, string $table): string|array|null {
+	$sql ='SELECT
+		ix.RDB$INDEX_NAME AS INDEX_NAME,
+		sg.RDB$FIELD_NAME AS FIELD_NAME,
+		rc.RDB$RELATION_NAME AS TABLE_NAME
+	FROM
+		RDB$INDICES ix
+		JOIN RDB$RELATION_CONSTRAINTS rc ON rc.RDB$INDEX_NAME = ix.RDB$INDEX_NAME
+		LEFT JOIN RDB$INDEX_SEGMENTS sg ON ix.RDB$INDEX_NAME = sg.RDB$INDEX_NAME
+	WHERE
+		rc.RDB$CONSTRAINT_TYPE = \'PRIMARY KEY\' AND rc.RDB$RELATION_NAME = ?';
+
+	if(!($q = $db->query($sql, $table))){
+		return null;
+	}
+
+	while($r = $db->fetch_object($q)){
+		$ret[] = trim($r->FIELD_NAME);
+	}
+
+	if(!isset($ret)){
+		return null;
+	} elseif(count($ret) == 1){
+		return $ret[0];
+	} else {
+		return $ret;
+	}
+}
+
+function ibase_get_table_info(IBase $db, string $table): ?stdClass {
+	$sql = 'SELECT * FROM RDB$RELATIONS AS relations WHERE relations.RDB$SYSTEM_FLAG = 0 AND relations.RDB$RELATION_NAME = ?';
+
+	if(!($q = $db->query($sql, $table))){
+		return null;
+	}
+
+	if($r = $db->fetch_object($q)){
+		ibase_strip_rdb($r);
+		return $r;
+	}
+
+	return null;
 }

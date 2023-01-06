@@ -1,11 +1,15 @@
 <?php declare(strict_types = 1);
 
+# TODO: check argument types for __object_map() functions
+
+use dqdp\InvalidTypeException;
 use dqdp\LV;
 use dqdp\QueueMailer;
 use dqdp\StdObject;
 use PHPMailer\PHPMailer\PHPMailer;
 
 require_once("qblib.php");
+require_once("objflib.php");
 
 final class dqdp {
 	static public $DATE_FORMAT = 'd.m.Y';
@@ -383,55 +387,57 @@ function upload($key, $default = ''){
 	return isset($_FILES[$key]) ? $_FILES[$key] : $default;
 }
 
-function redirect(string $url = null): void {
+function redirect(string $url = null): bool {
 	header("Location: ".($url??php_self()));
+	return true;
 }
 
-function redirectp($url): void {
+function redirectp($url): bool {
 	header("Location: $url", true, 301);
+	return true;
 }
 
-function redirect_not_found(string $url = '/', string $msg = ''): void {
+function redirect_not_found(string $url = '/', string $msg = ''): bool {
 	header404($msg);
 	redirect($url);
+	return true;
 }
 
-function redirect_referer(string $default = "/"): void {
+function redirect_referer(string $default = "/"): bool {
 	if(empty($_SERVER['HTTP_REFERER'])){
-		redirect($default);
+		return redirect($default);
 	} else {
-		redirect($_SERVER["HTTP_REFERER"]);
+		return redirect($_SERVER["HTTP_REFERER"]);
 	}
 }
 
-
-function floatpoint($val): float {
-	$val = preg_replace('/[^0-9,\.\-]/', '', $val);
-	return (float)str_replace(',', '.', $val);
+function floatpoint(mixed $val): float {
+	$val = preg_replace('/[^0-9,\.\-]/', '', (string)$val);
+	return (float)str_replace(',', '.', (string)$val);
 }
 
-function to_float($data){
-	return __object_map($data, function($item): float {
+function to_float(mixed $data): mixed {
+	return __object_map($data, function(mixed $item): float {
 		return floatpoint($item);
 	});
 }
 
-function to_int($data){
-	return __object_map($data, function($item): int {
+function to_int(mixed $data): mixed {
+	return __object_map($data, function(mixed $item): int {
 		return (int)$item;
 	});
 }
 
-function money_conv($data): float {
+function money_conv(mixed $data): float {
 	return floatpoint($data);
 }
 
-function money_round($data){
+function money_round(mixed $data): string {
 	return number_format(money_conv($data), 2, '.', '');
 }
 
-function to_money($data){
-	return __object_map($data, function($item){
+function to_money(mixed $data): mixed {
+	return __object_map($data, function(mixed $item): float {
 		return money_conv($item);
 	});
 }
@@ -506,212 +512,82 @@ function browse_flat($path, callable $function){
 	return $ret??[];
 }
 
-function compacto($data) {
+function compacto($data): mixed {
 	return __object_filter($data, function($item){
 		return (bool)$item;
 	});
 }
 
-function __object_walk($data, callable $func, $i = null){
-	if(is_array($data)){
-		foreach($data as $k=>$v){
-			__object_walk($v, $func, $k);
-		}
-	} elseif($data instanceof stdClass || $data instanceof Traversable) {
-		foreach(get_object_vars($data) as $k=>$v){
-			__object_walk($v, $func, $k);
-		}
-	} else {
-		$func($data, $i);
-	}
+function utf2win(mixed $data): mixed {
+	return __object_map($data, stringwrap(fn(string $item): string|false =>
+		mb_convert_encoding($item, 'ISO-8859-13', 'UTF-8')
+	));
 }
 
-function __object_walk_ref(&$data, callable $func, &$i = null){
-	if(is_array($data)){
-		foreach($data as $k=>&$v){
-			$oldK = $k;
-			__object_walk_ref($v, $func, $k);
-			if($oldK !== $k){
-				$data[$k] = $data[$oldK];
-				unset($data[$oldK]);
-			}
-		}
-	} elseif($data instanceof stdClass || $data instanceof Traversable) {
-		foreach(get_object_vars($data) as $k=>$v){
-			$oldK = $k;
-			__object_walk_ref($data->{$k}, $func, $k);
-			if($oldK !== $k){
-				$data->{$k} = $data->{$oldK};
-				unset($data->{$oldK});
-			}
-		}
-	} else {
-		$func($data, $i);
-	}
+function win2utf(mixed $data): mixed {
+	return __object_map($data, stringwrap(fn(string $item): string|false =>
+		mb_convert_encoding($item, 'UTF-8', 'ISO-8859-13')
+	));
 }
 
-/**
- * Nebūtu slikti izdomāt veidu, kā ērtāk apstrādāt obj un array pašā $func
- * Pagaidām $func dabū tikai ne-(obj|arr)
- * Tas palīdzētu tādām f-ijām, kas čeko [] vai empty object
- */
-function __object_filter($data, callable $func, $i = null){
-	if(is_array($data)){
-		foreach($data as $k=>$v){
-			$v2 = __object_filter($v, $func, $k);
-			if(is_null($v2)){
-				unset($data[$k]);
-			} else {
-				$data[$k] = $v2;
-			}
-		}
-		return $data;
-	} elseif($data instanceof stdClass || $data instanceof Traversable) {
-		$d = clone $data;
-		foreach(get_object_vars($d) as $k=>$v){
-			$v2 = __object_filter($v, $func, $k);
-			if(is_null($v2)){
-				unset($d->{$k});
-			} else {
-				$d->{$k} = $v2;
-			}
-		}
-		return $d;
-	} else {
-		if($v = $func($data, $i)){
-			return $data;
-		}
-	}
-}
-/*
-function __object_filterk($data, $func, $i = null){
-	if(is_array($data)){
-		foreach($data as $k=>$v){
-			if($v2 = __object_filter($v, $func, $k)){
-				$data[$k] = $v2;
-			} else {
-				unset($data[$k]);
-			}
-		}
-		return $data;
-	} elseif(is_object($data)) {
-		$d = clone $data;
-		foreach(get_object_vars($d) as $k=>$v){
-			if($v2 = __object_filter($v, $func, $k)){
-				$d->{$k} = $v2;
-			} else {
-				unset($d->{$k});
-			}
-		}
-		return $d;
-	} else {
-		return $func($data, $i);
-	}
-}
-*/
-
-function __object_map($data, callable $func, $i = null){
-	if(is_array($data)){
-		foreach($data as $k=>$v){
-			$data[$k] = __object_map($v, $func, $k);
-		}
-		return $data;
-	} elseif($data instanceof stdClass || $data instanceof Traversable){
-		$d = clone $data;
-		foreach(get_object_vars($data) as $k=>$v){
-			$d->{$k} = __object_map($v, $func, $k);
-		}
-		return $d;
-	} else {
-		return $func((string)$data, $i);
-	}
+function translit(mixed $data): mixed {
+	return __object_map($data, stringwrap(fn(string $item): string|false =>
+		iconv("utf-8","ascii//TRANSLIT", $item)
+	));
 }
 
-// TODO: bool carry should return immediately
-function __object_reduce($data, callable $func, $carry = null, $i = null){
-	if(is_array($data)){
-		foreach($data as $k=>$v){
-			$carry = __object_reduce($v, $func, $carry, $k);
-		}
-	} elseif($data instanceof stdClass || $data instanceof Traversable) {
-		$carry = __object_reduce(get_object_vars($data), $func, $carry, $i);
-	} else {
-		$carry = $func($carry, $data, $i);
-	}
-
-	return $carry;
-}
-
-function utf2win($data){
-	return __object_map($data, function($item){
-		return mb_convert_encoding($item, 'ISO-8859-13', 'UTF-8');
-	});
-}
-
-function win2utf($data){
-	return __object_map($data, function($item){
-		return mb_convert_encoding($item, 'UTF-8', 'ISO-8859-13');
-	});
-}
-
-function translit($data){
-	return __object_map($data, function($item){
-		return iconv("utf-8","ascii//TRANSLIT", $item);
-	});
-}
-
-function is_empty($data = null){
-	return __object_reduce($data, function($carry, $item){
+function is_empty(mixed $data): bool {
+	return __object_reduce($data, function(bool $carry, mixed $item): bool {
 		return $carry && empty($item);
 	}, true);
 }
 
-function non_empty($data = null){
+function non_empty(mixed $data): bool {
 	return !is_empty($data);
 }
 
-function ent($data){
-	return __object_map($data, function($item){
-		return htmlentities($item);
-	});
+function ent(mixed $data): mixed {
+	return __object_map($data, stringwrap(fn(string $item): string =>
+		htmlentities($item)
+	));
 }
 
-function entdecode($data){
-	return __object_map($data, function($item){
-		return html_entity_decode($item);
-	});
+function entdecode(mixed $data): mixed {
+	return __object_map($data, stringwrap(fn(string $item): string =>
+		html_entity_decode($item)
+	));
 }
 
 # https://www.gyrocode.com/articles/php-urlencode-vs-rawurlencode/
 # scheme:[//[user[:password]@]host[:port]][/path][?query][#fragment]
 # If you are encoding *path* segment, use rawurlencode().
 # If you are encoding *query* component, use urlencode().
-function urlenc($data){
-	return __object_map($data, function($item){
-		return urlencode($item);
-	});
+function urlenc(mixed $data): mixed {
+	return __object_map($data, stringwrap(fn(string $item): string =>
+		urlencode($item)
+	));
 }
-function urldec($data){
-	return __object_map($data, function($item){
-		return urldecode($item);
-	});
+function urldec(mixed $data): mixed {
+	return __object_map($data, stringwrap(fn(string $item): string =>
+		urldecode($item)
+	));
 }
-function rawurlenc($data){
-	return __object_map($data, function($item){
-		return rawurlencode($item);
-	});
+function rawurlenc(mixed $data): mixed {
+	return __object_map($data, stringwrap(fn(string $item): string =>
+		rawurlencode($item)
+	));
 }
-function rawurldec($data){
-	return __object_map($data, function($item){
-		return rawurldecode($item);
-	});
+function rawurldec(mixed $data): mixed {
+	return __object_map($data, stringwrap(fn(string $item): string =>
+		rawurldecode($item)
+	));
 }
 ##
 
-function specialchars($data){
-	return __object_map($data, function(string $item){
-		return htmlspecialchars($item, ENT_COMPAT | ENT_HTML401, '', false);
-	});
+function specialchars(mixed $data){
+	return __object_map($data, stringwrap(fn(string $item): string =>
+		htmlspecialchars(string: $item, double_encode: false)
+	));
 }
 
 function date_in_periods($date, array $periods): bool {
@@ -814,65 +690,65 @@ function date_qt_month(int $C, int $m = 1): int {
 	return ($C - 1) * 3 + $m;
 }
 
-function date_startend($D): array {
-	$DATE = eoe($D);
-	$format = get_date_format();
-	$start_date = $end_date = false;
+// function date_startend($D): array {
+// 	$DATE = eoe($D);
+// 	$format = get_date_format();
+// 	$start_date = $end_date = false;
 
-	$ceturksnis = false;
-	for($i = 1; $i < 5; $i++){
-		if($DATE->{"C$i"}){
-			$ceturksnis = $i;
-		}
-	}
+// 	$ceturksnis = false;
+// 	for($i = 1; $i < 5; $i++){
+// 		if($DATE->{"C$i"}){
+// 			$ceturksnis = $i;
+// 		}
+// 	}
 
-	if($ceturksnis){
-		// $start_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 1, 1, date('Y'));
-		// $days_in_end_month = date_daycount(($ceturksnis - 1) * 3 + 3);
-		// $end_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 3, $days_in_end_month, date('Y'));
-		$start_date = mktime(0,0,0, date_qt_month($ceturksnis, 1), 1, (int)date('Y'));
-		$days_in_end_month = date_daycount(date_qt_month($ceturksnis, 3));
-		$end_date = mktime(0,0,0, date_qt_month($ceturksnis, 3), $days_in_end_month, (int)date('Y'));
-	} elseif($DATE->PREV_YEAR) {
-		$start_date = strtotime('first day of January last year');
-		$end_date = strtotime('last day of December last year');
-	} elseif($DATE->THIS_YEAR){
-		$start_date = strtotime('first day of January');
-		$end_date = time();
-	} elseif($DATE->TODAY) {
-		$start_date = $end_date = strtotime('today');
-	} elseif($DATE->YESTERDAY) {
-		$start_date = $end_date = strtotime('yesterday');
-	} elseif($DATE->THIS_WEEK) {
-		$start_date = strtotime("last Monday");
-		$end_date = time();
-	} elseif($DATE->THIS_MONTH) {
-		$start_date = strtotime("first day of");
-		$end_date = time();
-	} elseif($DATE->PREV_MONTH) {
-		$start_date = strtotime("first day of previous month");
-		$end_date = strtotime("last day of previous month");
-	} elseif($DATE->PREV_30DAYS){
-		$start_date = strtotime("-30 days");
-		$end_date = time();
-	} elseif($DATE->MONTH){
-		if(empty($DATE->YEAR))$DATE->YEAR = date('Y');
-		$dc = date_daycount((int)$DATE->MONTH, (int)$DATE->YEAR);
-		$start_date = strtotime("$DATE->YEAR-$DATE->MONTH-01");
-		$end_date = strtotime("$DATE->YEAR-$DATE->MONTH-$dc");
-	} elseif($DATE->YEAR){
-		$start_date = strtotime("first day of January $DATE->YEAR");
-		$end_date = strtotime("last day of December $DATE->YEAR");
-	} else {
-		if($DATE->START)$start_date = strtotime($DATE->START);
-		if($DATE->END)$end_date = strtotime($DATE->END);
-	}
+// 	if($ceturksnis){
+// 		// $start_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 1, 1, date('Y'));
+// 		// $days_in_end_month = date_daycount(($ceturksnis - 1) * 3 + 3);
+// 		// $end_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 3, $days_in_end_month, date('Y'));
+// 		$start_date = mktime(0,0,0, date_qt_month($ceturksnis, 1), 1, (int)date('Y'));
+// 		$days_in_end_month = date_daycount(date_qt_month($ceturksnis, 3));
+// 		$end_date = mktime(0,0,0, date_qt_month($ceturksnis, 3), $days_in_end_month, (int)date('Y'));
+// 	} elseif($DATE->PREV_YEAR) {
+// 		$start_date = strtotime('first day of January last year');
+// 		$end_date = strtotime('last day of December last year');
+// 	} elseif($DATE->THIS_YEAR){
+// 		$start_date = strtotime('first day of January');
+// 		$end_date = time();
+// 	} elseif($DATE->TODAY) {
+// 		$start_date = $end_date = strtotime('today');
+// 	} elseif($DATE->YESTERDAY) {
+// 		$start_date = $end_date = strtotime('yesterday');
+// 	} elseif($DATE->THIS_WEEK) {
+// 		$start_date = strtotime("last Monday");
+// 		$end_date = time();
+// 	} elseif($DATE->THIS_MONTH) {
+// 		$start_date = strtotime("first day of");
+// 		$end_date = time();
+// 	} elseif($DATE->PREV_MONTH) {
+// 		$start_date = strtotime("first day of previous month");
+// 		$end_date = strtotime("last day of previous month");
+// 	} elseif($DATE->PREV_30DAYS){
+// 		$start_date = strtotime("-30 days");
+// 		$end_date = time();
+// 	} elseif($DATE->MONTH){
+// 		if(empty($DATE->YEAR))$DATE->YEAR = date('Y');
+// 		$dc = date_daycount((int)$DATE->MONTH, (int)$DATE->YEAR);
+// 		$start_date = strtotime("$DATE->YEAR-$DATE->MONTH-01");
+// 		$end_date = strtotime("$DATE->YEAR-$DATE->MONTH-$dc");
+// 	} elseif($DATE->YEAR){
+// 		$start_date = strtotime("first day of January $DATE->YEAR");
+// 		$end_date = strtotime("last day of December $DATE->YEAR");
+// 	} else {
+// 		if($DATE->START)$start_date = strtotime($DATE->START);
+// 		if($DATE->END)$end_date = strtotime($DATE->END);
+// 	}
 
-	if($start_date)$start_date = date($format, $start_date);
-	if($end_date)$end_date = date($format, $end_date);
+// 	if($start_date)$start_date = date($format, $start_date);
+// 	if($end_date)$end_date = date($format, $end_date);
 
-	return [$start_date, $end_date];
-}
+// 	return [$start_date, $end_date];
+// }
 
 function php_self(){
 	return $_SERVER['REQUEST_URI'] ?? '';
@@ -921,11 +797,14 @@ function __query($query_string = '', $format = '', $delim = '&amp;', $allowed = 
 	return $q2;
 }
 
-# TODO: tas nestrādā, kā plānots
-function format_debug($v, $depth = 0){
-	$vars = __object_map($v, function($item) use ($depth){
-		if(is_scalar($item) && mb_detect_encoding($item)){
-			return mb_substr($item, 0, 1024).(mb_strlen($item) > 1024 ? '...' : '');
+function format_debug(mixed $v): mixed {
+	return __object_map($v, function($item) {
+		if((is_string($item) || $item instanceof Stringable) && mb_detect_encoding($item)){
+			return mb_substr($item, 0, 4096).(mb_strlen($item) > 4096 ? '...' : '');
+		} elseif(is_bool($item)){
+			return $item ? "treu" : "false";
+		} elseif(is_scalar($item)){
+			return $item;
 		} elseif(is_null($item)) {
 			return "NULL";
 		} elseif(is_resource($item)) {
@@ -934,26 +813,32 @@ function format_debug($v, $depth = 0){
 			return "[ARRAY]";
 		} elseif(is_object($item) && method_exists($item , '__toString')) {
 			return "$item";
+		} elseif(is_callable($item)) {
+			return "[FUNC]";
 		} else {
 			return "[BLOB]";
 		}
 	});
-
-	return $vars;
 }
 
 # NOTE: dep on https://highlightjs.org/
 function sqlr(){
-	if(!is_climode())print "<pre><code class=\"sql\">";
+	print is_climode() ? "\n" : '<pre style="background: gainsboro; color: black">';
 
-	print ($t = debug_backtrace()) ? __back_trace_fmt($t[0])."\n\n" : '';
+	print ($t = debug_backtrace()) ? __back_trace_fmt($t[0])."\n------------------------------------------------------------------------------\n" : '';
+
+	if(!is_climode())print '<code class="sql" style="background: gainsboro;">';
 	__output_wrapper(function($v){
 		if($v instanceof dqdp\SQL\Statement){
 			print (string)$v;
-			if(method_exists($v, 'vars')){
+			if(method_exists($v, 'getVars')){
 				print ("\n\n--[Bind vars]\n");
-				foreach($v->{'vars'}() as $k=>$var){
-					printf("--[%s] = %s\n", $k, format_debug($var));
+				if($vars = $v->getVars()){
+					foreach($vars as $k=>$var){
+						printf("--[%s] = %s\n", $k, format_debug($var));
+					}
+				} else {
+					print "-- none --";
 				}
 				// printf("\n--Finished in: %.3f sec", $v->end_ts - $v->start_ts);
 			}
@@ -962,7 +847,9 @@ function sqlr(){
 		}
 	}, ...func_get_args());
 
-	if(!is_climode())print "</code></pre>\n";
+	print is_climode() ? "\n------------------------------------------------------------------------------\n" : "</code></pre>";
+
+	print "\n";
 }
 
 function dumpr(){
@@ -974,12 +861,17 @@ function printr(){
 }
 
 function __pre_wrapper(callable $func, ...$args){
-	if(!is_climode())print '<pre style="background: lightgrey; color: black">';
+	print is_climode() ? "\n" : '<pre style="background: gainsboro; color: black">';
 
-	print ($t = debug_backtrace()) ? __back_trace_fmt($t[1])."\n\n" : '';
+	print ($t = debug_backtrace()) ? __back_trace_fmt($t[1])."\n------------------------------------------------------------------------------\n" : '';
+
+	if(!is_climode())print '<code class="accesslog" style="background: gainsboro;">';
 	__output_wrapper($func, ...$args);
+	if(!is_climode())print "</code>";
 
-	if(!is_climode())print "</pre>\n";
+	print is_climode() ? "\n------------------------------------------------------------------------------\n" : "</pre>";
+
+	print "\n";
 }
 
 function __output_wrapper(callable $func, ...$args){
@@ -994,7 +886,7 @@ function __output_wrapper(callable $func, ...$args){
 			if($i > 0)print "\n";
 			ob_start();
 			$func($args[$i]);
-			print specialchars(ob_get_clean());
+			print htmlspecialchars(string: ob_get_clean(), double_encode: false);
 		}
 	}
 }
@@ -1124,10 +1016,10 @@ function locale_money_format($t, $places = 2){
 	return number_format($t, $places, $point, $sep);
 }
 
-function strip_path($data) {
-	return __object_map($data, function($item){
-		return preg_replace('/[\/\.\\\]/', '', $item);
-	});
+function strip_path(mixed $data): mixed {
+	return __object_map($data, stringwrap(fn(string $item): string|null =>
+		preg_replace('/[\/\.\\\]/', '', $item)
+	));
 }
 
 function urlize($name){
@@ -1482,16 +1374,16 @@ function optioned($v, $value): string {
 	return sprintf(' value="%s"%s', $v, checked($v == $value));
 }
 
-function checked($v): string {
+function checked(mixed $v): string {
 	return ($v ? ' checked' : '');
 }
 
-function checkeda(Array $a, $k): string {
+function checkeda(array $a, $k): string {
 	return checked($a[$k]??null);
 }
 
-function checkedina(Array $a, $k): string {
-	return checked(in_array($k, $a));
+function checkedina(array $a, mixed $v): string {
+	return checked(in_array($v, $a));
 }
 
 # Hacking POST checkboxes
@@ -1501,14 +1393,20 @@ function boolcheckbox($NAME, $checked): string {
 	return join("\n", $ret);
 }
 
-function datediff($d1, $d2, $calc = 3600 * 24): float {
+function datediff(string $d1, string $d2, $calc = 3600 * 24): int|false {
 	$date1 = strtotime($d1);
 	$date2 = strtotime($d2);
+	// $date1 = $d1 ? strtotime($d1) : time();
+	// $date2 = $d2 ? strtotime($d2) : time();
 
-	return round(($date1 - $date2) / $calc);
+	if($date1 === false || $date2 === false || $calc == 0){
+		return false;
+	}
+
+	return (int)round(($date1 - $date2) / $calc);
 }
 
-function vardiem($int, $CURR_ID){
+function vardiem($int, $CURR_ID = 'EUR'){
 	return LV::vardiem($int, $CURR_ID);
 }
 
@@ -1548,18 +1446,31 @@ function kdsort(&$a){
 	}
 }
 
-function __merge($o1, $o2, array $fields = null){
+function __merge(mixed $o1, mixed $o2, array $fields = null): mixed {
 	if(is_null($o1) && is_null($o2)){
 		return null;
 	}
 
-	if($o2 instanceof stdClass || $o2 instanceof Traversable){
-		$a2 = get_object_vars($o2);
-	} elseif(is_array($o2)){
+	if(is_array($o2) || $o2 instanceof ArrayAccess){
 		$a2 = $o2;
+	} elseif($o2 instanceof stdClass || $o2 instanceof Traversable){
+		$a2 = get_object_vars($o2);
 	} else {
 		return $o2;
 	}
+
+	// if($o2 instanceof stdClass || $o2 instanceof Traversable){
+	// 	$a2 = get_object_vars($o2);
+	// } elseif(is_array($o2)){
+	// 	$a2 = $o2;
+	// } else {
+	// 	return $o2;
+	// 	// if(is_array($o1)){
+	// 	// 	return (array)$o2;
+	// 	// } else {
+	// 	// 	return $o2;
+	// 	// }
+	// }
 
 	if($fields){
 		foreach($a2 as $k=>$v){
@@ -1569,22 +1480,32 @@ function __merge($o1, $o2, array $fields = null){
 		}
 	}
 
-	if($o1 instanceof stdClass || $o1 instanceof Traversable){
-		foreach($a2 as $k=>$v)$o1->{$k} = merge($o1->{$k}??null, $v);
-	} elseif(is_array($o1)){
+	if(is_array($o1)){
 		foreach($a2 as $k=>$v)$o1[$k] = merge($o1, $v);
+	} elseif($o1 instanceof ArrayAccess){
+		foreach($a2 as $k=>$v)$o1[$k] = merge($o1[$k]??null, $v);
+	} elseif($o1 instanceof stdClass || $o1 instanceof Traversable){
+		foreach($a2 as $k=>$v)$o1->{$k} = merge($o1->{$k}??null, $v);
 	} else {
 		return $o2;
 	}
 
+	// if($o1 instanceof stdClass || $o1 instanceof Traversable){
+	// 	foreach($a2 as $k=>$v)$o1->{$k} = merge($o1->{$k}??null, $v);
+	// } elseif(is_array($o1)){
+	// 	foreach($a2 as $k=>$v)$o1[$k] = merge($o1, $v);
+	// } else {
+	// 	return $o2;
+	// }
+
 	return $o1;
 }
 
-function merge($o1, $o2){
+function merge(mixed $o1, mixed $o2){
 	return __merge($o1, $o2);
 }
 
-function merge_only(array $fields, $o1, $o2 = null){
+function merge_only(array $fields, mixed $o1, mixed $o2 = null){
 	if(is_null($o2)){
 		$o2 = $o1;
 		$o1 = is_array($o2) ? [] : (is_object($o2) ? new stdClass : $o1);
@@ -1637,11 +1558,11 @@ function vpdiv(){
 	return call_user_func_array('__vpbc', array_merge(['bcdiv'], func_get_args()));
 }
 
-function between($v, $s, $e){
+function between(mixed $v, mixed $s, mixed $e): bool {
 	return ($v >= $s) && ($v <= $e);
 }
 
-function within($v, $s, $e){
+function within(mixed $v, mixed $s, mixed $e): bool {
 	return ($v > $s) && ($v < $e);
 }
 
@@ -1722,9 +1643,9 @@ function trim_includes_path(string $path): ?string {
 }
 
 function trimmer($data){
-	return __object_map($data, function(string $item){
-		return trim($item);
-	});
+	return __object_map($data, stringwrap(fn(string $item): string =>
+		trim($item)
+	));
 }
 
 function is_fatal_error($errno): bool {
@@ -1821,7 +1742,7 @@ function proc_exec(string $cmd, array $args = [], string $input = '', array $des
 
 function debug2file($msg){
 	$msg = str_replace(array("\r", "\n"), ' ', $msg);
-	return file_put_contents(constant('TMPDIR').'./debug.log', sprintf("[%s] %s\n", date('c'), $msg), FILE_APPEND);
+	return file_put_contents(constant('TMPDIR').DIRECTORY_SEPARATOR.'.'.DIRECTORY_SEPARATOR.'debug.log', sprintf("[%s] %s\n", date('c'), $msg), FILE_APPEND);
 }
 
 function get_ex_rate($CURR_ID, $date = null): ?float {
@@ -1874,35 +1795,53 @@ function options_select(iterable $data, string $vk, string $lk, $selected = null
 	return join("", $ret??[]);
 }
 
-function array_search_k(array $arr, $k, $v){
+function array_search_k(array|object $arr, $k, $v): mixed {
 	foreach($arr as $i=>$item){
-		if(is_object($item)){
-			$cmpv = $item->{$k}??null;
-		} elseif(is_array($item)){
-			$cmpv = $item[$k]??null;
+		if(is_scalar($item)){
+			if($item === $v){
+				return $i;
+			}
 		} else {
-			$cmpv = $item;
-		}
-		if($cmpv === $v){
-			return $i;
+			if(get_prop($item, $k) === $v){
+				return $i;
+			}
 		}
 	}
+
+	return null;
 }
 
-# TODO: refactor
-function parse_search_q($q, $minWordLen = 0){
-	$q = preg_replace('/[%,\'\.]/', ' ', $q);
-	$words = explode(' ', $q);
+function parse_search_q(string $q, int $minWordLen = 0): array {
+	$words = preg_split('/\s/', $q);
 
-	foreach($words as $k=>$word){
-		if(($word = trim($word)) && (mb_strlen($word) >= $minWordLen)){
-			$words[$k] = mb_strtoupper($word);
-		} else {
-			unset($words[$k]);
+	foreach($words as $word){
+		if(
+			($word = trim($word)) &&
+			($index = mb_strtolower($word)) &&
+			empty($buf[$index]) &&
+			(mb_strlen($word) >= $minWordLen)
+		){
+			$buf[$index] = true;
+			$ret[] = $word;
 		}
 	}
-	return array_unique($words);
+
+	return $ret??[];
 }
+
+// function parse_search_q($q, $minWordLen = 0){
+// 	$q = preg_replace('/[%,\'\.]/', ' ', $q);
+// 	$words = explode(' ', $q);
+
+// 	foreach($words as $k=>$word){
+// 		if(($word = trim($word)) && (mb_strlen($word) >= $minWordLen)){
+// 			$words[$k] = mb_strtoupper($word);
+// 		} else {
+// 			unset($words[$k]);
+// 		}
+// 	}
+// 	return array_unique($words);
+// }
 
 function split_words(string $q){
 	return preg_split('/\s+/', trim($q));
@@ -2055,8 +1994,16 @@ function substitute(string $str){
 		$str);
 }
 
-function join_paths($a) {
-	return join(DIRECTORY_SEPARATOR, $a);
+function join_paths(...$args): string {
+	if(count($args) == 1) {
+		if(is_array($args[0])){
+			return join(DIRECTORY_SEPARATOR, $args[0]);
+		} else {
+			throw new InvalidTypeException($args[0]);
+		}
+	} else {
+		return join(DIRECTORY_SEPARATOR, [...$args]);
+	}
 }
 
 function str_limiter($str, $limit, $append){
@@ -2067,23 +2014,93 @@ function str_limiter($str, $limit, $append){
 	return $str;
 }
 
-function get_prop($o, $k){
-	if(is_object($o)){
-		if(property_exists($o, $k)){
-			return $o->{$k};
-		}
+# TODO: remove throws?
+function prop_exists(array|object|null $o, string|int $k): bool {
+	if(is_null($o)){
+		return false;
 	} elseif(is_array($o)){
-		if(key_exists($k, $o)){
-			return $o[$k];
-		}
+		return key_exists($k, $o);
+	} elseif($o instanceof ArrayAccess){
+		return $o->offsetExists($k);
+	// } elseif($o instanceof Generator){
+	// 	throw new InvalidArgumentException("Generators does not support ArrayAccess");
+	} elseif(is_object($o)){
+		return is_int($k) ? property_exists($o, (string)$k) : property_exists($o, $k);
+	} else {
+		throw new InvalidTypeException($o);
 	}
 }
 
-function set_prop(&$o, $k, $v){
-	if(is_object($o)){
-		return $o->{$k} = $v;
+function prop_initialized(array|object|null $o, string|int $k): bool {
+	if(is_null($o)){
+		return false;
 	} elseif(is_array($o)){
-		return $o[$k] = $v;
+		return key_exists($k, $o);
+	} elseif(is_object($o)){
+		return (new ReflectionObject($o))->getProperty($k)->isInitialized($o);
+	} else {
+		throw new InvalidTypeException($o);
+	}
+}
+
+# TODO: vajag vai nevajag ar referenci??
+function &get_prop_ref(array|object|null $o, string|int $k): mixed {
+	if(is_null($o)){
+		return null;
+	} elseif(is_array($o) || $o instanceof ArrayAccess){
+		return $o[$k];
+	// } elseif($o instanceof Generator){
+	// 	throw new InvalidArgumentException("Generators does not support ArrayAccess");
+	} elseif(is_object($o)){
+		return $o->{$k};
+	} else {
+		throw new InvalidTypeException($o);
+	}
+}
+
+function get_prop(array|object|null $o, string|int $k): mixed {
+	if(is_null($o)){
+		return null;
+	} elseif(is_array($o) || $o instanceof ArrayAccess){
+		return $o[$k];
+	// } elseif($o instanceof Generator){
+	// 	throw new InvalidArgumentException("Generators does not support ArrayAccess");
+	} elseif(is_object($o)){
+		return $o->{$k};
+	} else {
+		throw new InvalidTypeException($o);
+	}
+}
+
+function unset_prop(array|object &$o, string|int $k): void {
+	if(is_array($o) || $o instanceof ArrayAccess){
+		unset($o[$k]);
+	// } elseif($o instanceof Generator){
+	// 	throw new InvalidArgumentException("Generators does not support ArrayAccess");
+	} elseif(is_object($o)){
+		unset($o->{$k});
+	} else {
+		throw new InvalidTypeException($o);
+	}
+}
+
+function set_prop(array|object &$o, string|int $k, mixed $v): void {
+	if(is_array($o) || $o instanceof ArrayAccess){
+		$o[$k] = $v;
+	// } elseif($o instanceof Generator){
+	// 	throw new InvalidArgumentException("Generators does not support ArrayAccess");
+	} elseif(is_object($o)){
+		$o->{$k} = $v;
+	} else {
+		throw new InvalidTypeException($o);
+	}
+}
+
+function prop_is_nullable(array|object|null $o, string|int $k): bool {
+	if(is_object($o)){
+		return (new ReflectionProperty($o, $k))->getType()->allowsNull();
+	} else {
+		return true;
 	}
 }
 
@@ -2091,9 +2108,13 @@ function str_ends($haystack, $needle) {
 	return 0 === substr_compare($haystack, $needle, -strlen($needle));
 }
 
-function ktolower($data){
-	__object_walk_ref($data, function(&$item, &$k){
-		$k = strtolower($k);
+function ktolower(array|object $data): mixed {
+	__object_walk($data, function(&$item, &$k, &$parent){
+		$new_k = strtolower($k);
+		if(strcmp($new_k, $k) !== 0){
+			unset_prop($parent, $k);
+			set_prop($parent, $new_k, $item);
+		}
 	});
 
 	return $data;
@@ -2103,7 +2124,7 @@ function array_flatten(array $a): array {
 	return flatten($a);
 }
 
-function flatten($o): array {
+function flatten(array|object $o): array {
 	__object_walk($o, function($i) use (&$ret){
 		$ret[] = $i;
 	});
@@ -2111,9 +2132,9 @@ function flatten($o): array {
 	return $ret??[];
 }
 
-function getbyk($o, $k){
-	return flatten(__object_filter($o, function($item, $i) use ($k){
-		return $i === $k;
+function getbyk(array|object $o, string|int $k): mixed {
+	return flatten(__object_filter($o, function($item, $inner_k) use ($k){
+		return $inner_k === $k;
 	}));
 }
 
@@ -2207,4 +2228,56 @@ function rearrange_files_array(array $file_post): array {
 	}
 
 	return $file_ary;
+}
+
+function is_dqdp_statement($args): bool {
+	return (count($args) == 1) && $args[0] instanceof \dqdp\SQL\Statement;
+}
+
+function get_class_public_vars(string $className){
+	return get_class_vars($className);
+}
+
+function get_object_public_vars(object $o){
+	return get_object_vars($o);
+}
+
+function static_prop_initialized(string $className, string|int $k): bool {
+	return (new ReflectionClass($className))->getProperty($k)->isInitialized();
+}
+
+function get_multitype(mixed $o): string {
+	return is_object($o) ? get_class($o) : gettype($o);
+}
+
+function name2prop(string $name): string {
+	$retName = "";
+
+	$name = mb_strtolower($name);
+	$parts = explode("_", $name);
+	foreach($parts as $v){
+		if(empty($v)){
+			continue;
+		}
+
+		if(($v[0] >= "0") && ($v[0] <= "9")){
+			$retName .= "_"; // restore _ for digits
+		} else {
+			$v[0] = mb_strtoupper($v[0]);
+		}
+
+		$retName .= $v;
+	}
+
+	return $retName;
+}
+
+function stringwrap(callable $f): callable {
+	return function(mixed $item) use ($f) {
+		if(is_string($item) || $item instanceof Stringable){
+			return $f($item);
+		} else {
+			return $item;
+		}
+	};
 }

@@ -1,2 +1,2 @@
-rem --filter test3 
-cls && phpunit --bootstrap boot.php %*
+@echo off
+C:\php82\phpunit --bootstrap boot.php %*

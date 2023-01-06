@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace dqdp\SQL;
 
@@ -11,17 +11,17 @@ class Order extends Statement
 	private $dir;
 	private $collate;
 
-	function __construct(string $order, $dir = null){
+	function __construct(string $order, int $dir = null){
 		$this->order = $order;
 		$this->dir = $dir;
 	}
 
-	function Collate($str){
+	function Collate(string $str): static {
 		$this->collate = $str;
 		return $this;
 	}
 
-	function parse(){
+	function parse(): string {
 		$line = $this->order;
 
 		if($this->collate)
@@ -39,11 +39,11 @@ class Order extends Statement
 		return $line;
 	}
 
-	static function factory($o){
-		if(gettype($o) == 'string'){
-			return new Order($o);
-		} else {
+	static function factory(string|Order $o, int $dir = null){
+		if($o instanceof Order){
 			return $o;
+		} else {
+			return new Order($o, $dir);
 		}
 	}
 }

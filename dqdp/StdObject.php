@@ -1,61 +1,31 @@
-<?php
-
-declare(strict_types = 1);
+<?php declare(strict_types = 1);
 
 namespace dqdp;
 
-use Countable;
-use Iterator;
-
-class StdObject implements Iterator, Countable
+class StdObject extends \stdClass implements \Countable, \ArrayAccess, \IteratorAggregate
 {
-	private $__stdo_debug = false;
-	// private $__stdo_keys = [];
-	private $__stdo_i = 0;
-
-	function __construct($initValues = null) {
+	function __construct(array|object|null $initValues = null) {
 		$this->merge($initValues);
-
-		return $this;
 	}
 
-	private function is_protected($k): bool {
-		return strpos($k, '__stdo_') === 0;
-	}
-
-	private function debug_msg($msg){
-		if($this->__stdo_debug){
-			trigger_error($msg);
-		}
-	}
-
-	function set_debug(bool $mode){
-		$this->__stdo_debug = $mode;
+	function __unset($k): void {
+		unset($this->{$k});
 	}
 
 	function __get($k){
-		if($this->is_protected($k)){
-			$this->debug_msg("Can not access private property $k");
-		// } elseif($this->exists($k)){
-		// 	return $this->{$k};
-		} else{
-			$this->debug_msg("$k not set");
-		}
+		return $this->{$k}??null;
 	}
 
 	function __set($k, $v){
-		if($this->is_protected($k)){
-			$this->debug_msg("Can not access private property $k");
-		} else {
-			// if(!$this->exists($k)){
-			// 	$this->__stdo_keys[] = $k;
-			// }
-			$this->{$k} = $v;
-		}
+		$this->{$k} = $v;
 	}
 
-	function exists($k): bool {
-		return property_exists($this, $k);
+	function getIterator(): \Traversable {
+		return new \ArrayIterator(get_object_public_vars($this));
+	}
+
+	function exists(string $k): bool {
+		return $this->offsetExists($k);
 	}
 
 	function merge($o){
@@ -66,29 +36,58 @@ class StdObject implements Iterator, Countable
 		return merge_only($only, $this, $o);
 	}
 
-	function count() : int {
-		return count(get_object_vars($this));
-		//return count($this->__stdo_keys);
+	function count(): int {
+		return count(get_object_public_vars($this));
 	}
 
-	function current() {
-		return $this->{$this->key()};
+	// function current(): mixed {
+	// 	return current($this->__data);
+	// }
+
+	// function key(): mixed {
+	// 	return key($this->__data);
+	// }
+
+	// function next(): void {
+	// 	next($this->__data);
+	// }
+
+	// function rewind(): void {
+	// 	reset($this->__data);
+	// }
+
+	// function valid(): bool {
+	// 	return !is_null(key($this->__data));
+	// }
+
+	function offsetExists(mixed $k): bool {
+		if(is_int($k)){
+			return property_exists($this, (string)$k);
+		} else {
+			return property_exists($this, $k);
+		}
 	}
 
-	function key() {
-		return get_object_vars($this)[$this->__stdo_i]??null;
-		//return $this->__stdo_keys[$this->__stdo_i]??null;
+	function offsetGet(mixed $k): mixed {
+		return $this->{$k};
 	}
 
-	function next(): void {
-		++$this->__stdo_i;
+	function offsetSet(mixed $k, mixed $v): void {
+		if (is_null($k)) {
+			$this->{$this->count() + 1} = $v;
+		} elseif(is_int($k)) {
+			if($this->offsetExists($k)){
+				$this->{$k} = $v;
+			} else {
+				$this->{max($this->count(), $k)} = $v;
+			}
+		} else {
+			$this->{$k} = $v;
+		}
 	}
 
-	function rewind(): void {
-		$this->__stdo_i = 0;
+	function offsetUnset(mixed $k): void {
+		unset($this->{$k});
 	}
 
-	function valid(): bool {
-		return $this->exists($this->key());
-	}
 }

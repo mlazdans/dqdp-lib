@@ -1,6 +1,4 @@
-<?php
-
-declare(strict_types = 1);
+<?php declare(strict_types = 1);
 
 namespace dqdp\QueueMailer;
 
@@ -17,7 +15,7 @@ class Entity extends \dqdp\DBA\Entity
 
 	function select(): Select {
 		return (new Select)
-		->From($this->tableName)
+		->From($this->Table)
 		->OrderBy('CREATE_TIME DESC');
 	}
 

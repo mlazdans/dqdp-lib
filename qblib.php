@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 use dqdp\SQL\Condition;
 
@@ -6,8 +6,12 @@ use dqdp\SQL\Condition;
  * Query builder lib
  */
 
+function qb_create_placeholders(int $count){
+	return join(",", array_fill(0, $count, "?"));
+}
+
 function qb_filter_in($field, $v){
-	return ["$field IN (".join(",", array_fill(0, count($v), "?")).")", $v];
+	return ["$field IN (".qb_create_placeholders(count($v)).")", $v];
 }
 
 function qb_filter_in_ints($field, $v){
@@ -50,8 +54,10 @@ function search_to_sql_cond($q, $fields, $minWordLen = 0, $options = []){
 		$Cond = new Condition();
 		foreach($fields as $field){
 			if(empty($options['wordboundary'])){
-				$Cond->add_condition(["UPPER($field) LIKE ?", "%".$word."%"], Condition::OR);
+				$Cond->add_condition(["$field CONTAINING ?", $word], Condition::OR);
+				// $Cond->add_condition(["UPPER($field) LIKE ?", "%".$word."%"], Condition::OR);
 			} else {
+				# MySQL specific?? Abstract!
 				$Cond->add_condition(["UPPER($field) REGEXP ?", '([[:blank:][:punct:]]|^)'.$word.'([[:blank:][:punct:]]|$)'], Condition::OR);
 				// $Cond->add_condition(["UPPER($field) REGEXP ?", "[[:<:]]".$word."[[:>:]]"], Condition::OR);
 			}
@@ -62,16 +68,17 @@ function search_to_sql_cond($q, $fields, $minWordLen = 0, $options = []){
 	return $MainCond;
 }
 
-# TODO: DATA arī array
-function build_sql($fields, $DATA = null, $skip_nulls = false){
+function build_sql(iterable $fields, array|object|null $DATA = null, $skip_nulls = false){
 	foreach($fields as $k){
-		if($skip_nulls && !property_exists($DATA, $k)){
+		if($skip_nulls && !($exists = (prop_exists($DATA, $k) && prop_initialized($DATA, $k)))){
 			continue;
 		}
 
-		if(property_exists($DATA, $k)){
-			if(is_callable([$DATA, $k]) || $DATA->{$k} instanceof Closure){
-				$fret = $DATA->$k->__invoke();
+		if($exists){
+			$item = get_prop($DATA, $k);
+			if(is_callable($item) || $item instanceof Closure){
+				// $fret = $item->__invoke();
+				$fret = $item();
 				if(is_array($fret)){
 					# Ja nav uzstādīts otrs parametrs, neliekam to pie fields vai holders
 					if(array_key_exists(0, $fret) && array_key_exists(1, $fret)){
@@ -89,7 +96,7 @@ function build_sql($fields, $DATA = null, $skip_nulls = false){
 				}
 			} else {
 				$h = "?";
-				$v = $DATA->{$k};
+				$v = $item;
 			}
 		} else {
 			$h = "?";
@@ -147,8 +154,11 @@ function search_to_sql($q, $fields, $minWordLen = 0){
 		$tmp = '';
 		foreach($fields as $field){
 			//$tmp .= "UPPER($field) LIKE ? COLLATE UNICODE_CI_AI ESCAPE '\\' OR ";
-			$tmp .= "UPPER($field) LIKE ? OR ";
-			$values[] = "%".$word."%";
+			// $tmp .= "UPPER($field) LIKE ? OR ";
+			// $values[] = "%".$word."%";
+			$tmp .= "$field CONTAINING ? OR ";
+			$values[] = $word;
+
 		}
 		$tmp = substr($tmp, 0, -4);
 		if($tmp)

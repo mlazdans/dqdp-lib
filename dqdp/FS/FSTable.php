@@ -4,9 +4,9 @@ declare(strict_types = 1);
 
 namespace dqdp\FS;
 
-use dqdp\DBA\AbstractTable;
+use dqdp\DBA\Table;
 
-class FSTable extends AbstractTable {
+class FSTable extends Table {
 	function getName(): string {
 		return 'fs';
 	}

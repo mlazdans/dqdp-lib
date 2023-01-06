@@ -2,73 +2,97 @@
 
 namespace dqdp\SQL;
 
+use ArgumentCountError;
+use dqdp\InvalidTypeException;
+
 class Update extends Statement
 {
-	protected $table;
-	protected $vars;
-	protected Condition $where;
+	protected string $Table;
+	protected array $Values = [];
+	protected array $returningParts = [];
+	protected Condition $Where;
 
-	function __construct($table){
-		$this->table = $table;
-		$this->where = new Condition;
+	function __construct(string $Table){
+		$this->Table = $Table;
+		$this->Where = new Condition;
 	}
 
-	function Set(...$args){
+	/**
+	 * Usage:
+	 *   Set(["field"=>"value"]);
+	 *   Set("field", "value");
+	 * */
+	function Set(...$args): static {
 		if(count($args) == 1){
-			$data = $args[0];
-			if(is_object($data)){
-				$this->vars = get_object_vars($data);
-			} elseif(is_array($data)){
-				$this->vars = $data;
+			if(is_object($args[0])){
+				$this->Values = get_object_vars($args[0]);
+			} elseif(is_array($args[0])){
+				$this->Values = $args[0];
 			} else {
-				trigger_error("Expected array or object", E_USER_ERROR);
+				throw new InvalidTypeException($args[0]);
 			}
 		} elseif(count($args) == 2){
-			$this->vars[$args[0]] = $args[1];
+			$this->Values[$args[0]] = $args[1];
 		} else {
-			trigger_error("Expected array, object or [key, value] pair", E_USER_ERROR);
+			throw new ArgumentCountError("Expected 1 or 2 arguments");
 		}
 
 		return $this;
 	}
 
-	function Where($condition): Update {
-		$this->where->add_condition($condition);
+	function Where(mixed $condition): static {
+		$this->Where->add_condition($condition);
 		return $this;
 	}
 
-	function parse(){
+	function parse(): string {
 		$lines = ['UPDATE'];
 
-		if($this->table){
-			$lines[] = "$this->table";
+		if($this->Table){
+			$lines[] = "$this->Table";
 		}
 
 		$this->merge_lines($lines, $this->values_parser());
 		$this->merge_lines($lines, $this->where_parser());
 
+		if($this->returningParts){
+			$lines[] = "RETURNING ".join(",", $this->returningParts);
+		}
+
 		return join("\n", $lines);
 	}
 
 	# TODO: cache build_sql_raw() output
-	function vars(){
-		$build = build_sql(array_keys($this->vars), eo($this->vars), true);
-		$vars = $build[2];
-		$vars = array_merge($vars, $this->where->vars());
+	function getVars(): array {
+		$build = build_sql(array_keys($this->Values), $this->Values, true);
 
-		return $vars;
+		return array_merge($build[2], $this->Where->getVars());
 	}
 
-	protected function _where(){
-		if($where = (string)$this->where){
+	function getValues(): array {
+		return $this->Values;
+	}
+
+	function Returning(string|array $cols): static {
+		if(is_string($cols)){
+			$this->returningParts = [$cols];
+		} else {
+			$this->returningParts = $cols;
+		}
+
+		return $this;
+	}
+
+	protected function where_parser(): array {
+		if($where = (string)$this->Where){
 			$lines[] = 'WHERE';
 			$lines[] = $where;
 		}
 		return $lines??[];
 	}
 
-	protected function _values(){
-		list($fields, $holders) = build_sql(array_keys($this->vars), eo($this->vars), true);
+	protected function values_parser(): array {
+		list($fields, $holders) = build_sql(array_keys($this->Values), $this->Values, true);
 
 		$set_line = [];
 		foreach($fields as $i=>$f){
@@ -79,6 +103,6 @@ class Update extends Statement
 			$lines[] = "SET ".join(', ', $set_line);
 		}
 
-		return $lines;
+		return $lines??[];
 	}
 }

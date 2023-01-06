@@ -1,6 +1,4 @@
-<?php
-
-declare(strict_types = 1);
+<?php declare(strict_types = 1);
 
 // fs_fullpath_hash varchar(40) NOT NULL,
 
@@ -84,7 +82,7 @@ class Entity extends \dqdp\DBA\Entity {
 			new Select(
 				"fs_id, fs_fsid, fs_uid, fs_depth, fs_type, fs_name, fs_ext, fs_fullname, fs_fullpath,".
 				"fs_size, fs_mime, fs_entered, fs_updated"
-			))->From($this->tableName);
+			))->From($this->Table);
 	}
 
 	function set_filters(Statement $sql, ?iterable $F = null): Statement {

@@ -1,65 +1,89 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace dqdp\SQL;
+
+use InvalidArgumentException;
 
 class Insert extends Statement
 {
 	protected $on_duplicate_update = false;
-	protected $parts = null;
-	protected $table;
-	protected $vars;
-	protected $matching = [];
+	protected string $Table;
+	protected array $Values = [];
+	protected array $matchingParts = [];
+	protected array $returningParts = [];
 
-	function Into($table){
-		$this->table = $table;
+	function Into(string $table): static {
+		$this->Table = $table;
 		return $this;
 	}
 
-	function Values($data){
+	function Values(array|object $data): static {
 		if(is_object($data)){
-			$this->vars = get_object_vars($data);
+			$this->Values = get_object_vars($data);
 		} elseif(is_array($data)){
-			$this->vars = $data;
-		} else {
-			trigger_error("Expected array or object", E_USER_ERROR);
+			$this->Values = $data;
 		}
+
 		return $this;
 	}
 
-	function Update(){
+	function Update(): static {
 		$this->on_duplicate_update = true;
+
 		return $this;
 	}
 
-	function Matching(array $column_list){
-		$this->matching = $column_list;
+	function Matching(string|array $cols): static {
+		if(is_string($cols)){
+			$this->matchingParts = [$cols];
+		} else {
+			$this->matchingParts = $cols;
+		}
+
 		return $this;
 	}
 
-	function ResetUpdate(){
+	# TODO: INTO <variables>
+	function Returning(string|array $cols): static {
+		if(is_string($cols)){
+			$this->returningParts = [$cols];
+		} else {
+			$this->returningParts = $cols;
+		}
+
+		return $this;
+	}
+
+	function ResetUpdate(): static {
 		$this->on_duplicate_update = false;
+
 		return $this;
 	}
 
-	function parse(){
-		if($this->lex() == 'mysql'){
+	function parse(): string {
+		if(SQL::$lex == 'mysql'){
 			$lines = $this->parse_mysql();
-		} elseif($this->lex() == 'fbird'){
+		} elseif(SQL::$lex == 'fbird'){
 			$lines = $this->parse_fbird();
 		} else {
-			trigger_error("Unknown SQL::\$lex: ".$this->lex(), E_USER_ERROR);
+			throw new InvalidArgumentException("Unknown SQL::\$lex: ".SQL::$lex);
 		}
+
 		return join("\n", $lines);
 	}
 
-	# TODO: cache build_sql_raw() output
-	function vars(){
-		$build = build_sql(array_keys($this->vars), eo($this->vars), true);
+	function getVars(): array {
+		$build = build_sql(array_keys($this->Values), $this->Values, true);
 		return $build[2];
+
 	}
 
-	protected function _values(){
-		list($fields, $holders) = build_sql(array_keys($this->vars), eo($this->vars), true);
+	function getValues(): array {
+		return $this->Values;
+	}
+
+	protected function values_parser(){
+		list($fields, $holders) = build_sql(array_keys($this->Values), eo($this->Values), true);
 		$lines[] = "(".join(',', $fields).")";
 		$lines[] = "VALUES";
 		$lines[] = "(".join(',', $holders).")";
@@ -70,8 +94,8 @@ class Insert extends Statement
 	protected function parse_mysql(){
 		$lines = ['INSERT'];
 
-		if($this->table){
-			$lines[] = "INTO $this->table";
+		if($this->Table){
+			$lines[] = "INTO $this->Table";
 		}
 
 		$this->merge_lines($lines, $this->values_parser());
@@ -79,7 +103,7 @@ class Insert extends Statement
 		if($this->on_duplicate_update){
 			$v_fields = array_map(function($v){
 				return "$v=VALUES($v)";
-			}, array_keys($this->vars));
+			}, array_keys($this->Values));
 
 			$lines[] = "ON DUPLICATE KEY UPDATE";
 			$lines[] = join(",", $v_fields);
@@ -95,14 +119,18 @@ class Insert extends Statement
 			$lines = ['INSERT'];
 		}
 
-		if($this->table){
-			$lines[] = "INTO $this->table";
+		if($this->Table){
+			$lines[] = "INTO $this->Table";
 		}
 
 		$this->merge_lines($lines, $this->values_parser());
 
-		if($this->matching){
-			$lines[] = "MATCHING (".join(",", $this->matching).")";
+		if($this->matchingParts){
+			$lines[] = "MATCHING (".join(",", $this->matchingParts).")";
+		}
+
+		if($this->returningParts){
+			$lines[] = "RETURNING ".join(",", $this->returningParts);
 		}
 
 		return $lines;

@@ -2,8 +2,8 @@
 
 namespace dqdp;
 
-use dqdp\DBA;
-use dqdp\DBA\AbstractDBA;
+use dqdp\DBA\DBA;
+use dqdp\DBA\TransactionInterface;
 
 // write, read to/from file descriptor
 // mkdir, rmdir, creat, unlink, link, symlink
@@ -13,7 +13,7 @@ use dqdp\DBA\AbstractDBA;
 # TODO: fs_type const
 # TODO: do not return content by default
 
-class FS implements DBA\TransactionInterface {
+class FS implements TransactionInterface {
 	var $uid;
 	protected $Ent;
 
@@ -22,13 +22,13 @@ class FS implements DBA\TransactionInterface {
 		$this->Ent = new FS\Entity;
 	}
 
-	function set_trans(AbstractDBA $dba): FS {
+	function set_trans(DBA $dba): FS {
 		$this->Ent->set_trans($dba);
 
 		return $this;
 	}
 
-	function get_trans(): AbstractDBA {
+	function get_trans(): DBA {
 		return $this->Ent->get_trans();
 	}
 

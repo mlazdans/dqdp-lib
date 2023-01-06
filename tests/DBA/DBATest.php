@@ -1,11 +1,11 @@
 <?php
 
-use dqdp\DBA\AbstractDBA;
+use dqdp\DBA\DBA;
 use PHPUnit\Framework\TestCase;
 
 abstract class DBATest extends TestCase
 {
-	protected static AbstractDBA $db;
+	protected static DBA $db;
 
 	public function testSelect1() {
 		$this->assertTrue(self::$db->execute("SELECT * FROM table1") !== false);

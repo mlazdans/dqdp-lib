@@ -4,9 +4,9 @@ declare(strict_types = 1);
 
 namespace dqdp\QueueMailer;
 
-use dqdp\DBA\AbstractTable;
+use dqdp\DBA\Table;
 
-class QueueMailerTable extends AbstractTable {
+class QueueMailerTable extends Table {
 	function getName(): string {
 		return 'MAIL_QUEUE';
 	}
