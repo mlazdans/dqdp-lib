@@ -1378,12 +1378,12 @@ function checked(mixed $v): string {
 	return ($v ? ' checked' : '');
 }
 
-function checkeda(array $a, $k): string {
+function checkeda(?array $a, $k): string {
 	return checked($a[$k]??null);
 }
 
-function checkedina(array $a, mixed $v): string {
-	return checked(in_array($v, $a));
+function checkedina(?array $a, mixed $v): string {
+	return is_null($a) ? "" : checked(in_array($v, $a));
 }
 
 # Hacking POST checkboxes
