@@ -2,9 +2,7 @@
 
 namespace dqdp\Settings;
 
-use dqdp\DBA\interfaces\ORMInterface;
-
-class Entity extends \dqdp\DBA\AbstractEntity implements ORMInterface
+class Entity extends \dqdp\DBA\AbstractEntity
 {
 	use SettingsEntityTrait;
 	// static function getDataType(): string {

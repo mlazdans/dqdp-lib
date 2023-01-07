@@ -2,7 +2,9 @@
 
 namespace dqdp;
 
-abstract class DataObject implements \IteratorAggregate, TraversableConstructor, PropertyInitInterface {
+use dqdp\DBA\interfaces\ORMInterface;
+
+abstract class DataObject implements \IteratorAggregate, TraversableConstructor, PropertyInitInterface, ORMInterface {
 	# NOTE: must be defined in child, to be in scope
 	// abstract function initPoperty(string|int $k, mixed $v): void;
 
