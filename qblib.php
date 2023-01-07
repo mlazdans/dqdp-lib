@@ -76,8 +76,8 @@ function build_sql(iterable $fields, array|object|null $DATA = null, $skip_nulls
 
 		if($exists){
 			$item = get_prop($DATA, $k);
-			if(is_callable($item) || $item instanceof Closure){
-				// $fret = $item->__invoke();
+			# Accept *only* Closure, do not accept is_callable()! Try for example $DATA->system :>
+			if($item instanceof Closure){
 				$fret = $item();
 				if(is_array($fret)){
 					# Ja nav uzstādīts otrs parametrs, neliekam to pie fields vai holders
