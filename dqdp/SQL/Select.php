@@ -73,12 +73,12 @@ class Select extends Statement
 		return $this;
 	}
 
-	# TODO: sameklēt kodā, kur tiek lietots Select([]) vai otrs arguments kā wrapper
-	function Select(string|Select $Field, ?string $alias = null): static {
-		if($Field instanceof \dqdp\SQL\Select){
-			// if($wrapper){
-			// 	$this->parts->fields[] = "$wrapper(($sql)) $alias";
-			// }
+	function WrapIn(string $wrapper): WrapSelect {
+		return new WrapSelect($this, $wrapper);
+	}
+
+	function Select(string|Select|WrapSelect $Field, ?string $alias = null): static {
+		if($Field instanceof Select || $Field instanceof WrapSelect){
 			$fieldStr = "($Field)";
 			$this->whereParts->addVar($Field->getVars());
 		} else {
