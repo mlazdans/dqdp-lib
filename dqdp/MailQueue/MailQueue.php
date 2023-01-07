@@ -1,13 +1,13 @@
 <?php declare(strict_types = 1);
 
-namespace dqdp\QueueMailer;
+namespace dqdp\MailQueue;
 
 use dqdp\DBA\interfaces\DBAInterface;
 use dqdp\DBA\interfaces\TransactionInterface;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-class QueueMailer extends PHPMailer implements TransactionInterface
+class MailQueue extends PHPMailer implements TransactionInterface
 {
 	var $TR;
 	private $q;
@@ -52,9 +52,9 @@ class QueueMailer extends PHPMailer implements TransactionInterface
 			}
 		];
 
-		$Ent = (new QueueMailer\Entity)->set_trans($this->get_trans());
+		$Ent = (new Entity)->set_trans($this->get_trans());
 
-		return $Ent->save($DATA);
+		return $Ent->save(MailQueueType::initFrom($DATA));
 	}
 
 	function getQueue(){

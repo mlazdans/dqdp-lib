@@ -4,7 +4,7 @@
 
 use dqdp\InvalidTypeException;
 use dqdp\LV;
-use dqdp\QueueMailer;
+use dqdp\MailQueue\MailQueue;
 use dqdp\StdObject;
 use PHPMailer\PHPMailer\PHPMailer;
 
@@ -1086,7 +1086,7 @@ function emailex($params){
 	$id_user           = (isset($params->id_user) ? $params->id_user : null);
 
 	if($use_queue){
-		$mail = new QueueMailer(true);
+		$mail = new MailQueue(true);
 		$mail->set_trans($params->TR);
 	} else {
 		$mail = new PHPMailer(true);
