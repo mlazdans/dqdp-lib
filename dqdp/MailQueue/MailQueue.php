@@ -36,25 +36,19 @@ class MailQueue extends PHPMailer implements TransactionInterface
 			$ObjData->{$k} = $this->{$k};
 		}
 
-		$DATA = [
-			'BODY'=>$this->Body,
-			'ALT_BODY'=>$this->AltBody,
-			'MIME_HEADERS'=>$MIMEHeader,
-			'MIME_BODY'=>$MIMEBody,
-			'MAILER_OBJ'=>serialize($ObjData),
-			'SENDER'=>$this->From,
-			'RECIPIENT'=>serialize($this->all_recipients),
-			'CREATE_TIME'=>static function(){
-				return 'CURRENT_TIMESTAMP';
-			},
-			'TIME_TO_SEND'=>static function(){
-				return 'CURRENT_TIMESTAMP';
-			}
-		];
+		$dummy = new MailQueueDummy(
+			Body: $this->Body,
+			AltBody: $this->AltBody,
+			MimeHeaders: $MIMEHeader,
+			MimeBody: $MIMEBody,
+			MailerObj: serialize($ObjData),
+			Sender: $this->From,
+			Recipient: serialize($this->all_recipients),
+		);
 
 		$Ent = (new Entity)->set_trans($this->get_trans());
 
-		return $Ent->save(MailQueueType::initFrom($DATA));
+		return $Ent->save(MailQueueType::initFrom($dummy));
 	}
 
 	function getQueue(){
