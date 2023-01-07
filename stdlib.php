@@ -2043,6 +2043,10 @@ function prop_initialized(array|object|null $o, string|int $k): bool {
 	}
 }
 
+function prop_isset(array|object|null $o, string|int $k): bool {
+	return prop_exists($o, $k) && prop_initialized($o, $k);
+}
+
 # TODO: vajag vai nevajag ar referenci??
 function &get_prop_ref(array|object|null $o, string|int $k): mixed {
 	if(is_null($o)){
