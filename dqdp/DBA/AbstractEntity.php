@@ -127,9 +127,10 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 
 		$PKSetInData = $this->_pk_in_data($DATA);
 
-		if($update && !$PKSetInData){
-			throw new InvalidArgumentException("Primary key not set");
-		}
+		// if($update && !$PKSetInData){
+		// 	dumpr($DATA);
+		// 	throw new InvalidArgumentException("Primary key not set for $TableName");
+		// }
 
 		$PK = $this->getPK();
 		if(is_array($PK)){
