@@ -37,9 +37,9 @@ class Form {
 				name: $name,
 				cols: $cols,
 				rows: $rows,
-				value: $this->Data->$name),
+				value: $this->Data->$name,
 				class: $class,
-			)->parse() ?></td>
+				))->parse() ?></td>
 		</tr>
 		<?
 	}
