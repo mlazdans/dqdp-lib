@@ -128,9 +128,8 @@ class Engine
 			// self::$POST->merge(entdecode($_POST));
 			// self::$REQ->merge(entdecode($_GET));
 			// self::$REQ->merge(entdecode($_POST));
+			self::initModule();
 		}
-
-		self::initModule();
 
 		# Module loader
 		// spl_autoload_register(function ($class) {
