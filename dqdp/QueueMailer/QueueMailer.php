@@ -1,9 +1,9 @@
 <?php declare(strict_types = 1);
 
-namespace dqdp;
+namespace dqdp\QueueMailer;
 
-use dqdp\DBA\DBA;
-use dqdp\DBA\TransactionInterface;
+use dqdp\DBA\interfaces\DBAInterface;
+use dqdp\DBA\interfaces\TransactionInterface;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -18,13 +18,13 @@ class QueueMailer extends PHPMailer implements TransactionInterface
 		$this->Mailer = 'queue';
 	}
 
-	function set_trans(DBA $dba){
+	function set_trans(DBAInterface $dba){
 		$this->TR = $dba;
 
 		return $this;
 	}
 
-	function get_trans(): DBA {
+	function get_trans(): DBAInterface {
 		return $this->TR;
 	}
 
