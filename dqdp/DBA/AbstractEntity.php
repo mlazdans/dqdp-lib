@@ -135,7 +135,8 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 		$PK = $this->getPK();
 		if(is_array($PK)){
 		} else {
-			if(!$PKSetInData && $Gen = $this->getGen()){
+			$needSetGen = !$PKSetInData || !$update;
+			if($needSetGen && $Gen = $this->getGen()){
 				set_prop($DATA, $PK, function() use ($Gen) {
 					return "NEXT VALUE FOR $Gen";
 				});
