@@ -9,18 +9,21 @@ use dqdp\SQL\Select;
 class MailQueueFilter extends AbstractFilter {
 	function __construct(
 		public ?int $ID = null,
-		public ?int $SENT = null,
-		public ?int $UNSENT = null,
-		public ?int $ERRORED = null,
+		public ?bool $IS_SENT = null,
+		public ?bool $IS_ERRORED = null,
 	) {}
 
 	function apply_filter(Select $sql): Select {
 		$this->apply_fields_with_values($sql, ['ID']);
 
 		$Cond = new Condition();
-		if($this->SENT)$Cond->add_condition('SENT_TIME IS NOT NULL', Condition::OR);
-		if($this->UNSENT)$Cond->add_condition('SENT_TIME IS NULL AND TRY_SENT = 0', Condition::OR);
-		if($this->ERRORED)$Cond->add_condition('SENT_TIME IS NULL AND TRY_SENT >= 1', Condition::OR);
+		if(isset($this->IS_SENT)){
+			$Cond->add_condition($this->IS_SENT ? 'SENT_TIME IS NOT NULL' : 'SENT_TIME IS NULL');
+		}
+
+		if(isset($this->IS_ERRORED)){
+			$Cond->add_condition($this->IS_ERRORED ? 'TRY_SENT > 0' : 'TRY_SENT = 0');
+		}
 
 		if($Cond->non_empty()){
 			$sql->Where($Cond);
