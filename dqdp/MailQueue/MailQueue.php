@@ -82,7 +82,7 @@ class MailQueue extends PHPMailer implements TransactionInterface
 
 		try {
 			if($this->smtpSend($r->MIME_HEADERS,$r->MIME_BODY)){
-				$sql = "UPDATE MAIL_QUEUE SET SENT_TIME = CURRENT_TIMESTAMP, ERROR_MSG = NULL WHERE ID = ?";
+				$sql = "UPDATE MAIL_QUEUE SET SENT_TIME = CURRENT_TIMESTAMP WHERE ID = ?";
 				$this->get_trans()->query($sql, $r->ID);
 
 				return true;
