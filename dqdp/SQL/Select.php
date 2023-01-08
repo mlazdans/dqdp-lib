@@ -282,7 +282,7 @@ class Select extends Statement
 
 		$lines[] = 'FROM';
 		foreach($this->fromParts as $k=>$v){
-			if(isset($this->fromArgCounts[$k])){
+			if(isset($this->fromArgCounts[$k]) && $this->fromArgCounts[$k]){
 				$parts[] = "$v(".qb_create_placeholders($this->fromArgCounts[$k]).")";
 			} else {
 				$parts[] = $v;
