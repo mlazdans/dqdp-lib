@@ -29,9 +29,9 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 	# TODO: SelectFields() or SelectOnly() or similar
 	protected function select(): Select {
 		if($TableName = $this->getTableName()){
-			return (new Select("$TableName.*"))->From($TableName);
+			return (new Select("*"))->From($TableName);
 		} elseif($TableName = $this->getProcName()){
-			return (new Select("$TableName.*"))->From($TableName)->withArgs($this->getProcArgs());
+			return (new Select("*"))->From($TableName)->withArgs($this->getProcArgs());
 		} else {
 			throw new InvalidArgumentException("Table not found");
 		}
