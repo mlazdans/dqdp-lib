@@ -17,4 +17,5 @@ interface EntityInterface {
 	function save(array|object $DATA): mixed;
 
 	function delete(int|string|array $ID);
+	function delete_multiple(array $IDS): bool;
 }

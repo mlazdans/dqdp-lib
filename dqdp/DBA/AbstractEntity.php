@@ -9,6 +9,7 @@ use dqdp\SQL\Condition;
 use dqdp\SQL\Insert;
 use dqdp\SQL\Select;
 use dqdp\SQL\Update;
+use dqdp\TODO;
 use InvalidArgumentException;
 
 // TODO: maybe do separate classes? ProcEntity, ReadOnlyEntity, etc
@@ -127,11 +128,6 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 
 		$PKSetInData = $this->_pk_in_data($DATA);
 
-		// if($update && !$PKSetInData){
-		// 	dumpr($DATA);
-		// 	throw new InvalidArgumentException("Primary key not set for $TableName");
-		// }
-
 		$PK = $this->getPK();
 		if(is_array($PK)){
 		} else {
@@ -179,6 +175,9 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 				$Where->add_condition(["$k = ?", $ID[$i]]);
 			}
 		} else {
+			if(is_array($ID)){
+				throw new InvalidArgumentException("Invalid type for primary key: ".get_multitype($ID));
+			}
 			$Where->add_condition(["$PK = ?", $ID]);
 		}
 
@@ -187,15 +186,31 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 		// $sql = (new Delete)->From($TableName)->Where($Where);
 
 		return $this->get_trans()->query($sql, ...$Where->getVars());
+	}
 
-		# TODO: delete_multiple
-		// $prep = $this->get_trans()->prepare("DELETE FROM $TableName WHERE $this->PK = ?");
-		// $ret = true;
-		// foreach(array_enfold($ID) as $id){
-		// 	$ret = $ret && $this->get_trans()->execute_prepared($prep, $id);
-		// }
+	function delete_multiple(array $IDS): bool {
+		if(is_null($TableName = $this->getTableName())){
+			throw new InvalidArgumentException("Table not found");
+		}
 
-		// return $ret;
+		if(is_null($PK = $this->getPK())){
+			throw new InvalidArgumentException("Primary key not set");
+		}
+
+		if(is_array($PK)){
+			new TODO("delete_multiple not implemented for array PK");
+		} else {
+			$sql = sprintf(
+				"DELETE FROM $TableName WHERE $PK IN (%s)",
+				qb_create_placeholders(count($IDS))
+			);
+
+			if($this->get_trans()->query($sql, ...$IDS)){
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	function set_trans(DBAInterface $dba): static {
