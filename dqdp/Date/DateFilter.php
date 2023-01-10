@@ -5,13 +5,48 @@ namespace dqdp\Date;
 use dqdp\StricStdObject;
 
 class DateFilter extends StricStdObject {
+	readonly ?string $START;
+	readonly ?string $END;
+	readonly ?int $YEAR;
+	readonly ?int $MONTH;
+	readonly ?Range $RANGE;
+
 	function __construct(
-		readonly ?string $START = null,
-		readonly ?string $END = null,
-		readonly ?int $YEAR = null,
-		readonly ?int $MONTH = null,
-		readonly ?Range $RANGE = null,
+		?string $START = null,
+		?string $END = null,
+		?int $YEAR = null,
+		?int $MONTH = null,
+		?Range $RANGE = null,
 	) {
+		if(isset($RANGE)){
+			$this->START = null;
+			$this->END = null;
+			if(in_array($RANGE, [Range::Q1, Range::Q2, Range::Q3, Range::Q4])){
+				$this->YEAR = $YEAR;
+			} else {
+				$this->YEAR = null;
+			}
+			$this->MONTH = null;
+			$this->RANGE = $RANGE;
+		} elseif(isset($MONTH)){
+			$this->START = null;
+			$this->END = null;
+			$this->YEAR = $YEAR;
+			$this->MONTH = $MONTH;
+			$this->RANGE = null;
+		} elseif(isset($YEAR)){
+			$this->START = null;
+			$this->END = null;
+			$this->YEAR = $YEAR;
+			$this->MONTH = null;
+			$this->RANGE = null;
+		} else {
+			$this->START = $START;
+			$this->END = $END;
+			$this->YEAR = null;
+			$this->MONTH = null;
+			$this->RANGE = null;
+		}
 	}
 
 	function to_range(): array {
