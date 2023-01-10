@@ -159,7 +159,7 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 		return null;
 	}
 
-	function delete(int|string|array $ID){
+	function delete(int|string|array $ID): bool {
 		if(is_null($TableName = $this->getTableName())){
 			throw new InvalidArgumentException("Table not found");
 		}
@@ -185,7 +185,7 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 		# TODO: dqdp\SQL\Statement
 		// $sql = (new Delete)->From($TableName)->Where($Where);
 
-		return $this->get_trans()->query($sql, ...$Where->getVars());
+		return $this->get_trans()->query($sql, ...$Where->getVars()) ? true : false;
 	}
 
 	function delete_multiple(array $IDS): bool {
