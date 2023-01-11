@@ -141,4 +141,12 @@ class MultiIterator implements Iterator, ArrayAccess, Countable {
 	function count(): int {
 		return count($this->data);
 	}
+
+	function toArray(): array {
+		return $this->data;
+	}
+
+	function has(mixed $e){
+		return in_array($e, $this->data);
+	}
 }
