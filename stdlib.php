@@ -1371,25 +1371,17 @@ function selected($v, $value): string {
 }
 
 function optioned($v, $value): string {
-	return sprintf(' value="%s"%s', $v, checked($v == $value));
+	return sprintf(' value="%s"%s', $v, checkedif($v == $value));
 }
 
-function checked(mixed $v): string {
+function checkedif(mixed $v): string {
 	return ($v ? ' checked' : '');
-}
-
-function checkeda(?array $a, $k): string {
-	return checked($a[$k]??null);
-}
-
-function checkedina(?array $a, mixed $v): string {
-	return is_null($a) ? "" : checked(in_array($v, $a));
 }
 
 # Hacking POST checkboxes
 function boolcheckbox($NAME, $checked): string {
 	$ret[] = sprintf('<input type=hidden value=0 name=%s>', $NAME);
-	$ret[] = sprintf('<input type=checkbox value=1 name=%s%s>', $NAME, checked($checked));
+	$ret[] = sprintf('<input type=checkbox value=1 name=%s%s>', $NAME, checkedif($checked));
 	return join("\n", $ret);
 }
 
