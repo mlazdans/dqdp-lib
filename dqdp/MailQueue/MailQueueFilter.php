@@ -3,16 +3,16 @@
 namespace dqdp\MailQueue;
 
 use dqdp\DBA\AbstractFilter;
+use dqdp\IntCollection;
 use dqdp\SQL\Condition;
 use dqdp\SQL\Select;
-use InvalidArgumentException;
 
 class MailQueueFilter extends AbstractFilter {
 	function __construct(
 		public ?int $ID = null,
 		public ?bool $IS_SENT = null,
 		public ?bool $IS_ERRORED = null,
-		public ?array $MQ_IDS = null,
+		public ?IntCollection $MQ_IDS = new IntCollection,
 	) {}
 
 	function apply_filter(Select $sql): Select {
@@ -27,10 +27,7 @@ class MailQueueFilter extends AbstractFilter {
 			$Cond->add_condition($this->IS_ERRORED ? 'TRY_SENT > 0' : 'TRY_SENT = 0');
 		}
 
-		if($this->MQ_IDS !== null){
-			if(empty($this->MQ_IDS)){
-				throw new InvalidArgumentException('Norādīts tukšs $MQ_IDS[]');
-			}
+		if(count($this->MQ_IDS)){
 			$sql->WhereIn("ID", $this->MQ_IDS);
 		}
 
