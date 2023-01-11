@@ -80,7 +80,12 @@ class MultiIterator implements Iterator, ArrayAccess, Countable {
 	}
 
 	function offsetUnset(mixed $k): void {
-		unset_prop($this->data, $k);
+		unset($this->data[$k]);
+		// if(is_string($k) || is_int($k)){
+		// 	unset_prop($this->data, $k);
+		// } else {
+		// 	throw new InvalidTypeException($k);
+		// }
 		// if(is_array($this->data)){
 		// 	unset($this->data[$offset]);
 		// } elseif($this->data instanceof Generator) {
