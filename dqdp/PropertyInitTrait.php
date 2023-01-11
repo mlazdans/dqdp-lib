@@ -75,6 +75,10 @@ trait PropertyInitTrait {
 				return ($TypeName)::initFrom($v);
 			}
 
+			if(is_subclass_of($TypeName, '\dqdp\Collection')){
+				return new $TypeName($v);
+			}
+
 			return $v;
 		} else {
 			throw new InvalidArgumentException("Unsupported Reflection type: ".get_class($Type));
