@@ -8,17 +8,23 @@ use Generator;
 use Iterator;
 
 class MultiIterator implements Iterator, ArrayAccess, Countable {
-	private $data = null;
+	private $data = [];
 
 	function __construct(array|object|null $data = null){
 		if(is_null($data)){
 			$this->data = [];
-		} elseif(is_array($data)){
-			$this->data = $data;
-		} elseif($data instanceof ArrayAccess){
-			$this->data = clone $data;
+		} elseif(is_array($data) || $data instanceof ArrayAccess){
+			foreach($data as $k=>$v){
+				$this[$k] = $v;
+			}
+			// $this->data = $data;
+		// } elseif($data instanceof ArrayAccess){
+		// 	$this->data = clone $data;
 		} elseif(is_object($this->data)){
-			$this->data = get_object_vars($data);
+			// $this->data = get_object_vars($data);
+			foreach(get_object_vars($data) as $k=>$v){
+				$this[$k] = $v;
+			}
 		} elseif($this->data instanceof Generator) {
 			new TODO("Implement and test");
 		} else {
