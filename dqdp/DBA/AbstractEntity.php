@@ -189,28 +189,35 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 	}
 
 	function delete_multiple(array $IDS): bool {
-		if(is_null($TableName = $this->getTableName())){
-			throw new InvalidArgumentException("Table not found");
-		}
-
-		if(is_null($PK = $this->getPK())){
-			throw new InvalidArgumentException("Primary key not set");
-		}
-
-		if(is_array($PK)){
-			new TODO("delete_multiple not implemented for array PK");
-		} else {
-			$sql = sprintf(
-				"DELETE FROM $TableName WHERE $PK IN (%s)",
-				qb_create_placeholders(count($IDS))
-			);
-
-			if($this->get_trans()->query($sql, ...$IDS)){
-				return true;
+		foreach($IDS as $ID){
+			if(!$this->delete($ID)){
+				return false;
 			}
 		}
 
-		return false;
+		return true;
+		// if(is_null($TableName = $this->getTableName())){
+		// 	throw new InvalidArgumentException("Table not found");
+		// }
+
+		// if(is_null($PK = $this->getPK())){
+		// 	throw new InvalidArgumentException("Primary key not set");
+		// }
+
+		// if(is_array($PK)){
+		// 	new TODO("delete_multiple not implemented for array PK");
+		// } else {
+		// 	$sql = sprintf(
+		// 		"DELETE FROM $TableName WHERE $PK IN (%s)",
+		// 		qb_create_placeholders(count($IDS))
+		// 	);
+
+		// 	if($this->get_trans()->query($sql, ...$IDS)){
+		// 		return true;
+		// 	}
+		// }
+
+		// return false;
 	}
 
 	function set_trans(DBAInterface $dba): static {
