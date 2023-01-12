@@ -204,8 +204,8 @@ class IBase implements DBAInterface
 		return ibase_escape($v);
 	}
 
-	function with_new_trans(callable $func, ...$args): mixed {
-		$tr = $this->tr;
+	function withNewTrans(callable $func, ...$args): mixed {
+		$old_tr = $this->tr;
 		$this->new_trans(...$args);
 		try {
 			if(!$this->tr){
@@ -219,29 +219,7 @@ class IBase implements DBAInterface
 			if(empty($result)){
 				$this->rollback();
 			}
-			$this->tr = $tr;
-		}
-
-		return $result;
-	}
-
-	function inTransaction(callable $func, ...$args): mixed {
-		if(!$this->tr){
-			$this->new_trans(...$args);
-		}
-
-		try {
-			if(!$this->tr){
-				throw new Error("Could not initiate transaction");
-			}
-
-			if($result = $func($this)){
-				$this->commit_ret();
-			}
-		} finally {
-			if(empty($result) && $this->tr){
-				$this->rollback_ret();
-			}
+			$this->tr = $old_tr;
 		}
 
 		return $result;
