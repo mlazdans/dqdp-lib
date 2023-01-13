@@ -18,10 +18,13 @@ class Decimal {
 				$this->value = number_format($value, $scale, '.', '');
 			} elseif(empty($value)){
 				// $this->value = null;
-			} else {
+			} elseif(is_string($value)) {
+				if(strpos($value, ',') !== false){
+					$value = str_replace(',', '.', $value);
+				}
 				$this->value = number_format((float)$value, $scale, '.', '');
 				if($this->value != $value){
-					throw new InvalidArgumentException("Expected decimal, found: ".get_multitype($value)." with value $value");
+					throw new InvalidArgumentException("Expected decimal, found: ".get_multitype($value)." with value: $value");
 				}
 			}
 		}
