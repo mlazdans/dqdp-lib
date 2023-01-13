@@ -71,11 +71,11 @@ trait PropertyInitTrait {
 				}
 			}
 
-			if(method_exists($TypeName, "initFrom")){
+			if(is_subclass_of($TypeName, PropertyInitInterface::class)){
 				return ($TypeName)::initFrom($v);
 			}
 
-			if(is_subclass_of($TypeName, '\dqdp\Collection')){
+			if(is_subclass_of($TypeName, Collection::class)){
 				return new $TypeName($v);
 			}
 
