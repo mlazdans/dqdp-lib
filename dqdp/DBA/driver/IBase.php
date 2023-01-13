@@ -204,7 +204,7 @@ class IBase implements DBAInterface
 		return ibase_escape($v);
 	}
 
-	function withNewTrans(callable $func, ...$args): mixed {
+	function with_new_trans(callable $func, ...$args): mixed {
 		$old_tr = $this->tr;
 		$this->new_trans(...$args);
 		try {
