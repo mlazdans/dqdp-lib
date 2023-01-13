@@ -19,12 +19,13 @@ class Decimal {
 			} elseif(empty($value)){
 				// $this->value = null;
 			} elseif(is_string($value)) {
-				if(strpos($value, ',') !== false){
-					$value = str_replace(',', '.', $value);
+				$ovalue = $value;
+				if(($pos = strpos($value, ',')) !== false){
+					$value[$pos] = '.';
 				}
 				$this->value = number_format((float)$value, $scale, '.', '');
 				if($this->value != $value){
-					throw new InvalidArgumentException("Expected decimal, found: ".get_multitype($value)." with value: $value");
+					throw new InvalidArgumentException("Expected decimal, found: ".get_multitype($value)." with value: $ovalue");
 				}
 			}
 		}
