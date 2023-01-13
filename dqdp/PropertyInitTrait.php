@@ -27,6 +27,10 @@ trait PropertyInitTrait {
 			return null;
 		}
 
+		if(method_exists(static::class, "init$k")){
+			return static::{"init$k"}($v);
+		}
+
 		$Reflection = new ReflectionProperty(static::class, $k);
 		$Type = $Reflection->getType();
 
