@@ -2,7 +2,7 @@
 
 namespace dqdp;
 
-class StricStdObject implements \Countable, \ArrayAccess, \IteratorAggregate, ParametersConstructor
+class StricStdObject implements \Countable, \ArrayAccess, \IteratorAggregate, ParametersConstructor, PropertyInitInterface
 {
 	use PropertyInitTrait;
 
