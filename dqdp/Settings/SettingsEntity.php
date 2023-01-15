@@ -2,7 +2,7 @@
 
 namespace dqdp\Settings;
 
-class Entity extends \dqdp\DBA\AbstractEntity
+class SettingsEntity extends \dqdp\DBA\AbstractEntity
 {
 	use SettingsEntityTrait;
 	// static function getDataType(): string {

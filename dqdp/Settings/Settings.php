@@ -47,10 +47,10 @@ CREATE TABLE settings
 class Settings implements TransactionInterface
 {
 	protected array $DB_STRUCT = [];
-	protected Entity $Ent;
+	protected SettingsEntity $Ent;
 
 	function __construct(protected string $Domain){
-		$this->Ent = new Entity;
+		$this->Ent = new SettingsEntity;
 	}
 
 	function load() {
