@@ -17,7 +17,7 @@ class Decimal {
 			if(is_float($value)){
 				$this->value = number_format($value, $scale, '.', '');
 			} elseif(empty($value)){
-				// $this->value = null;
+				$this->value = "";
 			} elseif(is_string($value)) {
 				$ovalue = $value;
 				if(($pos = strpos($value, ',')) !== false){
