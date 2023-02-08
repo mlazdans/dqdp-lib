@@ -81,10 +81,10 @@ abstract class AbstractFilter extends StricStdObject implements EntityFilterInte
 				continue;
 			}
 
-			if(is_array($this->$k)){
-				$sql->WhereIn("$prefix$k", $this->$k);
-			} elseif(is_scalar($this->$k)) {
+			if(is_scalar($this->$k)) {
 				$sql->Where(["$prefix$k = ?", $this->$k]);
+			} elseif(is_array($this->$k) || is_iterable($this->$k)){
+				$sql->WhereIn("$prefix$k", $this->$k);
 			} else {
 				throw new InvalidTypeException($this->$k);
 			}
