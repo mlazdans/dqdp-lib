@@ -5,6 +5,7 @@ namespace dqdp;
 use InvalidArgumentException;
 use ReflectionNamedType;
 use ReflectionProperty;
+use ReflectionUnionType;
 
 trait PropertyInitTrait {
 	function initPoperty(string|int $k, mixed $v): void {
@@ -22,6 +23,57 @@ trait PropertyInitTrait {
 		return static::initFrom($defaults, get_class_public_vars(static::class));
 	}
 
+	static function initValueByType(string $TypeName, mixed $v): mixed {
+		switch($TypeName){
+			case "int": {
+				if(is_int($v)){
+					return $v;
+				}
+				if(strlen($v)){
+					return (int)$v;
+				} else {
+					return null;
+				}
+				// if((int)$v != $v){
+				// 	throw new InvalidArgumentException("Expected $k to be int, found: ".gettype($v)." '$v'");
+				// }
+				// return (int)$v;
+			}
+			case "string": {
+				return (string)$v;
+			}
+			case "bool": {
+				return (bool)$v;
+			}
+			// case "array": {
+			// 	if(is_array($v)){
+			// 		return $v;
+			// 	} else {
+			// 	}
+			// }
+		};
+
+		if(enum_exists($TypeName)){
+			if($v instanceof $TypeName || !method_exists($TypeName, "from")){
+				return $v;
+			} else {
+				return $TypeName::tryFrom($v);
+			}
+		}
+
+		if(is_array($v) || is_object($v) || is_null($v)){
+			if(is_subclass_of($TypeName, PropertyInitInterface::class)){
+				return ($TypeName)::initFrom($v);
+			}
+
+			if(is_subclass_of($TypeName, Collection::class)){
+				return new $TypeName($v);
+			}
+		}
+
+		throw new InvalidTypeException($v);
+	}
+
 	static function initValue(string|int $k, mixed $v): mixed {
 		if(is_null($v)){
 			return null;
@@ -34,56 +86,15 @@ trait PropertyInitTrait {
 		$Reflection = new ReflectionProperty(static::class, $k);
 		$Type = $Reflection->getType();
 
-		# TODO: implement union and intersaction type checks
 		if($Type instanceof ReflectionNamedType) {
-			$TypeName = $Type->getName();
-
-			switch($TypeName){
-				case "int": {
-					if(is_int($v)){
-						return $v;
-					}
-					if(strlen($v)){
-						return (int)$v;
-					} else {
-						return null;
-					}
-					// if((int)$v != $v){
-					// 	throw new InvalidArgumentException("Expected $k to be int, found: ".gettype($v)." '$v'");
-					// }
-					// return (int)$v;
-				}
-				case "string": {
-					return (string)$v;
-				}
-				case "bool": {
-					return (bool)$v;
-				}
-				// case "array": {
-				// 	if(is_array($v)){
-				// 		return $v;
-				// 	} else {
-				// 	}
-				// }
-			};
-
-			if(enum_exists($TypeName)){
-				if($v instanceof $TypeName || !method_exists($TypeName, "from")){
-					return $v;
-				} else {
-					return $TypeName::tryFrom($v);
+			return static::initValueByType($Type->getName(), $v);
+		} elseif($Type instanceof ReflectionUnionType) {
+			foreach($Type->getTypes() as $T){
+				try {
+					return static::initValueByType($T->getName(), $v);
+				} catch(InvalidTypeException) {
 				}
 			}
-
-			if(is_subclass_of($TypeName, PropertyInitInterface::class)){
-				return ($TypeName)::initFrom($v);
-			}
-
-			if(is_subclass_of($TypeName, Collection::class)){
-				return new $TypeName($v);
-			}
-
-			return $v;
 		} else {
 			throw new InvalidArgumentException("Unsupported Reflection type: ".get_class($Type));
 		}
