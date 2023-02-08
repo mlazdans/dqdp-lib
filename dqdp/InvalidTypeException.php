@@ -10,6 +10,6 @@ class InvalidTypeException extends \InvalidArgumentException {
 			$s .= " ".$msg;
 		}
 
-		throw new \InvalidArgumentException($s);
+		parent::__construct($s);
 	}
 }
