@@ -10,6 +10,7 @@
 namespace dqdp\DBA;
 
 use dqdp\DBA\interfaces\EntityFilterInterface;
+use dqdp\InvalidTypeException;
 use dqdp\SQL\Select;
 use dqdp\StricStdObject;
 
@@ -76,8 +77,16 @@ abstract class AbstractFilter extends StricStdObject implements EntityFilterInte
 
 	protected function apply_fields_with_values(Select $sql, array $fields, string $prefix = null): Select {
 		foreach($fields as $k){
-			if(!empty($this->$k)){
+			if(empty($this->$k)){
+				continue;
+			}
+
+			if(is_array($this->$k)){
+				$sql->WhereIn("$prefix$k", $this->$k);
+			} elseif(is_scalar($this->$k)) {
 				$sql->Where(["$prefix$k = ?", $this->$k]);
+			} else {
+				throw new InvalidTypeException($this->$k);
 			}
 		}
 
