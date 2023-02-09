@@ -142,7 +142,7 @@ function __search_sql(string $q, array $fields, callable $fn){
 	return $MainCond;
 }
 
-function search_to_sql($q, $fields, $minWordLen = 0){
+function search_to_sql($q, $fields, $minWordLen = 0): array {
 	$words = parse_search_q($q, $minWordLen);
 	if(!is_array($fields)){
 		$fields = array($fields);
@@ -164,9 +164,10 @@ function search_to_sql($q, $fields, $minWordLen = 0){
 		if($tmp)
 			$match .= "($tmp) AND ";
 	}
-	$match = substr($match, 0, -5);
-	if($match){
+
+	if($match = substr($match, 0, -5)){
 		return ["($match)", $values];
+	} else {
+		return ["", []];
 	}
-	return ["", []];
 }
