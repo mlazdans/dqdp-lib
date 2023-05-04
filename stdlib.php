@@ -1744,6 +1744,24 @@ function prepend_path(string $path, string $cmd): string {
 	}
 }
 
+function chrometopdf($HTML){
+	// chrome --headless --disable-gpu --print-to-pdf=test.pdf https://norgate.lv/
+	$in = tempnam(sys_get_temp_dir(), 'pdi').'.html';
+	$out = tempnam(sys_get_temp_dir(), 'pdo');
+	file_put_contents($in, $HTML);
+
+	$args = [
+		"--headless",
+		"--print-to-pdf=".($out), ($in)
+	];
+	$chrometopdf = prepend_path(constant('CHROME_BIN'), "chrome");
+
+	$a = proc_exec('"'.$chrometopdf.'"', $args, $HTML);
+	$a[1] = file_get_contents($out);
+
+	return $a;
+}
+
 function wkhtmltopdf($HTML){
 	$args = ["-", "-"];
 	$wkhtmltopdf = prepend_path(constant('WKHTMLTOPDF_BIN'), "wkhtmltopdf");
