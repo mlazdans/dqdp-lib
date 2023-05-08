@@ -1238,30 +1238,57 @@ function get_server_protocol(){
 	return $_ENV['SERVER_PROTOCOL']??($_SERVER['SERVER_PROTOCOL']??'');
 }
 
-function __header(int $code, string $msg_header, string $msg_display = null): void {
+// function __header(int $code, string $msg_header, string $msg_display = null): void
+function __header(int $code, string $msg_header): void
+{
 	$SERVER_PROTOCOL = get_server_protocol();
 
 	header("$SERVER_PROTOCOL $code $msg_header", true, $code);
-	if($msg_display){
-		print "<h1>$msg_display</h1>";
-	}
+	// if($msg_display){
+	// 	print "<h1>$msg_display</h1>";
+	// }
 }
 
 function header403($msg = "Forbidden"){
-	__header(403, "Forbidden", $msg);
+	__header(403, $msg);
 }
 
 function header404($msg = "Not Found"){
-	__header(404, "Not Found", $msg);
+	__header(404, $msg);
 }
 
 function header410($msg = "Gone"){
-	__header(410, "Gone", $msg);
+	__header(410, $msg);
 }
 
 function header503($msg = "Server error"){
-	__header(503, "Server error", $msg);
+	__header(503, $msg);
 }
+
+// function __header(int $code, string $msg_header, string $msg_display = null): void {
+// 	$SERVER_PROTOCOL = get_server_protocol();
+
+// 	header("$SERVER_PROTOCOL $code $msg_header", true, $code);
+// 	if($msg_display){
+// 		print "<h1>$msg_display</h1>";
+// 	}
+// }
+
+// function header403($msg = "Forbidden"){
+// 	__header(403, "Forbidden", $msg);
+// }
+
+// function header404($msg = "Not Found"){
+// 	__header(404, "Not Found", $msg);
+// }
+
+// function header410($msg = "Gone"){
+// 	__header(410, "Gone", $msg);
+// }
+
+// function header503($msg = "Server error"){
+// 	__header(503, "Server error", $msg);
+// }
 
 function proc_date(string $date){
 	$D = ['šodien', 'vakar', 'aizvakar'];
