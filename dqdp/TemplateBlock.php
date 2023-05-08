@@ -160,8 +160,8 @@ class TemplateBlock
 			if($attribute == 'disabled'){
 				$block->attr_disabled = $value;
 			}
+			return $block;
 		}
-		return $this;
 	}
 
 	# TODO: test vai remove?
