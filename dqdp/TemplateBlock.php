@@ -2,9 +2,6 @@
 
 namespace dqdp;
 
-use InvalidArgumentException;
-use ParseError;
-
 define('TMPL_APPEND', true);
 
 class TemplateBlock
@@ -39,7 +36,7 @@ class TemplateBlock
 			return $block;
 		}
 
-		throw new InvalidArgumentException("block not found ($ID)");
+		throw new \Error("block not found: $ID");
 	}
 
 	function parse_block(string $ID, bool $append = false): string {
@@ -87,7 +84,7 @@ class TemplateBlock
 			return $block->vars;
 		}
 
-		throw new InvalidArgumentException("block not found ($ID)");
+		throw new \Error("block not found: $ID");
 	}
 
 	function get_parsed_content(string $ID = NULL): string {
@@ -95,7 +92,7 @@ class TemplateBlock
 			return $block->parsed_content;
 		}
 
-		throw new InvalidArgumentException("block not found ($ID)");
+		throw new \Error("block not found: $ID");
 	}
 
 	function get_var(string $var_id, string $ID = NULL){
@@ -117,7 +114,7 @@ class TemplateBlock
 			return $block;
 		}
 
-		throw new InvalidArgumentException("block not found ($ID)");
+		throw new \Error("block not found: $ID");
 	}
 
 	function set_array(iterable $array, string $ID = NULL): TemplateBlock {
@@ -129,7 +126,7 @@ class TemplateBlock
 			return $block;
 		}
 
-		throw new InvalidArgumentException("block not found ($ID)");
+		throw new \Error("block not found: $ID");
 	}
 
 	function set_except(array $exclude, array $data, string $ID = NULL): TemplateBlock {
@@ -142,7 +139,7 @@ class TemplateBlock
 			return $block;
 		}
 
-		throw new InvalidArgumentException("block not found ($ID)");
+		throw new \Error("block not found: $ID");
 	}
 
 	function reset(string $ID = NULL): TemplateBlock {
@@ -156,7 +153,7 @@ class TemplateBlock
 			return $block;
 		}
 
-		throw new InvalidArgumentException("block not found ($ID)");
+		throw new \Error("block not found: $ID");
 	}
 
 	function enable_if(bool $cond, string $ID = NULL): TemplateBlock {
@@ -180,7 +177,7 @@ class TemplateBlock
 			return $block;
 		}
 
-		throw new InvalidArgumentException("block not found ($ID)");
+		throw new \Error("block not found: $ID");
 	}
 
 	# TODO: test vai remove?
@@ -221,7 +218,7 @@ class TemplateBlock
 			return $block;
 		}
 
-		throw new InvalidArgumentException("block not found ($ID)");
+		throw new \Error("block not found: $ID");
 	}
 
 	function dump_blocks($pre = ''){
@@ -282,7 +279,7 @@ class TemplateBlock
 				return substr($value, -6) === '_ERROR';
 			  }, ARRAY_FILTER_USE_KEY))[preg_last_error()];
 
-			throw new ParseError(sprintf("template compilation failure $this->ID (%s)", $err));
+			throw new \ParseError(sprintf("template compilation failure $this->ID (%s)", $err));
 		}
 
 		$striped_offset = 0;
@@ -292,7 +289,7 @@ class TemplateBlock
 
 			if(isset($this->blocks[$id])){
 				$content_offset = (int)$item[$m_CONTENTS][1];
-				throw new InvalidArgumentException(
+				throw new \Error(
 					sprintf("block already exists ($id), at %d near: '%s'",
 					$item[$m_WHOLE][1],
 					substr($this->content, $content_offset - 20, 40))
