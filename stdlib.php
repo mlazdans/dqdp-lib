@@ -1866,15 +1866,18 @@ function split_words(string $q){
 	return preg_split('/\s+/', trim($q));
 }
 
-function is_valid_host(string $host){
+function is_valid_host(string $host): bool {
 	$testip = gethostbyname($host);
-	$test1 = ip2long($testip);
-	$test2 = long2ip($test1);
+	if($test1 = ip2long($testip)){
+		$test2 = long2ip($test1);
+	} else {
+		$test2 = false;
+	}
 
 	return ($testip == $test2);
 }
 
-function is_valid_email(string $email){
+function is_valid_email(string $email): bool {
 	$parts = explode('@', $email);
 
 	if(count($parts) != 2){
