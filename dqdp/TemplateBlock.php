@@ -20,7 +20,7 @@ class TemplateBlock
 	private $parsed_content = '';         // XXX: ja uzliek type, tad baigi lēns!!!
 	private ?TemplateBlock $parent = null;
 
-	function __construct(TemplateBlock $parent = NULL, string $ID, string $content){
+	function __construct(TemplateBlock $parent = null, string $ID, string $content){
 		$this->ID = $ID;
 		$this->parent = $parent;
 		$this->content = $content;
@@ -79,7 +79,7 @@ class TemplateBlock
 		return $parsed_content;
 	}
 
-	function get_vars(string $ID = NULL): array {
+	function get_vars(string $ID = null): array {
 		if($block = $this->_get_block_or_self($ID)){
 			return $block->vars;
 		}
@@ -87,7 +87,7 @@ class TemplateBlock
 		throw new \Error("block not found: $ID");
 	}
 
-	function get_parsed_content(string $ID = NULL): string {
+	function get_parsed_content(string $ID = null): string {
 		if($block = $this->_get_block_or_self($ID)){
 			return $block->parsed_content;
 		}
@@ -95,7 +95,7 @@ class TemplateBlock
 		throw new \Error("block not found: $ID");
 	}
 
-	function get_var(string $var_id, string $ID = NULL){
+	function get_var(string $var_id, string $ID = null){
 		if($block = $this->_get_block_or_self($ID)){
 			if(isset($block->vars[$var_id])) {
 				return $block->vars[$var_id];
@@ -104,10 +104,10 @@ class TemplateBlock
 			}
 		}
 
-		return NULL;
+		throw new \Error("block not found: $ID");
 	}
 
-	function set_var(string $var_id, $value, string $ID = NULL): TemplateBlock {
+	function set_var(string $var_id, $value, string $ID = null): TemplateBlock {
 		if($block = $this->_get_block_or_self($ID)){
 			$block->vars[$var_id] = $value;
 
@@ -117,7 +117,7 @@ class TemplateBlock
 		throw new \Error("block not found: $ID");
 	}
 
-	function set_array(iterable $array, string $ID = NULL): TemplateBlock {
+	function set_array(iterable $array, string $ID = null): TemplateBlock {
 		if($block = $this->_get_block_or_self($ID)){
 			foreach($array as $k=>$v){
 				$block->vars[$k] = $v;
@@ -129,7 +129,7 @@ class TemplateBlock
 		throw new \Error("block not found: $ID");
 	}
 
-	function set_except(array $exclude, array $data, string $ID = NULL): TemplateBlock {
+	function set_except(array $exclude, array $data, string $ID = null): TemplateBlock {
 		if($block = $this->_get_block_or_self($ID)){
 			$diff = array_diff(array_keys($data), $exclude);
 			foreach($diff as $k){
@@ -142,7 +142,7 @@ class TemplateBlock
 		throw new \Error("block not found: $ID");
 	}
 
-	function reset(string $ID = NULL): TemplateBlock {
+	function reset(string $ID = null): TemplateBlock {
 		if($block = $this->_get_block_or_self($ID)){
 			$block->parsed_content = '';
 			$block->parsed_count = 0;
@@ -156,19 +156,19 @@ class TemplateBlock
 		throw new \Error("block not found: $ID");
 	}
 
-	function enable_if(bool $cond, string $ID = NULL): TemplateBlock {
+	function enable_if(bool $cond, string $ID = null): TemplateBlock {
 		return $this->set_attribute('disabled', !$cond, $ID);
 	}
 
-	function enable(string $ID = NULL): TemplateBlock {
+	function enable(string $ID = null): TemplateBlock {
 		return $this->set_attribute('disabled', false, $ID);
 	}
 
-	function disable(string $ID = NULL): TemplateBlock {
+	function disable(string $ID = null): TemplateBlock {
 		return $this->set_attribute('disabled', true, $ID);
 	}
 
-	function set_attribute(string $attribute, $value, string $ID = NULL): TemplateBlock {
+	function set_attribute(string $attribute, $value, string $ID = null): TemplateBlock {
 		if($block = $this->_get_block_or_self($ID)){
 			if($attribute == 'disabled'){
 				$block->attr_disabled = $value;
@@ -210,8 +210,8 @@ class TemplateBlock
 	// 	return true;
 	// }
 
-	function set_block_string(string $ID, string $content): TemplateBlock {
-		if($block = $this->get_block($ID)){
+	function set_block_string(string $content, string $ID = null): TemplateBlock {
+		if($block = $this->_get_block_or_self($ID)){
 			$block->parsed_content = $content;
 			$block->parsed_count = 1;
 
