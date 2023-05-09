@@ -102,6 +102,8 @@ class TemplateBlock
 			} elseif($block->parent) {
 				return $block->parent->get_var($var_id);
 			}
+
+			return null;
 		}
 
 		throw new \Error("block not found: $ID");
