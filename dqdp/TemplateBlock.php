@@ -131,6 +131,21 @@ class TemplateBlock
 		throw new \Error("block not found: $ID");
 	}
 
+	# TODO: unify set_only() set_array() set_except()
+	function set_only(array $include, array $data, string $ID = null): TemplateBlock {
+		if($block = $this->_get_block_or_self($ID)){
+			foreach($include as $k){
+				if(isset($data[$k])){
+					$block->vars[$k] = $data[$k];
+				}
+			}
+
+			return $block;
+		}
+
+		throw new \Error("block not found: $ID");
+	}
+
 	function set_except(array $exclude, array $data, string $ID = null): TemplateBlock {
 		if($block = $this->_get_block_or_self($ID)){
 			$diff = array_diff(array_keys($data), $exclude);
