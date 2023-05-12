@@ -1,41 +1,50 @@
-<?php
-
-declare(strict_types = 1);
+<?php declare(strict_types = 1);
 
 namespace dqdp\DBA\driver;
 
-use dqdp\DBA\DBA;
-use dqdp\DBA\Table;
-use dqdp\DBA\DBAException;
-use dqdp\SQL\Insert;
+use dqdp\DBA\interfaces\DBAInterface;
+use dqdp\DBA\Types\MySQLConnectParams;
+use Error;
 use Exception;
 use PDO;
+use PDOStatement;
 
-class MySQL_PDO extends DBA
+class MySQL_PDO implements DBAInterface
 {
-	var ?PDO $conn;
+	private ?PDO $conn;
 	protected $transactionCounter = 0;
 	protected $row_count;
 
-	function connect_params($params){
-		$host = $params['host'] ?? 'localhost';
-		$username = $params['username'] ?? '';
-		$password = $params['password'] ?? '';
-		$database = $params['database'] ?? '';
-		$charset = $params['charset'] ?? 'utf8';
-		$port = $params['port'] ?? 3306;
-
-		return $this->connect($host, $username, $password, $database, $charset, $port);
+	function __construct(private MySQLConnectParams $params)
+	{
 	}
 
-	function connect($host = null, $username = null, $password = null, $database = null, $charset = null, $port = null){
-		$dsn = [];
-		if($host)$dsn[]= "host=$host";
-		if($database)$dsn[]= "dbname=$database";
-		if($charset)$dsn[]= "charset=$charset";
-		if($port)$dsn[]= "port=$port";
+	// function connect_params($params){
+	// 	$host = $params['host'] ?? 'localhost';
+	// 	$username = $params['username'] ?? '';
+	// 	$password = $params['password'] ?? '';
+	// 	$database = $params['database'] ?? '';
+	// 	$charset = $params['charset'] ?? 'utf8';
+	// 	$port = $params['port'] ?? 3306;
 
-		$this->conn = new PDO("mysql:".join(";", $dsn), $username, $password);
+	// 	return $this->connect($host, $username, $password, $database, $charset, $port);
+	// }
+
+	function get_conn(): mixed
+	{
+		return $this->conn;
+	}
+
+	// function connect($host = null, $username = null, $password = null, $database = null, $charset = null, $port = null){
+	function connect()
+	{
+		$dsn = [];
+		if($this->params->host)$dsn[]= "host=".$this->params->host;
+		if($this->params->database)$dsn[]= "dbname=".$this->params->database;
+		if($this->params->charset)$dsn[]= "charset=".$this->params->charset;
+		if($this->params->port)$dsn[]= "port=".$this->params->port;
+
+		$this->conn = new PDO("mysql:".join(";", $dsn), $this->params->username, $this->params->password);
 		//$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
 		$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		$this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
@@ -44,25 +53,25 @@ class MySQL_PDO extends DBA
 		return $this;
 	}
 
-	private function __execute($f, ...$args){
-		$q = $this->query(...$args);
-		if($q && $q->columnCount()){
-			$data = $this->$f($q);
-		}
+	// private function __execute($f, ...$args){
+	// 	$q = $this->query(...$args);
+	// 	if($q && $q->columnCount()){
+	// 		$data = $this->$f($q);
+	// 	}
 
-		# ja selekteejam datus, tad atgriezam tos, savaadaak querija rezultaatu
-		return isset($data) ? $data : $q;
-	}
+	// 	# ja selekteejam datus, tad atgriezam tos, savaadaak querija rezultaatu
+	// 	return isset($data) ? $data : $q;
+	// }
+
+	// function execute(){
+	// 	return $this->__execute("fetch_all", ...func_get_args());
+	// }
+
+	// function execute_single(){
+	// 	return $this->__execute("fetch", ...func_get_args());
+	// }
 
 	function execute(){
-		return $this->__execute("fetch_all", ...func_get_args());
-	}
-
-	function execute_single(){
-		return $this->__execute("fetch", ...func_get_args());
-	}
-
-	function execute_prepared(){
 		throw new Exception("Not implemented");
 	}
 
@@ -70,7 +79,7 @@ class MySQL_PDO extends DBA
 		$args = func_get_args();
 
 		try {
-			if($this->is_dqdp_statement($args)){
+			if(is_dqdp_statement($args)){
 				if($q = $this->prepare($args[0])){
 					$q->execute($args[0]->vars());
 				}
@@ -94,24 +103,31 @@ class MySQL_PDO extends DBA
 				return $q;
 			}
 
-			throw new DBAException("Invalid query");
+			throw new Error("Invalid query");
 		} finally {
-			if($q){
+			if(!empty($q)){
 				$this->row_count = $q->rowCount();
 			}
 		}
 	}
 
-	function fetch_assoc(){
-		list($q) = func_get_args();
+	function fetch_array(...$args): array|null {
+		/** @var PDOStatement */ list($q) = func_get_args();
 
-		return $q->Fetch(PDO::FETCH_ASSOC);
+		return ($o = $q->Fetch(PDO::FETCH_NUM)) ? $o : null;
 	}
 
-	function fetch_object(){
+	function fetch_assoc(...$args): array|null {
+		/** @var PDOStatement */ list($q) = func_get_args();
 		list($q) = func_get_args();
 
-		return $q->Fetch(PDO::FETCH_OBJ);
+		return ($o = $q->Fetch(PDO::FETCH_ASSOC)) ? $o : null;
+	}
+
+	function fetch_object(): object|null {
+		/** @var PDOStatement */ list($q) = func_get_args();
+
+		return ($o = $q->Fetch(PDO::FETCH_OBJ)) ? $o : null;
 	}
 
 	// function trans(){
@@ -140,6 +156,9 @@ class MySQL_PDO extends DBA
 	function new_trans(){
 		$this->conn->beginTransaction();
 		$this->transactionCounter++;
+
+		# TODO: nested transactions
+		// $this->conn->exec("SAVEPOINT trans $this->transactionCounter");
 
 		return $this;
 	}
@@ -175,7 +194,7 @@ class MySQL_PDO extends DBA
 	function prepare(){
 		$args = func_get_args();
 
-		if($this->is_dqdp_statement($args)){
+		if(is_dqdp_statement($args)){
 			return $this->conn->prepare((string)$args[0]);
 		} else {
 			return $this->conn->prepare(...$args);
@@ -186,62 +205,70 @@ class MySQL_PDO extends DBA
 		return trim($this->conn->quote($v), "'");
 	}
 
-	function save(iterable $DATA, Table $Table){
-		$sql_fields = (array)merge_only($Table->getFields(), $DATA);
+	// function save(iterable $DATA, Table $Table){
+	// 	$sql_fields = (array)merge_only($Table->getFields(), $DATA);
 
-		$PK = $Table->getPK();
-		if(!is_array($PK)){
-			$PK_val = get_prop($DATA, $PK);
-			if(is_null($PK_val)){
-			} else {
-				$sql_fields[$PK] = $PK_val;
+	// 	$PK = $Table->getPK();
+	// 	if(!is_array($PK)){
+	// 		$PK_val = get_prop($DATA, $PK);
+	// 		if(is_null($PK_val)){
+	// 		} else {
+	// 			$sql_fields[$PK] = $PK_val;
+	// 		}
+	// 	}
+
+	// 	$sql = (new Insert)
+	// 	->Into($Table->getName())
+	// 	->Values($sql_fields)
+	// 	->Update();
+
+	// 	if($this->query($sql)){
+	// 		if(is_array($PK)){
+	// 			foreach($PK as $k){
+	// 				$ret[] = get_prop($DATA, $k);
+	// 			}
+	// 			return $ret??[];
+	// 		} else {
+	// 			if(empty($sql_fields[$PK])){
+	// 				return $this->mysql_last_id();
+	// 			} else {
+	// 				return $sql_fields[$PK];
+	// 			}
+	// 		}
+	// 	} else {
+	// 		return false;
+	// 	}
+	// }
+
+	// private function mysql_last_id(){
+	// 	return get_prop($this->execute_single("SELECT LAST_INSERT_ID() AS last_id"), 'last_id');
+	// }
+
+	// function with_new_trans(callable $func, ...$args){
+	// 	$this->new_trans();
+	// 	if($result = $func($this, ...$args)){
+	// 		$this->commit();
+	// 	} else {
+	// 		$this->rollback();
+	// 	}
+
+	// 	return $result;
+	// }
+
+	function with_new_trans(callable $func, ...$args): mixed {
+		// $old_tr = $this->tr;
+		$this->new_trans(...$args);
+		try {
+			if($result = $func($this)){
+				$this->commit();
 			}
-		}
-
-		$sql = (new Insert)
-		->Into($Table->getName())
-		->Values($sql_fields)
-		->Update();
-
-		if($this->query($sql)){
-			if(is_array($PK)){
-				foreach($PK as $k){
-					$ret[] = get_prop($DATA, $k);
-				}
-				return $ret??[];
-			} else {
-				if(empty($sql_fields[$PK])){
-					return $this->mysql_last_id();
-				} else {
-					return $sql_fields[$PK];
-				}
+		} finally {
+			if(empty($result)){
+				$this->rollback();
 			}
-		} else {
-			return false;
-		}
-	}
-
-	private function mysql_last_id(){
-		return get_prop($this->execute_single("SELECT LAST_INSERT_ID() AS last_id"), 'last_id');
-	}
-
-	function with_new_trans(callable $func, ...$args){
-		$this->new_trans();
-		if($result = $func($this, ...$args)){
-			$this->commit();
-		} else {
-			$this->rollback();
 		}
 
 		return $result;
-	}
-
-	function insert(iterable $DATA, Table $Table){
-		throw new Exception("TODO");
-	}
-
-	function update($ID, iterable $DATA, Table $Table){
-		throw new Exception("TODO");
 	}
 
 }
