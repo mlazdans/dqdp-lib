@@ -270,4 +270,8 @@ class MySQL_PDO implements DBAInterface
 		return $result;
 	}
 
+	function last_insert_id()
+	{
+		return $this->conn->lastInsertId();
+	}
 }
