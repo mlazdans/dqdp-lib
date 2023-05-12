@@ -83,16 +83,11 @@ class MySQL_PDO implements DBAInterface
 
 		try {
 			if(is_dqdp_statement($args)){
-				if($q = $this->prepare($args[0])){
-					$q->execute($args[0]->vars());
+				/** @var \dqdp\SQL\Statement */
+				$s = $args[0];
+				if($q = $this->prepare($s)){
+					$q->execute($s->getVars());
 				}
-			// } elseif($args[0] instanceof PDOStatement) {
-			// 	$q = $args[0];
-			// 	$q->execute($args[1]);
-			// } elseif(count($args) == 2) {
-			// 	if($q = $this->prepare($args[0])){
-			// 		$q->execute($args[1]);
-			// 	}
 			} elseif(count($args) == 1) {
 				$q = $this->conn->query(...$args);
 			} else {
