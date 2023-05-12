@@ -12,9 +12,9 @@ interface DBAInterface
 	function fetch_array(): array|null;
 	function fetch_assoc(): array|null;
 	function fetch_object(): object|null;
-	// function execute();
+	function execute();
 	// function execute_single();
-	// function prepare();
+	function prepare();
 	// function execute();
 	function new_trans();
 	function commit(): bool;

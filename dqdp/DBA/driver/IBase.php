@@ -57,7 +57,7 @@ class IBase implements DBAInterface
 	// 	return $this->__execute("fetch_object", ...func_get_args());
 	// }
 
-	function execute_prepared(){
+	function execute(){
 		return ibase_execute(...func_get_args());
 	}
 
