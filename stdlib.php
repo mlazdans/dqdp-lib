@@ -861,6 +861,13 @@ function printr(){
 }
 
 function __pre_wrapper(callable $func, ...$args){
+	global $DQDP_DEBUG;
+
+	if(isset($DQDP_DEBUG) && !$DQDP_DEBUG)
+	{
+		return;
+	}
+
 	print is_climode() ? "\n" : '<pre style="background: gainsboro; color: black">';
 
 	print ($t = debug_backtrace()) ? __back_trace_fmt($t[1])."\n------------------------------------------------------------------------------\n" : '';
