@@ -93,7 +93,7 @@ class MySQL_PDO implements DBAInterface
 			} elseif(count($args) == 1) {
 				$q = $this->conn->query(...$args);
 			} else {
-				if($q = $this->prepare(array_shift($args))){
+				if($q = $this->conn->prepare(array_shift($args))){
 					$q->execute($args);
 				}
 				// $q = $this->conn->query(...$args);
