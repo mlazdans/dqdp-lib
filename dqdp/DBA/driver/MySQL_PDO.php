@@ -119,7 +119,6 @@ class MySQL_PDO implements DBAInterface
 
 	function fetch_assoc(...$args): array|null {
 		/** @var PDOStatement */ list($q) = func_get_args();
-		list($q) = func_get_args();
 
 		return ($o = $q->Fetch(PDO::FETCH_ASSOC)) ? $o : null;
 	}
