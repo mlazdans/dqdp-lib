@@ -71,8 +71,11 @@ class MySQL_PDO implements DBAInterface
 	// 	return $this->__execute("fetch", ...func_get_args());
 	// }
 
-	function execute(){
-		throw new Exception("Not implemented");
+	function execute()
+	{
+		$args = func_get_args();
+		$q = array_shift($args);
+		return $q->execute($args);
 	}
 
 	function query(){
@@ -111,13 +114,13 @@ class MySQL_PDO implements DBAInterface
 		}
 	}
 
-	function fetch_array(...$args): array|null {
+	function fetch_array(): array|null {
 		/** @var PDOStatement */ list($q) = func_get_args();
 
 		return ($o = $q->Fetch(PDO::FETCH_NUM)) ? $o : null;
 	}
 
-	function fetch_assoc(...$args): array|null {
+	function fetch_assoc(): array|null {
 		/** @var PDOStatement */ list($q) = func_get_args();
 
 		return ($o = $q->Fetch(PDO::FETCH_ASSOC)) ? $o : null;
