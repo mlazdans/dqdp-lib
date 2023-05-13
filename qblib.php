@@ -1,6 +1,8 @@
 <?php declare(strict_types = 1);
 
 use dqdp\SQL\Condition;
+use dqdp\SQL\ConditionAnd;
+use dqdp\SQL\ConditionOr;
 
 /**
  * Query builder lib
@@ -54,15 +56,15 @@ function search_to_sql_cond($q, $fields, $minWordLen = 0, $options = []){
 		$Cond = new Condition();
 		foreach($fields as $field){
 			if(empty($options['wordboundary'])){
-				$Cond->add_condition(["$field CONTAINING ?", $word], Condition::OR);
+				$Cond->add_condition(["$field CONTAINING ?", $word], new ConditionOr);
 				// $Cond->add_condition(["UPPER($field) LIKE ?", "%".$word."%"], Condition::OR);
 			} else {
 				# MySQL specific?? Abstract!
-				$Cond->add_condition(["UPPER($field) REGEXP ?", '([[:blank:][:punct:]]|^)'.$word.'([[:blank:][:punct:]]|$)'], Condition::OR);
+				$Cond->add_condition(["UPPER($field) REGEXP ?", '([[:blank:][:punct:]]|^)'.$word.'([[:blank:][:punct:]]|$)'], new ConditionOr);
 				// $Cond->add_condition(["UPPER($field) REGEXP ?", "[[:<:]]".$word."[[:>:]]"], Condition::OR);
 			}
 		}
-		$MainCond->add_condition($Cond, Condition::AND);
+		$MainCond->add_condition($Cond, new ConditionAnd);
 	}
 
 	return $MainCond;
@@ -112,11 +114,11 @@ function build_sql(iterable $fields, array|object|null $DATA = null, $skip_nulls
 }
 
 function search_fn_ci($word, $field, $Cond){
-	$Cond->add_condition(["UPPER($field) LIKE ?", "%".mb_strtoupper($word)."%"], Condition::OR);
+	$Cond->add_condition(["UPPER($field) LIKE ?", "%".mb_strtoupper($word)."%"], new ConditionOr);
 }
 
 function search_fn_nci($word, $field, $Cond){
-	$Cond->add_condition(["$field LIKE ?", "%".$word."%"], Condition::OR);
+	$Cond->add_condition(["$field LIKE ?", "%".$word."%"], new ConditionOr);
 }
 
 function search_sql(string $q, array $fields, callable $fn = null){
@@ -124,7 +126,7 @@ function search_sql(string $q, array $fields, callable $fn = null){
 }
 
 function search_fn_nci_binary($word, $field, $Cond){
-	$Cond->add_condition(["UPPER(CONVERT($field USING utf8)) LIKE ?", "%".mb_strtoupper($word)."%"], Condition::OR);
+	$Cond->add_condition(["UPPER(CONVERT($field USING utf8)) LIKE ?", "%".mb_strtoupper($word)."%"], new ConditionOr);
 }
 
 function __search_sql(string $q, array $fields, callable $fn){
@@ -136,7 +138,7 @@ function __search_sql(string $q, array $fields, callable $fn){
 		foreach($fields as $field){
 			($fn)($word, $field, $Cond);
 		}
-		$MainCond->add_condition($Cond, Condition::AND);
+		$MainCond->add_condition($Cond, new ConditionAnd);
 	}
 
 	return $MainCond;

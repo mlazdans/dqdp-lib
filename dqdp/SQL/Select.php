@@ -154,8 +154,8 @@ class Select extends Statement
 		return $this;
 	}
 
-	function Where(mixed $condition): static {
-		$this->whereParts->add_condition($condition);
+	function Where(...$args): static {
+		$this->whereParts->add_condition(...$args);
 		return $this;
 	}
 

@@ -4,18 +4,11 @@ namespace dqdp\SQL;
 
 class Condition extends Statement
 {
-	const AND = 1;
-	const OR = 2;
-
-	var $Type = Condition::AND;
+	var ConditionType $Type;
 	var $Condition = '';
 	var $Conditions = [];
-	// var $Vars = [];
 
-	# __construct($type = Condition::AND)
-	# __construct($str = '', $type = Condition::AND)
-	# TODO: sameklēt kodā vietas ar vienu parametru - Condition::AND|Condition::OR
-	function __construct(array|string $C = null, int $Type = Condition::AND){
+	function __construct(array|string $C = null, ConditionType $Type = new ConditionAnd){
 		$this->Type = $Type;
 
 		if(is_null($C)){
@@ -30,49 +23,9 @@ class Condition extends Statement
 		}
 	}
 
-	// function __construct(){
-	// 	$acount = func_num_args();
-	// 	$aval = func_get_args();
-
-	// 	if($acount == 0) {
-	// 	} elseif(gettype($aval[0]) == 'array'){
-	// 		$this->Condition = $aval[0][0];
-	// 		for($i=1; $i<count($aval[0]);$i++){
-	// 			$this->add_vars($aval[0][$i]);
-	// 			//$this->Vars[] = $aval[0][$i];
-	// 		}
-	// 		if(isset($aval[1])){
-	// 			$this->Type = $aval[1];
-	// 		}
-	// 	} elseif(($acount == 1) && (($aval[0] === Condition::AND) || ($aval[0] === Condition::OR))){
-	// 		# __construct($type = Condition::AND)
-	// 		$this->Type = $aval[0];
-	// 	} elseif(($acount == 1)){
-	// 		# __construct($str = '')
-	// 		$this->Condition = $aval[0];
-	// 	} elseif($acount == 2) {
-	// 		$this->Condition = $aval[0];
-	// 		$this->Type = $aval[1];
-	// 	} else {
-	// 		trigger_error("Wrong parameter count", E_USER_WARNING);
-	// 	}
-	// }
-
 	static function ao($type){
-		return $type === Condition::OR ? " OR " : " AND ";
+		return $type instanceof ConditionOr ? " OR " : " AND ";
 	}
-
-	//static function factory($condition, $type = Condition::AND){
-	// static function factory(){
-	// 	$args = func_get_args();
-	// 	$condition = $args[0]??null;
-
-	// 	if((gettype($condition) != 'object') || (get_class($condition) != 'dqdp\SQL\Condition')){
-	// 		return new Condition(...$args);
-	// 	} else {
-	// 		return $condition;
-	// 	}
-	// }
 
 	static function parse_conditions(array $conditions): string {
 		$line = '';

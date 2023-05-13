@@ -40,8 +40,8 @@ class Update extends Statement
 		return $this;
 	}
 
-	function Where(mixed $condition): static {
-		$this->Where->add_condition($condition);
+	function Where(...$args): static {
+		$this->Where->add_condition(...$args);
 		return $this;
 	}
 

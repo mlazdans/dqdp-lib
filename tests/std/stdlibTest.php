@@ -1,6 +1,7 @@
 <?php
 
 use dqdp\SQL\Condition;
+use dqdp\SQL\ConditionOr;
 use dqdp\StdObject;
 use PHPUnit\Framework\TestCase;
 
@@ -14,7 +15,7 @@ class stdlibTest extends TestCase
 
 	function test_sql_select2() {
 		$MainCond = __search_sql("a b c", ["field1", "field2"], function($word, $field, $Cond){
-			$Cond->add_condition(["$field LIKE ?", "%".$word."%"], Condition::OR);
+			$Cond->add_condition(["$field LIKE ?", "%".$word."%"], new ConditionOr);
 		});
 		//printr((string)$MainCond, $MainCond->vars());
 		$this->assertTrue($MainCond == "((field1 LIKE ? OR field2 LIKE ?) AND (field1 LIKE ? OR field2 LIKE ?) AND (field1 LIKE ? OR field2 LIKE ?))");
