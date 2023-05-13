@@ -1057,11 +1057,11 @@ function get_inner_html($node){
 	return $innerHTML;
 }
 
-function ip_rev($ip){
+function ip_rev(string $ip): string {
 	return implode('.', array_reverse(explode('.', $ip)));
 }
 
-function ip_blacklisted($ip){
+function ip_blacklisted(string $ip): bool {
 	$dnsbl = ['bl.blocklist.de', 'xbl.spamhaus.org', 'cbl.abuseat.org', 'all.s5h.net'];
 
 	$iprev = ip_rev($ip);
@@ -2313,4 +2313,48 @@ function stringwrap(callable $f): callable {
 			return $item;
 		}
 	};
+}
+
+function mysql_password(string $p): string {
+	return "*".strtoupper(sha1(sha1($p, true)));
+}
+
+// https://onlinephp.io/code/a7a66c7e4b79b52aaa9f948fc8b8f23fe2644492
+function hex_hash2bin(string $hex): string {
+	$bin = "";
+	$len = strlen($hex);
+	for ($i = 0; $i < $len; $i += 2) {
+		$byte_hex  = substr($hex, $i, 2);
+		$byte_dec  = hexdec($byte_hex);
+		$byte_char = chr($byte_dec);
+		$bin .= $byte_char;
+	}
+
+	return $bin;
+}
+
+function mysql_old_password(string $input, $hex = true): string {
+	$nr    = 1345345333;
+	$add   = 7;
+	$nr2   = 0x12345671;
+	$tmp   = null;
+	$inlen = strlen($input);
+	for ($i = 0; $i < $inlen; $i++) {
+		$byte = substr($input, $i, 1);
+		if ($byte == ' ' || $byte == "\t") {
+			continue;
+		}
+		$tmp = ord($byte);
+		$nr ^= ((($nr & 63) + $add) * $tmp) + (($nr << 8) & 0xFFFFFFFF);
+		$nr2 += (($nr2 << 8) & 0xFFFFFFFF) ^ $nr;
+		$add += $tmp;
+	}
+	$out_a  = $nr & ((1 << 31) - 1);
+	$out_b  = $nr2 & ((1 << 31) - 1);
+	$output = sprintf("%08x%08x", $out_a, $out_b);
+	if ($hex) {
+		return $output;
+	}
+
+	return hex_hash2bin($output);
 }
