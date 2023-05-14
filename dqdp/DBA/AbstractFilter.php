@@ -30,6 +30,24 @@ abstract class AbstractFilter extends StricStdObject implements EntityFilterInte
 		return static::initFrom($this, $F);
 	}
 
+	function orderBy(string $order): static
+	{
+		$this->ORDER_BY = $order;
+		return $this;
+	}
+
+	function rows(int $rows): static
+	{
+		$this->ROWS = $rows;
+		return $this;
+	}
+
+	function offset(int $offset): static
+	{
+		$this->OFFSET = $offset;
+		return $this;
+	}
+
 	// protected function applay_default_filters(Select $sql, $DATA, array $defaults, $prefix = null): Select {
 	// 	if(is_null($prefix)){
 	// 		$prefix = "$this->Table.";
@@ -94,6 +112,18 @@ abstract class AbstractFilter extends StricStdObject implements EntityFilterInte
 	protected function apply_set_fields(Select $sql, array $fields, string $prefix = null): Select {
 		foreach($fields as $k){
 			if(isset($this->$k)){
+				$sql->Where(["$prefix$k = ?", $this->$k]);
+			}
+		}
+
+		return $sql;
+	}
+
+	# var <type 1>|...|<type n>|bool $this->$k
+	# false indicates ignore field
+	protected function apply_falsed_fields(Select $sql, array $fields, string $prefix = null): Select {
+		foreach($fields as $k){
+			if($this->$k !== false) {
 				$sql->Where(["$prefix$k = ?", $this->$k]);
 			}
 		}
