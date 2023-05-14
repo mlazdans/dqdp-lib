@@ -45,7 +45,7 @@ function sql_add_filter(&$filter, &$values, $newf){
 	}
 }
 
-function search_to_sql_cond($q, $fields, $minWordLen = 0, $options = []){
+function search_to_sql_cond(string $q, array|string $fields, int $minWordLen = 0, array $options = []): Condition {
 	$words = parse_search_q($q, $minWordLen);
 	if(!is_array($fields)){
 		$fields = array($fields);
