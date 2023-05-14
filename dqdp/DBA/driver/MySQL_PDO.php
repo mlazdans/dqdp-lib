@@ -272,4 +272,9 @@ class MySQL_PDO implements DBAInterface
 	{
 		return $this->conn->lastInsertId();
 	}
+
+	function get_params(): MySQLConnectParams
+	{
+		return $this->params;
+	}
 }
