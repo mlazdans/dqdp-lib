@@ -24,6 +24,8 @@ class Update extends Statement
 	 * */
 	function Set(...$args): static {
 		if(count($args) == 1){
+			# TODO: merge object/array
+			# TODO: ->Set("aa = bb");
 			if(is_object($args[0])){
 				$this->Values = get_object_vars($args[0]);
 			} elseif(is_array($args[0])){

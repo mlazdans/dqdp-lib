@@ -19,6 +19,7 @@ class Select extends Statement
 	protected array         $groupByParts    = [];
 	protected Condition     $whereParts;
 
+	# TODO: sync with ->Select()
 	function __construct(string|Select $fromFields = null){
 		$this->ResetWhere();
 		if($fromFields){
