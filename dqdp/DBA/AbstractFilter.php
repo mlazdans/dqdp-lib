@@ -15,13 +15,11 @@ use dqdp\SQL\Select;
 use dqdp\StricStdObject;
 
 abstract class AbstractFilter extends StricStdObject implements EntityFilterInterface {
-	abstract function apply_filter(Select $sql): Select;
+	protected ?string $ORDER_BY = null;
+	protected ?int $ROWS = null;
+	protected ?int $OFFSET = null;
 
-	function __construct(
-		public ?string $ORDER_BY = null,
-		public ?int $ROWS = null,
-		public ?int $OFFSET = null
-	) { }
+	abstract protected function apply_filter(Select $sql): Select;
 
 	final function apply(Select $sql): Select {
 		$this->apply_filter($sql);
