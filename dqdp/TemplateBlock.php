@@ -120,9 +120,13 @@ class TemplateBlock
 	}
 
 	function set_array(iterable $array, string $ID = null): TemplateBlock {
+		return $this->set_array_prefix("", $array, $ID);
+	}
+
+	function set_array_prefix(string $prefix, iterable $array, string $ID = null): TemplateBlock {
 		if($block = $this->_get_block_or_self($ID)){
 			foreach($array as $k=>$v){
-				$block->vars[$k] = $v;
+				$block->vars[$prefix.$k] = $v;
 			}
 
 			return $block;
