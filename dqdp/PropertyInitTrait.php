@@ -6,6 +6,7 @@ use InvalidArgumentException;
 use ReflectionNamedType;
 use ReflectionProperty;
 use ReflectionUnionType;
+use TypeError;
 
 trait PropertyInitTrait {
 	function initPoperty(string|int $k, mixed $v): void {
@@ -29,6 +30,8 @@ trait PropertyInitTrait {
 				if(is_int($v)){
 					return $v;
 				}
+				# TODO: cast tikai vajadzētu piemērot, kad iziets cauri visiem ReflectionUnionType tipiem
+				# piemēram, var būt tips int|false|string
 				if(strlen($v)){
 					return (int)$v;
 				} else {
@@ -42,7 +45,10 @@ trait PropertyInitTrait {
 			case "string": {
 				return (string)$v;
 			}
-			case "bool": {
+			case "bool":
+			case "false":
+			case "true":
+			{
 				return (bool)$v;
 			}
 			// case "array": {
@@ -93,6 +99,7 @@ trait PropertyInitTrait {
 				try {
 					return static::initValueByType($T->getName(), $v);
 				} catch(InvalidTypeException) {
+				} catch(TypeError){
 				}
 			}
 		} else {
