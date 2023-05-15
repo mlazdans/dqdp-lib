@@ -31,4 +31,7 @@ abstract class AbstractTypeGenerator
 
 	// Returns primary key if any
 	abstract function getPK(): string|array|null;
+
+	// Returns folder path to store generated code
+	abstract function getOutputFolder(): string;
 }
