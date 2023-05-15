@@ -385,7 +385,7 @@ function ibase_get_privileges(Ibase $db, $PARAMS = null): array {
 	return $ret;
 }
 
-function get_relation_fields(IBase $db, string $table): mixed {
+function ibase_get_relation_fields(IBase $db, string $table): mixed {
 	$sql = 'SELECT rf.*,
 		f.RDB$FIELD_SUB_TYPE,
 		f.RDB$FIELD_TYPE,
@@ -412,7 +412,7 @@ function get_relation_fields(IBase $db, string $table): mixed {
 	return $ret??[];
 }
 
-function get_proc_fields(IBase $db, string $proc): mixed {
+function ibase_get_proc_fields(IBase $db, string $proc): mixed {
 	$sql = 'SELECT pp.*,
 	f.RDB$FIELD_SUB_TYPE,
 	f.RDB$FIELD_TYPE,
@@ -439,7 +439,7 @@ ORDER BY pp.RDB$PARAMETER_NUMBER';
 	return $ret??[];
 }
 
-function get_proc_args(IBase $db, string $proc): mixed {
+function ibase_get_proc_args(IBase $db, string $proc): mixed {
 	$sql = 'SELECT pp.*,
 	f.RDB$FIELD_SUB_TYPE,
 	f.RDB$FIELD_TYPE,
