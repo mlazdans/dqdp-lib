@@ -109,6 +109,10 @@ class Insert extends Statement
 			$lines[] = join(",", $v_fields);
 		}
 
+		if($this->returningParts){
+			$lines[] = "RETURNING ".join(",", $this->returningParts);
+		}
+
 		return $lines;
 	}
 
