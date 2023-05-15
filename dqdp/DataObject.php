@@ -26,4 +26,26 @@ abstract class DataObject implements \IteratorAggregate, TraversableConstructor,
 	function getIterator(): \Traversable {
 		return new \ArrayIterator($this);
 	}
+
+	# TODO: varbūt kādreiz ieslēgt implements \ArrayAccess
+	// function offsetExists(mixed $offset): bool
+	// {
+	// 	return property_exists($this, $offset);
+	// }
+
+	// function offsetGet(mixed $offset): mixed
+	// {
+	// 	return $this->{$offset};
+
+	// }
+
+	// function offsetSet(mixed $offset, mixed $value): void
+	// {
+	// 	$this->{$offset} = $value;
+	// }
+
+	// function offsetUnset(mixed $offset): void
+	// {
+	// 	unset($this->$offset);
+	// }
 }
