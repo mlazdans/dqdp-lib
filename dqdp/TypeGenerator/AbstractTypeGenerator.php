@@ -27,5 +27,8 @@ abstract class AbstractTypeGenerator
 	abstract function getFields(): FieldInfoCollection;
 
 	// Returns procedure args information. See more @FieldInfoType
-	abstract function getProcArgs(): FieldInfoCollection;
+	abstract function getProcArgs(): ?FieldInfoCollection;
+
+	// Returns primary key if any
+	abstract function getPK(): string|array|null;
 }
