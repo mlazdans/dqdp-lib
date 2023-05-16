@@ -754,6 +754,7 @@ function php_self(){
 	return $_SERVER['REQUEST_URI'] ?? '';
 }
 
+# TODO: query klasē
 function queryl($format = '', $allowed = []){
 	return __query($_SERVER['QUERY_STRING'] ?? '', $format, '&', $allowed);
 }
@@ -2231,6 +2232,7 @@ function parse_query_string(string $qs): array {
 	$pairs = explode('&', $qs);
 	foreach($pairs as $kv){
 		$parts = explode('=', $kv);
+		# TODO: $qs jau var būt dekodēts!
 		$k = isset($parts[0]) ? urldecode($parts[0]) : false;
 		$v = isset($parts[1]) ? urldecode($parts[1]) : false;
 
