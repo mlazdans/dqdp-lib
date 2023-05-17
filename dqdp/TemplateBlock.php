@@ -139,6 +139,14 @@ class TemplateBlock
 		throw new \Error("block not found: $ID");
 	}
 
+	function set_object(object $o, string $ID = null): TemplateBlock {
+		return $this->set_object_prefix("", $o, $ID);
+	}
+
+	function set_object_prefix(string $prefix, object $data, string $ID = null): TemplateBlock {
+		return $this->set_array_prefix($prefix, get_object_vars($data), $ID);
+	}
+
 	# TODO: unify set_only() set_array() set_except()
 	function set_only(array $include, array $data, string $ID = null): TemplateBlock {
 		if($block = $this->_get_block_or_self($ID)){
