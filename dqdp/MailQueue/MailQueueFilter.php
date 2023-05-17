@@ -15,7 +15,7 @@ class MailQueueFilter extends AbstractFilter {
 		public ?IntCollection $MQ_IDS = new IntCollection,
 	) {}
 
-	function apply_filter(Select $sql): Select {
+	protected function apply_filter(Select $sql): Select {
 		$this->apply_fields_with_values($sql, ['ID']);
 
 		$Cond = new Condition();
