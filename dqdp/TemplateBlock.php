@@ -1,5 +1,9 @@
 <?php declare(strict_types = 1);
 
+// To enable syntax highlighting in FAR
+// add .tpl to hrc\inet\html.hrc in
+// C:\Program Files\Far Manager\Plugins\FarColorer\base\common.zip
+
 namespace dqdp;
 
 define('TMPL_APPEND', true);
