@@ -15,9 +15,11 @@ use dqdp\SQL\Select;
 use dqdp\StricStdObject;
 
 abstract class AbstractFilter extends StricStdObject implements EntityFilterInterface {
-	protected ?string $ORDER_BY = null;
-	protected ?int $ROWS = null;
-	protected ?int $OFFSET = null;
+	protected ?string $ORDER_BY    = null;
+	protected ?int $ROWS           = null;
+	protected ?int $OFFSET         = null;
+	protected ?int $PAGE           = null;
+	protected ?int $ITEMS_PER_PAGE = null;
 
 	abstract protected function apply_filter(Select $sql): Select;
 
@@ -36,16 +38,43 @@ abstract class AbstractFilter extends StricStdObject implements EntityFilterInte
 		return $this;
 	}
 
+	function getOrderBy(): ?string
+	{
+		return $this->ORDER_BY;
+	}
+
 	function rows(int $rows): static
 	{
 		$this->ROWS = $rows;
 		return $this;
 	}
 
+	function getRows(): ?int
+	{
+		return $this->ROWS;
+	}
+
 	function offset(int $offset): static
 	{
 		$this->OFFSET = $offset;
 		return $this;
+	}
+
+	function getOffset(): ?int
+	{
+		return $this->OFFSET;
+	}
+
+	function page(int $page, int $items_per_page): static
+	{
+		$this->PAGE = $page;
+		$this->ITEMS_PER_PAGE = $items_per_page;
+		return $this;
+	}
+
+	function getPage(): array
+	{
+		return [$this->PAGE, $this->ITEMS_PER_PAGE];
 	}
 
 	// protected function applay_default_filters(Select $sql, $DATA, array $defaults, $prefix = null): Select {
@@ -142,6 +171,10 @@ abstract class AbstractFilter extends StricStdObject implements EntityFilterInte
 
 		if(isset($this->OFFSET)){
 			$sql->Offset($this->OFFSET);
+		}
+
+		if(isset($this->PAGE) && isset($this->ITEMS_PER_PAGE)){
+			$sql->Page($this->PAGE, $this->ITEMS_PER_PAGE);
 		}
 
 		return $sql;
