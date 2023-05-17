@@ -150,11 +150,19 @@ class TemplateBlock
 		throw new \Error("block not found: $ID");
 	}
 
-	function set_except(array $exclude, array $data, string $ID = null): TemplateBlock {
+	function set_except(array $exclude, object|array $data, string $ID = null): TemplateBlock {
 		if($block = $this->_get_block_or_self($ID)){
-			$diff = array_diff(array_keys($data), $exclude);
-			foreach($diff as $k){
-				$block->vars[$k] = $data[$k];
+			$exclude = array_flip($exclude);
+			if(is_object($data)){
+				$props = array_keys(get_object_vars($data));
+			} else {
+				$props = array_keys($data);
+			}
+
+			foreach($props as $k){
+				if(!isset($exclude[$k])){
+					$block->vars[$k] = get_prop($data, $k);
+				}
 			}
 
 			return $block;
