@@ -3,6 +3,7 @@
 use dqdp\SQL\Condition;
 use dqdp\SQL\ConditionAnd;
 use dqdp\SQL\ConditionOr;
+use dqdp\SQL\SQL;
 
 /**
  * Query builder lib
@@ -54,10 +55,19 @@ function search_to_sql_cond(string $q, array|string $fields, int $minWordLen = 0
 	$MainCond = new Condition();
 	foreach($words as $word){
 		$Cond = new Condition();
+		# TODO: abstract/optimize
+		if(SQL::$lex == "mysql"){
+			$word = str_replace(['%', '_'], ['\%', '\_'], $word);
+		}
+
 		foreach($fields as $field){
 			if(empty($options['wordboundary'])){
-				$Cond->add_condition(["$field CONTAINING ?", $word], new ConditionOr);
-				// $Cond->add_condition(["UPPER($field) LIKE ?", "%".$word."%"], Condition::OR);
+				# TODO: abstract/optimize
+				if(SQL::$lex == "mysql"){
+					$Cond->add_condition(["$field LIKE ?", "%$word%"], new ConditionOr);
+				} else {
+					$Cond->add_condition(["$field CONTAINING ?", $word], new ConditionOr);
+				}
 			} else {
 				# MySQL specific?? Abstract!
 				$Cond->add_condition(["UPPER($field) REGEXP ?", '([[:blank:][:punct:]]|^)'.$word.'([[:blank:][:punct:]]|$)'], new ConditionOr);
