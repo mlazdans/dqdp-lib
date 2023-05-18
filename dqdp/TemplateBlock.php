@@ -123,11 +123,11 @@ class TemplateBlock
 		throw new \Error("block not found: $ID");
 	}
 
-	function set_array(iterable $array, string $ID = null): TemplateBlock {
-		return $this->set_array_prefix("", $array, $ID);
+	function set_array(array|object $array, string $ID = null): TemplateBlock {
+		return $this->set_with_prefix("", $array, $ID);
 	}
 
-	function set_array_prefix(string $prefix, iterable $array, string $ID = null): TemplateBlock {
+	function set_with_prefix(string $prefix, array|object $array, string $ID = null): TemplateBlock {
 		if($block = $this->_get_block_or_self($ID)){
 			foreach($array as $k=>$v){
 				$block->vars[$prefix.$k] = $v;
@@ -139,16 +139,7 @@ class TemplateBlock
 		throw new \Error("block not found: $ID");
 	}
 
-	function set_object(object $o, string $ID = null): TemplateBlock {
-		return $this->set_object_prefix("", $o, $ID);
-	}
-
-	function set_object_prefix(string $prefix, object $data, string $ID = null): TemplateBlock {
-		return $this->set_array_prefix($prefix, get_object_vars($data), $ID);
-	}
-
-	# TODO: unify set_only() set_array() set_except()
-	function set_only(array $include, array $data, string $ID = null): TemplateBlock {
+	function set_only(array $include, array|object $data, string $ID = null): TemplateBlock {
 		if($block = $this->_get_block_or_self($ID)){
 			foreach($include as $k){
 				if(isset($data[$k])){
