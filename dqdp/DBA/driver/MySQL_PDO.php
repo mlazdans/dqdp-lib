@@ -75,7 +75,8 @@ class MySQL_PDO implements DBAInterface
 	{
 		$args = func_get_args();
 		$q = array_shift($args);
-		return $q->execute($args);
+		$q->execute($args);
+		return $q;
 	}
 
 	function query(){
