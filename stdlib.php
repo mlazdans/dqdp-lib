@@ -1298,21 +1298,23 @@ function header503($msg = "Server error"){
 // 	__header(503, "Server error", $msg);
 // }
 
-function proc_date(string $date){
+function proc_date(string $date)
+{
 	$D = ['šodien', 'vakar', 'aizvakar'];
 	$M = ['janvārī', 'februārī', 'martā', 'aprīlī', 'maijā', 'jūnijā', 'jūlijā', 'augustā', 'septembrī', 'oktobrī', 'novembrī', 'decembrī'];
 
 	$date_now = date("Y:m:j:H:i");
-	list($y0, $m0, $d0, $h0, $min0) = to_int(explode(":", date("Y:m:j:H:i", strtotime($date))));
-	list($y1, $m1, $d1, $h1, $min1) = to_int(explode(":", $date_now));
-	// mktime ( [int hour [, int minute [, int second [, int month [, int day [, int year [, int is_dst]]]]]]])
-	$dlong0 = mktime($h0, $min0, 0, $m0, $d0, $y0);
-	$dlong1 = mktime($h1, $min1, 0, $m1, $d1, $y1);
+
+	list($y0, $m0, $d0, $h0, $min0) = explode(":", date("Y:m:j:H:i", strtotime($date)));
+	list($y1, $m1, $d1, $h1, $min1) = explode(":", $date_now);
+
+	$dlong0 = mktime((int)$h0, (int)$min0, 0, (int)$m0, (int)$d0, (int)$y0);
+	$dlong1 = mktime((int)$h1, (int)$min1, 0, (int)$m1, (int)$d1, (int)$y1);
 	$diff = date('z', $dlong1) - date('z', $dlong0);
+
 	$retdate = '';
 
-	if( ($diff < 3) && ($y1 == $y0) )
-	//if( ($diff < 3) /*&& ($y1 == $y0)*/ )
+	if(($diff < 3) && ($y1 == $y0))
 	{
 		$retdate .= $D[$diff];
 	} else {
@@ -1321,8 +1323,7 @@ function proc_date(string $date){
 		$retdate.= "$d0. ".$M[$m0 - 1];
 	}
 
-	//if((integer)$h0 || (integer)$min0)
-		$retdate .= ", plkst. $h0:$min0";
+	$retdate .= ", plkst. $h0:$min0";
 
 	return $retdate;
 }
