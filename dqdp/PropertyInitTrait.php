@@ -47,9 +47,12 @@ trait PropertyInitTrait {
 			}
 			case "bool":
 			case "false":
-			case "true":
-			{
+			case "true": {
 				return (bool)$v;
+			}
+			case "double":
+			case "float": {
+				return (float)$v;
 			}
 			// case "array": {
 			// 	if(is_array($v)){
