@@ -2360,3 +2360,7 @@ function mysql_old_password(string $input, $hex = true): string {
 
 	return hex_hash2bin($output);
 }
+
+function request_method(): ?string {
+	return $_SERVER['REQUEST_METHOD'] ?? null;
+}
