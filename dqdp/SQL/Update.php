@@ -8,6 +8,7 @@ use dqdp\InvalidTypeException;
 class Update extends Statement
 {
 	protected string $Table;
+	protected array $Sets = [];
 	protected array $Values = [];
 	protected array $returningParts = [];
 	protected Condition $Where;
@@ -21,12 +22,14 @@ class Update extends Statement
 	 * Usage:
 	 *   Set(["field"=>"value"]);
 	 *   Set("field", "value");
+	 *   Set("field = value");
 	 * */
 	function Set(...$args): static {
 		if(count($args) == 1){
 			# TODO: merge object/array
-			# TODO: ->Set("aa = bb");
-			if(is_object($args[0])){
+			if(is_string($args[0])){
+				$this->Sets[] = $args[0];
+			} elseif(is_object($args[0])){
 				$this->Values = get_object_vars($args[0]);
 			} elseif(is_array($args[0])){
 				$this->Values = $args[0];
@@ -96,7 +99,7 @@ class Update extends Statement
 	protected function values_parser(): array {
 		list($fields, $holders) = build_sql(array_keys($this->Values), $this->Values, true);
 
-		$set_line = [];
+		$set_line = $this->Sets;
 		foreach($fields as $i=>$f){
 			$set_line[] = "$f = ".$holders[$i];
 		}
