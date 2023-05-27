@@ -798,8 +798,8 @@ function __query($query_string = '', $format = '', $delim = '&amp;', $allowed = 
 	return $q2;
 }
 
-function format_debug(mixed $v): mixed {
-	return __object_map($v, function($item) {
+function format_debug(mixed $item): mixed {
+	// return __object_map($v, function($item) {
 		if((is_string($item) || $item instanceof Stringable) && mb_detect_encoding($item)){
 			return mb_substr($item, 0, 4096).(mb_strlen($item) > 4096 ? '...' : '');
 		} elseif(is_bool($item)){
@@ -819,7 +819,7 @@ function format_debug(mixed $v): mixed {
 		} else {
 			return "[BLOB]";
 		}
-	});
+	// });
 }
 
 # NOTE: dep on https://highlightjs.org/
