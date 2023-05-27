@@ -50,6 +50,11 @@ class Update extends Statement
 		return $this;
 	}
 
+	function WhereIn(mixed $field, mixed $v): static {
+		$this->Where->add_condition(qb_filter_in($field, $v));
+		return $this;
+	}
+
 	function parse(): string {
 		$lines = ['UPDATE'];
 
