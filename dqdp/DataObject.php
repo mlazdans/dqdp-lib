@@ -2,23 +2,21 @@
 
 namespace dqdp;
 
-use dqdp\DBA\interfaces\ORMInterface;
-
-abstract class DataObject implements \IteratorAggregate, TraversableConstructor, PropertyInitInterface, ORMInterface {
+abstract class DataObject implements \IteratorAggregate, TraversableConstructor, PropertyInitInterface {
 	# NOTE: must be defined in child, to be in scope
 	// abstract function initPoperty(string|int $k, mixed $v): void;
 
-	function __construct(array|object|null $data = null, array|object|null $defaults = null){
-		// if(empty($data)){
-		// 	return $this;
-		// }
+	function __construct(array|object|null $data = null, array|object|null $defaults = null, bool $is_dirty = false){
+		if(is_null($data) && is_null($defaults)){
+			return $this;
+		}
 
 		$properties = get_class_public_vars(static::class);
 		foreach($properties as $k=>$class_default){
-			if($data !== null && prop_exists($data, $k) && prop_initialized($data, $k)){
-				$this->initPoperty($k, get_prop($data, $k));
-			} elseif($defaults !== null && prop_exists($defaults, $k) && prop_initialized($defaults, $k)){
-				$this->initPoperty($k, get_prop($defaults, $k));
+			if($data !== null && prop_isset($data, $k)){
+				$this->initPoperty($k, get_prop($data, $k), $is_dirty);
+			} elseif($defaults !== null && prop_isset($defaults, $k)){
+				$this->initPoperty($k, get_prop($defaults, $k), $is_dirty);
 			}
 		}
 	}

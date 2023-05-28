@@ -9,9 +9,9 @@ use ReflectionUnionType;
 use TypeError;
 
 trait PropertyInitTrait {
-	function initPoperty(string|int $k, mixed $v): void {
+	function initPoperty(string|int $k, mixed $v, bool $is_dirty): void {
 		// Skip setting non null-able properties to null
-		if(is_null($v = $this->initValue($k, $v))){
+		if($is_dirty && is_null($v = $this->initValue($k, $v))){
 			if(prop_is_nullable($this, $k)){
 				$this->$k = $v;
 			}
@@ -111,41 +111,80 @@ trait PropertyInitTrait {
 	}
 
 	static function initFrom(array|object|null $data = null, array|object|null $defaults = null): static {
-		if(is_subclass_of(static::class, '\dqdp\ParametersConstructor')){
-			return static::initiator(1, $data, $defaults);
-		} elseif(is_subclass_of(static::class, '\dqdp\TraversableConstructor')){
-			return static::initiator(2, $data, $defaults);
-		} else {
-			# TODO: could relax this, defaulting to ParametersConstructor?
-			throw new \Exception("Not a valid constructor interface for ".static::class.", must implement one of: \dqdp\ParametersConstructor, \dqdp\TraversableConstructor");
-		}
+		return static::initiator($data, $defaults, false);
+		// if(is_subclass_of(static::class, '\dqdp\ParametersConstructor')){
+		// 	return static::initiator(1, $data, $defaults, false);
+		// } elseif(is_subclass_of(static::class, '\dqdp\TraversableConstructor')){
+		// 	return static::initiator(2, $data, $defaults, false);
+		// } else {
+		// 	# TODO: could relax this, defaulting to ParametersConstructor?
+		// 	throw new \Exception("Not a valid constructor interface for ".static::class.", must implement one of: \dqdp\ParametersConstructor, \dqdp\TraversableConstructor");
+		// }
+	}
+
+	static function initFromDirty(array|object|null $data = null, array|object|null $defaults = null): static {
+		return static::initiator($data, $defaults, true);
+		// if(is_subclass_of(static::class, '\dqdp\ParametersConstructor')){
+		// 	return static::initiator(1, $data, $defaults, true);
+		// } elseif(is_subclass_of(static::class, '\dqdp\TraversableConstructor')){
+		// 	return static::initiator(2, $data, $defaults, true);
+		// } else {
+		// 	# TODO: could relax this, defaulting to ParametersConstructor?
+		// 	throw new \Exception("Not a valid constructor interface for ".static::class.", must implement one of: \dqdp\ParametersConstructor, \dqdp\TraversableConstructor");
+		// }
 	}
 
 	// static function initWithObjConstructorFrom(array|object|null $data = null, array|object|null $defaults = null): static {
 	// 	return static::initiator(2, $data, $defaults);
 	// }
 
-	private static function initiator(int $way, array|object|null $data = null, array|object|null $defaults = null): static {
-		// if(empty($data)){
-		// 	return new static;
+	private static function initiator(array|object|null $data, array|object|null $defaults, bool $is_dirty): static {
+		// if(is_null($data) && is_null($defaults)){
+		// 	return;
 		// }
-
-		$params = [];
-		$properties = get_class_public_vars(static::class);
-		foreach($properties as $k=>$class_default){
-			if($data !== null && prop_exists($data, $k) && prop_initialized($data, $k)){
-				$params[$k] = static::initValue($k, get_prop($data, $k));
-			} elseif($defaults !== null && prop_exists($defaults, $k) && prop_initialized($defaults, $k)){
-				$params[$k] = static::initValue($k, get_prop($defaults, $k));
-			}
+		if(is_subclass_of(static::class, '\dqdp\ParametersConstructor')){
+			$way = 1;
+		} elseif(is_subclass_of(static::class, '\dqdp\TraversableConstructor')){
+			$way = 2;
+		} else {
+			# TODO: could relax this, defaulting to ParametersConstructor?
+			throw new \Exception("Not a valid constructor interface for ".static::class.", must implement one of: \dqdp\ParametersConstructor, \dqdp\TraversableConstructor");
 		}
 
 		if($way == 1){
-			return new static(...$params);
+			return new static(...$data);
 		} elseif($way == 2){
-			return new static($params);
+			return new static($data, $defaults, $is_dirty);
 		} else {
 			throw new InvalidArgumentException("Invalid value for \$way: $way");
 		}
+
+		// if($is_dirty){
+		// 	$params = [];
+		// 	$properties = get_class_public_vars(static::class);
+		// 	foreach($properties as $k=>$class_default){
+		// 		if($data !== null && prop_isset($data, $k)){
+		// 			$params[$k] = static::initValue($k, get_prop($data, $k));
+		// 		} elseif($defaults !== null && prop_isset($defaults, $k)){
+		// 			$params[$k] = static::initValue($k, get_prop($defaults, $k));
+		// 		}
+		// 	}
+
+		// 	if($way == 1){
+		// 		return new static(...$params);
+		// 	} elseif($way == 2){
+		// 		return new static($params);
+		// 	} else {
+		// 		throw new InvalidArgumentException("Invalid value for \$way: $way");
+		// 	}
+		// } else {
+		// 	if($way == 1){
+		// 		return new static(...$data);
+		// 	} elseif($way == 2){
+		// 		return new static($data, $defaults);
+		// 	} else {
+		// 		throw new InvalidArgumentException("Invalid value for \$way: $way");
+		// 	}
+		// }
 	}
 }
