@@ -2068,7 +2068,7 @@ function prop_initialized(array|object|null $o, string|int $k): bool {
 	} elseif(is_array($o)){
 		return key_exists($k, $o);
 	} elseif(is_object($o)){
-		return (new ReflectionObject($o))->getProperty($k)->isInitialized($o);
+		return (new ReflectionObject($o))->getProperty((string)$k)->isInitialized($o);
 	} else {
 		throw new InvalidTypeException($o);
 	}
