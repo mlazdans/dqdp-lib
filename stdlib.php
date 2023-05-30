@@ -1960,7 +1960,7 @@ function hl(string $data, string $kw): string {
 	$cc = count($colors);
 	$bc = count($bg);
 
-	$kw = trim(preg_replace("/[\*\(\)\-\+\/\:]/", " ", $kw));
+	$kw = trim(preg_replace("/[\|\*\(\)\-\+\/\:]/", " ", $kw));
 
 	$words = explode(' ', $kw);
 	// duplikaati nafig
