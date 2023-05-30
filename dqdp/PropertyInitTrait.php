@@ -2,6 +2,7 @@
 
 namespace dqdp;
 
+use Error;
 use InvalidArgumentException;
 use ReflectionNamedType;
 use ReflectionProperty;
@@ -89,7 +90,8 @@ trait PropertyInitTrait {
 		}
 
 		if(method_exists(static::class, "init$k")){
-			return static::{"init$k"}($v);
+			throw new Error("Deprecated use of init$k()");
+			// return static::{"init$k"}($v);
 		}
 
 		$Reflection = new ReflectionProperty(static::class, $k);
@@ -112,79 +114,58 @@ trait PropertyInitTrait {
 
 	static function initFrom(array|object|null $data = null, array|object|null $defaults = null): static {
 		return static::initiator($data, $defaults, false);
-		// if(is_subclass_of(static::class, '\dqdp\ParametersConstructor')){
-		// 	return static::initiator(1, $data, $defaults, false);
-		// } elseif(is_subclass_of(static::class, '\dqdp\TraversableConstructor')){
-		// 	return static::initiator(2, $data, $defaults, false);
-		// } else {
-		// 	# TODO: could relax this, defaulting to ParametersConstructor?
-		// 	throw new \Exception("Not a valid constructor interface for ".static::class.", must implement one of: \dqdp\ParametersConstructor, \dqdp\TraversableConstructor");
-		// }
 	}
 
 	static function initFromDirty(array|object|null $data = null, array|object|null $defaults = null): static {
 		return static::initiator($data, $defaults, true);
-		// if(is_subclass_of(static::class, '\dqdp\ParametersConstructor')){
-		// 	return static::initiator(1, $data, $defaults, true);
-		// } elseif(is_subclass_of(static::class, '\dqdp\TraversableConstructor')){
-		// 	return static::initiator(2, $data, $defaults, true);
-		// } else {
-		// 	# TODO: could relax this, defaulting to ParametersConstructor?
-		// 	throw new \Exception("Not a valid constructor interface for ".static::class.", must implement one of: \dqdp\ParametersConstructor, \dqdp\TraversableConstructor");
-		// }
 	}
-
-	// static function initWithObjConstructorFrom(array|object|null $data = null, array|object|null $defaults = null): static {
-	// 	return static::initiator(2, $data, $defaults);
-	// }
 
 	private static function initiator(array|object|null $data, array|object|null $defaults, bool $is_dirty): static {
-		// if(is_null($data) && is_null($defaults)){
-		// 	return;
-		// }
-		if(is_subclass_of(static::class, '\dqdp\ParametersConstructor')){
-			$way = 1;
-		} elseif(is_subclass_of(static::class, '\dqdp\TraversableConstructor')){
-			$way = 2;
+		$o = new static();
+		$properties = get_class_public_vars(static::class);
+
+		if($is_dirty){
+			foreach($properties as $k=>$class_default){
+				if(prop_isset($data, $k)){
+					$o->$k = static::initValue($k, get_prop($data, $k));
+				} elseif(prop_isset($defaults, $k)){
+					$o->$k = static::initValue($k, get_prop($defaults, $k));
+				}
+			}
 		} else {
-			# TODO: could relax this, defaulting to ParametersConstructor?
-			throw new \Exception("Not a valid constructor interface for ".static::class.", must implement one of: \dqdp\ParametersConstructor, \dqdp\TraversableConstructor");
+			foreach($properties as $k=>$class_default){
+				if(prop_isset($data, $k)){
+					$o->$k = get_prop($data, $k);
+				} elseif(prop_isset($defaults, $k)){
+					$o->$k = get_prop($defaults, $k);
+				}
+			}
 		}
 
-		if($way == 1){
-			return new static(...$data);
-		} elseif($way == 2){
-			return new static($data, $defaults, $is_dirty);
-		} else {
-			throw new InvalidArgumentException("Invalid value for \$way: $way");
-		}
+		return $o;
 
-		// if($is_dirty){
-		// 	$params = [];
-		// 	$properties = get_class_public_vars(static::class);
-		// 	foreach($properties as $k=>$class_default){
-		// 		if($data !== null && prop_isset($data, $k)){
-		// 			$params[$k] = static::initValue($k, get_prop($data, $k));
-		// 		} elseif($defaults !== null && prop_isset($defaults, $k)){
-		// 			$params[$k] = static::initValue($k, get_prop($defaults, $k));
-		// 		}
-		// 	}
-
-		// 	if($way == 1){
-		// 		return new static(...$params);
-		// 	} elseif($way == 2){
-		// 		return new static($params);
-		// 	} else {
-		// 		throw new InvalidArgumentException("Invalid value for \$way: $way");
-		// 	}
-		// } else {
-		// 	if($way == 1){
-		// 		return new static(...$data);
-		// 	} elseif($way == 2){
-		// 		return new static($data, $defaults);
-		// 	} else {
-		// 		throw new InvalidArgumentException("Invalid value for \$way: $way");
-		// 	}
-		// }
 	}
+
+	# TODO: varbūt kādreiz ieslēgt implements \ArrayAccess
+	// function offsetExists(mixed $offset): bool
+	// {
+	// 	return property_exists($this, $offset);
+	// }
+
+	// function offsetGet(mixed $offset): mixed
+	// {
+	// 	return $this->{$offset};
+
+	// }
+
+	// function offsetSet(mixed $offset, mixed $value): void
+	// {
+	// 	$this->{$offset} = $value;
+	// }
+
+	// function offsetUnset(mixed $offset): void
+	// {
+	// 	unset($this->$offset);
+	// }
+
 }
