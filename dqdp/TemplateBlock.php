@@ -123,6 +123,15 @@ class TemplateBlock
 		throw new \Error("block not found: $ID");
 	}
 
+	function set_var_if(bool $cond, string $var_id, $value, string $ID = null): ?TemplateBlock {
+		if($cond)
+		{
+			return $this->set_var($var_id, $value, $ID);
+		} else {
+			return null;
+		}
+	}
+
 	function set_array(array|object $array, string $ID = null): TemplateBlock {
 		return $this->set_with_prefix("", $array, $ID);
 	}
