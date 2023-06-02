@@ -200,7 +200,7 @@ class MySQL_PDO implements DBAInterface
 	}
 
 	function escape($v): string {
-		return trim($this->conn->quote($v), "'");
+		return mb_substr($this->conn->quote($v), 1, -1);
 	}
 
 	// function save(iterable $DATA, Table $Table){
