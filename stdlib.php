@@ -1298,7 +1298,12 @@ function header503($msg = "Server error"){
 // 	__header(503, "Server error", $msg);
 // }
 
-function proc_date(string $date)
+function proc_date_short(string $date)
+{
+	return proc_date($date, true);
+}
+
+function proc_date(string $date, bool $short = false)
 {
 	$D = ['šodien', 'vakar', 'aizvakar'];
 	$M = ['janvārī', 'februārī', 'martā', 'aprīlī', 'maijā', 'jūnijā', 'jūlijā', 'augustā', 'septembrī', 'oktobrī', 'novembrī', 'decembrī'];
@@ -1323,7 +1328,9 @@ function proc_date(string $date)
 		$retdate.= "$d0. ".$M[$m0 - 1];
 	}
 
-	$retdate .= ", plkst. $h0:$min0";
+	if(!$short){
+		$retdate .= ", plkst. $h0:$min0";
+	}
 
 	return $retdate;
 }
