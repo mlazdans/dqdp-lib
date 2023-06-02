@@ -48,7 +48,7 @@ class MySQL_PDO implements DBAInterface
 		//$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
 		$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		$this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-		//$this->conn->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
+		$this->conn->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
 
 		return $this;
 	}
