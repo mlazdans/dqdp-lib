@@ -392,8 +392,20 @@ function redirect(string $url = null): bool {
 	return true;
 }
 
+function redirect_wqs(string $url = null): bool {
+	$qs = empty($_SERVER['QUERY_STRING']) ? "" : "?".$_SERVER['QUERY_STRING'];
+	header("Location: ".($url??php_self()).$qs);
+	return true;
+}
+
 function redirectp($url): bool {
 	header("Location: $url", true, 301);
+	return true;
+}
+
+function redirectp_wqs($url): bool {
+	$qs = empty($_SERVER['QUERY_STRING']) ? "" : "?".$_SERVER['QUERY_STRING'];
+	header("Location: $url$qs", true, 301);
 	return true;
 }
 
