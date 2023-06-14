@@ -20,12 +20,16 @@ abstract class AbstractFilter extends StricStdObject implements EntityFilterInte
 	protected ?int $OFFSET         = null;
 	protected ?int $PAGE           = null;
 	protected ?int $ITEMS_PER_PAGE = null;
+	protected ?array $FIELDS       = null;
 
 	abstract protected function apply_filter(Select $sql): Select;
 
 	final function apply(Select $sql): Select {
 		$this->apply_filter($sql);
-		return $this->apply_base_filters($sql);
+		$this->apply_base_filters($sql);
+		$this->apply_fields($sql);
+
+		return $sql;
 	}
 
 	function merge(?AbstractFilter $F): static {
@@ -77,48 +81,23 @@ abstract class AbstractFilter extends StricStdObject implements EntityFilterInte
 		return [$this->PAGE, $this->ITEMS_PER_PAGE];
 	}
 
-	// protected function applay_default_filters(Select $sql, $DATA, array $defaults, $prefix = null): Select {
-	// 	if(is_null($prefix)){
-	// 		$prefix = "$this->Table.";
-	// 	}
+	function fields(...$args): static {
+		$this->FIELDS = [];
+		foreach($args as $arg){
+			if(is_string($arg)){
+				$this->FIELDS[] = $arg;
+			} elseif(is_array($arg)){
+				$this->FIELDS = array_merge($this->FIELDS, $arg);
+			} else {
+				throw new InvalidTypeException($arg);
+			}
+		}
+		return $this;
+	}
 
-	// 	foreach($defaults as $field=>$value){
-	// 		if(is_int($field)){
-	// 			$sql->Where($value);
-	// 		} elseif($DATA->exists($field)){
-	// 			if(!is_null($DATA->{$field})){
-	// 				# TODO: f-ija, kā build_sql
-	// 				$sql->Where(["$prefix$field = ?", $DATA->{$field}]);
-	// 			}
-	// 		} else {
-	// 			$sql->Where(["$prefix$field = ?", $value]);
-	// 		}
-	// 	}
-
-	// 	return $sql;
-	// }
-
-	# TODO: abstract out filters funkcionālo daļu
-	# TODO: uz Select???
-	# TODO: vai vispār vajag atdalīt NULL filters? Varbūt visiem vajag NULL check?
-	// protected function applay_nullable_filters(Select $sql, $DATA, array $fields, string $prefix = null): Select {
-	// 	// if(is_null($prefix)){
-	// 	// 	$prefix = "$this->Table.";
-	// 	// }
-
-	// 	foreach($fields as $k){
-	// 		if($DATA->exists($k)){
-	// 			if(is_null($DATA->{$k})){
-	// 				$sql->Where(["$prefix$k IS NULL"]);
-	// 			} else {
-	// 				# TODO: f-ija, kā build_sql
-	// 				$sql->Where(["$prefix$k = ?", $DATA->{$k}]);
-	// 			}
-	// 		}
-	// 	}
-
-	// 	return $sql;
-	// }
+	function get_fields(): array {
+		return $this->FIELDS;
+	}
 
 	protected function apply_fields_with_values(Select $sql, array $fields, string $prefix = null): Select {
 		foreach($fields as $k){
@@ -180,4 +159,11 @@ abstract class AbstractFilter extends StricStdObject implements EntityFilterInte
 		return $sql;
 	}
 
+	protected function apply_fields(Select $sql): Select {
+		if($this->FIELDS){
+			$sql->ResetFields()->Select(join(",", $this->FIELDS));
+		}
+
+		return $sql;
+	}
 }
