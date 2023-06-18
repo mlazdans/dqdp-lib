@@ -2393,3 +2393,13 @@ function mysql_old_password(string $input, $hex = true): string {
 function request_method(): ?string {
 	return $_SERVER['REQUEST_METHOD'] ?? null;
 }
+
+function dsk(int $sk, string $vsk, string $dsk): string {
+	if($sk % 100 == 11){
+		return $dsk;
+	} elseif($sk % 10 == 1){
+		return $vsk;
+	} else {
+		return $dsk;
+	}
+}
