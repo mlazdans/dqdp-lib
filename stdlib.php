@@ -5,7 +5,6 @@
 use dqdp\InvalidTypeException;
 use dqdp\LV;
 use dqdp\MailQueue\MailQueue;
-use dqdp\StdObject;
 use PHPMailer\PHPMailer\PHPMailer;
 
 require_once("qblib.php");
@@ -1621,59 +1620,6 @@ function between(mixed $v, mixed $s, mixed $e): bool {
 function within(mixed $v, mixed $s, mixed $e): bool {
 	return ($v > $s) && ($v < $e);
 }
-
-function eo($data = null): StdObject {
-	return new StdObject($data);
-}
-
-function eoe($data = null): StdObject {
-	if($data instanceof dqdp\StdObject){
-		return $data;
-	} else {
-		return eo($data);
-	}
-}
-
-# TODO: apvienot sqlr,eo_debug,printr
-function eo_debug(StdObject $o, $keys = null){
-	if(is_null($keys)){
-		$keys = array_keys(get_object_vars($o));
-	}
-
-	$ret = [];
-	foreach($keys as $k){
-		if(!$o->exists($k)){
-			continue;
-		}
-		$msg = "$k=";
-		if($o->{$k} instanceof dqdp\StdObject){
-			$msg .= 'eo{'.eo_debug($o->{$k}).'}';
-		} elseif(is_object($o->{$k})){
-			$msg .= "{".join(",", get_object_vars($o->{$k}))."}";
-		} elseif(is_array($o->{$k})){
-			$msg .= "[".join(",", array_flatten($o->{$k}))."]";
-		} elseif(is_bool($o->{$k})){
-			$msg .= (int)$o->{$k};
-		} else {
-			$msg .= $o->{$k};
-		}
-		$ret[] = $msg;
-	}
-
-	return join(",", $ret);
-}
-
-# TODO: kāpēc return $args?
-// function escape_shell(Array $args){
-// 	foreach($args as $k=>$part){
-// 		if(is_string($k)){
-// 			$params[] = escapeshellarg($k).'='.escapeshellarg($part);
-// 		} else {
-// 			$params[] = escapeshellarg($part);
-// 		}
-// 	}
-// 	return $args;
-// }
 
 function is_windows(): bool {
 	return strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
