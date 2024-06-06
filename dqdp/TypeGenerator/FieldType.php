@@ -2,7 +2,8 @@
 
 namespace dqdp\TypeGenerator;
 
-enum FieldType {
+enum FieldType
+{
 	case int;
 	case varchar;
 	case char;

@@ -14,8 +14,8 @@ abstract class AbstractTypeGenerator
 	) {}
 
 	// Returns name of sequence or null
-	abstract function getSequenceName(): ?string;
-	abstract function getDB(): DBAInterface;
+	abstract function get_sequence_name(): ?string;
+	abstract function get_db(): DBAInterface;
 
 	// Converts field name to PHP class property
 	abstract function field2prop(string $name): string;
@@ -24,14 +24,14 @@ abstract class AbstractTypeGenerator
 	abstract function self2class(): string;
 
 	// Returns table, view or procedure field information. See more @FieldInfoType
-	abstract function getFields(): FieldInfoCollection;
+	abstract function get_fields(): FieldInfoCollection;
 
 	// Returns procedure args information. See more @FieldInfoType
-	abstract function getProcArgs(): ?FieldInfoCollection;
+	abstract function get_proc_args(): ?FieldInfoCollection;
 
 	// Returns primary key if any
-	abstract function getPK(): string|array|null;
+	abstract function get_pk(): string|array|null;
 
 	// Returns folder path to store generated code
-	abstract function getOutputFolder(): string;
+	abstract function get_output_folder(): string;
 }
