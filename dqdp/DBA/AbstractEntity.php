@@ -18,20 +18,32 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 	function __construct(){
 	}
 
-	// Select can be made from tabe,view or procedure
-	// Update,insert can be made to table or view
-	protected abstract function getTableName(): ?string;
-	protected abstract function getProcName(): ?string;
-	protected abstract function getPK(): array|string|null;
-	protected abstract function getGen(): ?string;
-	protected abstract function getProcArgs(): ?array;
+	// Select can be made from tabe, view or procedure
+	// Update, insert, delete can be made to table or view or procedure
+	protected abstract function get_pk(): array|string|null;
+	protected abstract function get_gen(): ?string;
+
+	protected function get_table_name(): ?string
+	{
+		return null;
+	}
+
+	protected function get_proc_name(): ?string
+	{
+		return null;
+	}
+
+	protected function get_proc_args(): ?array
+	{
+		return null;
+	}
 
 	# TODO: SelectFields() or SelectOnly() or similar
 	protected function select(): Select {
-		if($TableName = $this->getTableName()){
-			return (new Select("*"))->From($TableName);
-		} elseif($TableName = $this->getProcName()){
-			return (new Select("*"))->From($TableName)->withArgs($this->getProcArgs());
+		if($TableName = $this->get_table_name()){
+			return (new Select("*"))->from($TableName);
+		} elseif($TableName = $this->get_proc_name()){
+			return (new Select("*"))->from($TableName)->withArgs($this->get_proc_args());
 		} else {
 			throw new InvalidArgumentException("Table not found");
 		}
@@ -45,7 +57,7 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 		}
 	}
 
-	function getSingle(?AbstractFilter $filters = null): mixed {
+	function get_single(?AbstractFilter $filters = null): mixed {
 		if($q = $this->query($filters)){
 			return $this->fetch($q);
 		}
@@ -77,11 +89,11 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 	}
 
 	function update(int|string|array $ID, array|object $DATA): bool {
-		if(is_null($TableName = $this->getTableName())){
+		if(is_null($TableName = $this->get_table_name())){
 			throw new InvalidArgumentException("Table not found");
 		}
 
-		if(is_null($PK = $this->getPK())){
+		if(is_null($PK = $this->get_pk())){
 			throw new InvalidArgumentException("Primary key not set");
 		}
 
@@ -104,7 +116,7 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 	}
 
 	private function _pk_in_data(array|object $DATA): bool {
-		$PK = $this->getPK();
+		$PK = $this->get_pk();
 		if(is_null($PK)){
 			return false;
 		} elseif(is_array($PK)){
@@ -121,17 +133,17 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 	}
 
 	private function _insert_query(array|object $DATA, $update = false): mixed {
-		if(is_null($TableName = $this->getTableName())){
+		if(is_null($TableName = $this->get_table_name())){
 			throw new InvalidArgumentException("Table not found");
 		}
 
 		$PKSetInData = $this->_pk_in_data($DATA);
 
-		$PK = $this->getPK();
+		$PK = $this->get_pk();
 		if(is_array($PK)){
 		} else {
 			$needSetGen = !$PKSetInData || !$update;
-			if($needSetGen && $Gen = $this->getGen()){
+			if($needSetGen && $Gen = $this->get_gen()){
 				set_prop($DATA, $PK, function() use ($Gen) {
 					return "NEXT VALUE FOR $Gen";
 				});
@@ -159,11 +171,11 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 	}
 
 	function delete(int|string|array $ID): bool {
-		if(is_null($TableName = $this->getTableName())){
+		if(is_null($TableName = $this->get_table_name())){
 			throw new InvalidArgumentException("Table not found");
 		}
 
-		if(is_null($PK = $this->getPK())){
+		if(is_null($PK = $this->get_pk())){
 			throw new InvalidArgumentException("Primary key not set");
 		}
 
@@ -228,5 +240,4 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 	function get_trans(): DBAInterface {
 		return $this->dba;
 	}
-
 }
