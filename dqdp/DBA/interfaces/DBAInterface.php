@@ -9,9 +9,9 @@ interface DBAInterface
 	function connect();
 	// function connect_params(iterable $params);
 	function query();
-	function fetch_array(): array|null;
-	function fetch_assoc(): array|null;
-	function fetch_object(): object|null;
+	function fetch_array(): ?array;
+	function fetch_assoc(): ?array;
+	function fetch_object(): ?object;
 	function execute();
 	// function execute_single();
 	function prepare();
