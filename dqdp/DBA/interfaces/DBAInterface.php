@@ -22,6 +22,7 @@ interface DBAInterface
 	function rollback(): bool;
 	function affected_rows(): int;
 	function close(): bool;
+	function close_query(mixed $q): bool;
 	function escape(string $v): string;
 	function with_new_trans(callable $func, ...$args);
 

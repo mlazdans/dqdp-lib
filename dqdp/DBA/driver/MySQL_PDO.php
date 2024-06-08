@@ -110,6 +110,12 @@ class MySQL_PDO implements DBAInterface
 		}
 	}
 
+	/** @param PDOStatement $q */
+	function close_query($q): bool
+	{
+		return $q->closeCursor();
+	}
+
 	function fetch_array(): array|null {
 		/** @var PDOStatement */ list($q) = func_get_args();
 

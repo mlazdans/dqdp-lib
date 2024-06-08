@@ -60,8 +60,15 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface
 		return ($data = $this->get_trans()->fetch_array($this->Q)) ? $data : null;
 	}
 
-	function get_single(?AbstractFilter $filters = null): mixed {
-		return ($q = $this->query($filters)) ? $this->fetch($q) : null;
+	function get_single(?AbstractFilter $filters = null): mixed
+	{
+		if($this->query($filters)) {
+			$data = $this->fetch();
+			$this->close_query();
+			return $data;
+		} else {
+			return null;
+		}
 	}
 
 	function query(?AbstractFilter $filters = null): mixed {
