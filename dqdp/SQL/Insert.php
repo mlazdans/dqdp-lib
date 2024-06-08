@@ -83,7 +83,7 @@ class Insert extends Statement
 	}
 
 	protected function values_parser(){
-		list($fields, $holders) = build_sql(array_keys($this->Values), eo($this->Values), true);
+		list($fields, $holders) = build_sql(array_keys($this->Values), $this->Values, true);
 		$lines[] = "(".join(',', $fields).")";
 		$lines[] = "VALUES";
 		$lines[] = "(".join(',', $holders).")";
