@@ -10,6 +10,7 @@
 namespace dqdp\DBA;
 
 use dqdp\DBA\interfaces\EntityFilterInterface;
+use dqdp\DBA\Types\None;
 use dqdp\InvalidTypeException;
 use dqdp\SQL\Select;
 use dqdp\StricStdObject;
@@ -120,6 +121,19 @@ abstract class AbstractFilter extends StricStdObject implements EntityFilterInte
 	protected function apply_set_fields(Select $sql, array $fields, string $prefix = null): Select {
 		foreach($fields as $k){
 			if(isset($this->$k)){
+				$sql->Where(["$prefix$k = ?", $this->$k]);
+			}
+		}
+
+		return $sql;
+	}
+
+	protected function apply_null_fields(Select $sql, array $fields, string $prefix = null): Select {
+		foreach($fields as $k){
+			if($this->$k instanceof None)
+			{
+				$sql->Where("$prefix$k IS NULL");
+			} elseif(isset($this->$k)){
 				$sql->Where(["$prefix$k = ?", $this->$k]);
 			}
 		}
