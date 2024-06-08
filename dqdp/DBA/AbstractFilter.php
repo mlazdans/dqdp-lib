@@ -22,6 +22,7 @@ abstract class AbstractFilter extends StricStdObject implements EntityFilterInte
 	protected ?int $PAGE           = null;
 	protected ?int $ITEMS_PER_PAGE = null;
 	protected ?array $FIELDS       = null;
+	protected ?bool $IS_DISTINCT   = null;
 
 	abstract protected function apply_filter(Select $sql): Select;
 
@@ -31,6 +32,11 @@ abstract class AbstractFilter extends StricStdObject implements EntityFilterInte
 		$this->apply_fields($sql);
 
 		return $sql;
+	}
+
+	function distinct(): static {
+		$this->IS_DISTINCT = true;
+		return $this;
 	}
 
 	function merge(?AbstractFilter $F): static {
@@ -168,6 +174,10 @@ abstract class AbstractFilter extends StricStdObject implements EntityFilterInte
 
 		if(isset($this->PAGE) && isset($this->ITEMS_PER_PAGE)){
 			$sql->Page($this->PAGE, $this->ITEMS_PER_PAGE);
+		}
+
+		if($this->IS_DISTINCT){
+			$sql->Distinct();
 		}
 
 		return $sql;
