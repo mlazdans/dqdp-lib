@@ -6,6 +6,7 @@ use dqdp\DBA\AbstractFilter;
 
 interface EntityInterface
 {
+	function query(?AbstractFilter $filters = null): bool;
 	function close_query(): bool;
 	function fetch_object(): ?object;
 	function fetch_array(): ?array;
