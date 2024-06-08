@@ -68,6 +68,15 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface
 		return $this->Q = $this->get_trans()->query($filters ? $filters->apply($this->select()) : $this->select());
 	}
 
+	function count(?AbstractFilter $filter = null): ?int {
+		$sql = ($filter ? $filter->apply($this->select()) : $this->select())
+		->ResetFields()
+		->ResetOrderBy()
+		->Select("COUNT(*) sk")
+		->Rows(1);
+
+		if($q = $this->get_trans()->query($sql)){
+			return ($this->get_trans()->fetch_object($q))->sk ?? null;
 		}
 
 		return null;
