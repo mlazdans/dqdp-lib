@@ -2,7 +2,8 @@
 
 namespace dqdp\DBA\interfaces;
 
-interface TransactionInterface {
+interface TransactionInterface
+{
 	function set_trans(DBAInterface $dba);
 	function get_trans(): DBAInterface;
 }

@@ -12,10 +12,12 @@ use dqdp\SQL\Update;
 use InvalidArgumentException;
 
 // TODO: maybe do separate classes? ProcEntity, ReadOnlyEntity, etc
-abstract class AbstractEntity implements EntityInterface, TransactionInterface {
+abstract class AbstractEntity implements EntityInterface, TransactionInterface
+{
 	protected DBAInterface $dba;
+	protected $Q = null;
 
-	function __construct(){
+	function __construct() {
 	}
 
 	// Select can be made from tabe, view or procedure
@@ -23,18 +25,15 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 	protected abstract function get_pk(): array|string|null;
 	protected abstract function get_gen(): ?string;
 
-	protected function get_table_name(): ?string
-	{
+	protected function get_table_name(): ?string {
 		return null;
 	}
 
-	protected function get_proc_name(): ?string
-	{
+	protected function get_proc_name(): ?string {
 		return null;
 	}
 
-	protected function get_proc_args(): ?array
-	{
+	protected function get_proc_args(): ?array {
 		return null;
 	}
 
@@ -49,36 +48,30 @@ abstract class AbstractEntity implements EntityInterface, TransactionInterface {
 		}
 	}
 
-	function fetch(mixed $q): mixed {
-		if($data = $this->get_trans()->fetch_object($q)){
-			return $data;
-		} else {
-			return null;
-		}
+	function fetch(): ?object {
+		return $this->fetch_object();
+	}
+
+	function fetch_object(): ?object {
+		return ($data = $this->get_trans()->fetch_object($this->Q)) ? $data : null;
+	}
+
+	function fetch_array(): ?array {
+		return ($data = $this->get_trans()->fetch_array($this->Q)) ? $data : null;
 	}
 
 	function get_single(?AbstractFilter $filters = null): mixed {
-		if($q = $this->query($filters)){
-			return $this->fetch($q);
+		return ($q = $this->query($filters)) ? $this->fetch($q) : null;
+	}
+
+	function query(?AbstractFilter $filters = null): mixed {
+		return $this->Q = $this->get_trans()->query($filters ? $filters->apply($this->select()) : $this->select());
+	}
+
 		}
 
 		return null;
 	}
-
-	function query(?AbstractFilter $filter = null): mixed {
-		return $this->get_trans()->query($filter ? $filter->apply($this->select()) : $this->select());
-	}
-
-	// function count(?iterable $filters = null): int {
-	// 	$sql = $this->set_filters($this->select(), $filters)
-	// 	->ResetFields()
-	// 	->ResetOrderBy()
-	// 	->ResetJoinLast() // Reset LEFT JOINS
-	// 	->Select("COUNT(*) sk")
-	// 	->Rows(1);
-
-	// 	return (int)($this->get_trans()->execute_single($sql)['sk']??0);
-	// }
 
 	function save(array|object $DATA): mixed {
 		return $this->_insert_query($DATA, true);

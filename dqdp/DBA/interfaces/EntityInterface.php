@@ -7,7 +7,8 @@ use dqdp\DBA\AbstractFilter;
 interface EntityInterface
 {
 	function query(?AbstractFilter $filters = null): mixed;
-	function fetch(mixed $q): mixed;
+	function fetch_object(): ?object;
+	function fetch_array(): ?array;
 
 	function insert(array|object $DATA): mixed;
 	function update(int|string|array $ID, array|object $DATA): bool;
