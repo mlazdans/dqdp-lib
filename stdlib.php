@@ -1010,7 +1010,6 @@ function array_deleter(array &$a, $v1){
 	$a = array_delete($a, $v1);
 }
 
-
 function locale_get_info($refresh = false){
 	if($refresh || is_null(dqdp::$LOCALE_INFO)){
 		dqdp::$LOCALE_INFO = localeconv();
