@@ -1272,24 +1272,30 @@ function __header(int $code, string $msg_header): void
 	$SERVER_PROTOCOL = get_server_protocol();
 
 	header("$SERVER_PROTOCOL $code $msg_header", true, $code);
-	// if($msg_display){
-	// 	print "<h1>$msg_display</h1>";
-	// }
 }
 
-function header403($msg = "Forbidden"){
+function header400($msg = "Bad Request"): void
+{
+	__header(400, $msg);
+}
+
+function header403($msg = "Forbidden"): void
+{
 	__header(403, $msg);
 }
 
-function header404($msg = "Not Found"){
+function header404($msg = "Not Found"): void
+{
 	__header(404, $msg);
 }
 
-function header410($msg = "Gone"){
+function header410($msg = "Gone"): void
+{
 	__header(410, $msg);
 }
 
-function header503($msg = "Server error"){
+function header503($msg = "Server error"): void
+{
 	__header(503, $msg);
 }
 
