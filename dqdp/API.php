@@ -2,6 +2,7 @@
 
 namespace dqdp;
 
+# TODO: redesign!
 abstract class API {
 	static string $URL;
 	static $KEY;
