@@ -205,7 +205,7 @@ abstract class Entity implements EntityInterface {
 				} elseif(is_string($filters->{$k})){
 					$IDS = explode(',',$filters->{$k});
 				} else {
-					trigger_error("Illegal multiple PRIMARY KEY value for $this->PKS", E_USER_ERROR);
+					trigger_error("Illegal multiple PRIMARY KEY value for $this->PK", E_USER_ERROR);
 				}
 				$sql->Where(qb_filter_in("$this->tableName.{$this->PK}", $IDS));
 			}
