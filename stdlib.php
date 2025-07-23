@@ -827,12 +827,10 @@ function date_startend($D): array {
 	}
 
 	if($ceturksnis){
-		// $start_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 1, 1, date('Y'));
-		// $days_in_end_month = date_daycount(($ceturksnis - 1) * 3 + 3);
-		// $end_date = mktime(0,0,0, ($ceturksnis - 1) * 3 + 3, $days_in_end_month, date('Y'));
-		$start_date = mktime(0,0,0, date_qt_month($ceturksnis, 1), 1, (int)date('Y'));
+		if(empty($DATE->YEAR))$DATE->YEAR = date('Y');
+		$start_date = mktime(0,0,0, date_qt_month($ceturksnis, 1), 1, (int)$DATE->YEAR);
 		$days_in_end_month = date_daycount(date_qt_month($ceturksnis, 3));
-		$end_date = mktime(0,0,0, date_qt_month($ceturksnis, 3), $days_in_end_month, (int)date('Y'));
+		$end_date = mktime(0,0,0, date_qt_month($ceturksnis, 3), $days_in_end_month, (int)$DATE->YEAR);
 	} elseif($DATE->PREV_YEAR) {
 		$start_date = strtotime('first day of January last year');
 		$end_date = strtotime('last day of December last year');
