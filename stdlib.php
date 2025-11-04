@@ -610,7 +610,7 @@ function date_in_periods($date, array $periods): bool {
 	$ts = empty($date) ? time() : strtotime($date);
 
 	if(($ts === false) || ($ts > time())){
-		return null;
+		return false;
 	}
 
 	foreach($periods as list($s, $e)){
@@ -1177,7 +1177,7 @@ function emailex($params){
 
 function csv_get_header(string $file, string $delim = ';'): ?array {
 	if(($f = fopen($file, "r")) === false){
-		return false;
+		return null;
 	}
 
 	$ret = null;
@@ -1208,9 +1208,9 @@ function csv_col_count($file, $delim = ';'): ?int {
 	// return $col_count;
 }
 
-function __csv_load(string $file, array $map, string $ret_type = 'array', string $delim = ';'): array {
+function __csv_load(string $file, array $map, string $ret_type = 'array', string $delim = ';'): ?array {
 	if(($f = fopen($file, "r")) === false){
-		return false;
+		return null;
 	}
 
 	$ret = [];
@@ -1685,7 +1685,7 @@ function get_include_paths(): array {
 	}, explode(PATH_SEPARATOR, ini_get('include_path')));
 }
 
-function trim_includes_path(string $path): ?string {
+function trim_includes_path(string $path): string {
 	if($path = realpath($path)){
 		foreach(get_include_paths() as $root){
 			$root = $root.DIRECTORY_SEPARATOR;
@@ -1693,9 +1693,8 @@ function trim_includes_path(string $path): ?string {
 				return str_replace($root, '', $path);
 			}
 		}
-	} else {
-		return null;
 	}
+	return "";
 }
 
 function trimmer($data){
